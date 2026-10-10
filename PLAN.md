@@ -176,11 +176,31 @@ Notes from the build:
 - Vitest runs under Bun (`bunx --bun vitest`) so `bun:sqlite` resolves; Node
   cannot load that builtin.
 
-### P2 — Admin
+### P2 — Admin — DONE (Cloudflare Access pending)
 
-- `/admin` protected by Cloudflare Access (`wizard` for dashboard steps).
+- `/admin` protected by Cloudflare Access (`wizard` for dashboard steps). **Pending:** the Access policy is a dashboard step, not yet done.
 - MDXEditor with mdxcn components. Draft and published states.
 - **Exit:** create, edit and publish an article end to end (Playwright).
+
+Notes from the build:
+
+- `/admin` lists drafts and published articles; `/admin/[id]` and `/admin/new`
+  edit with MDXEditor. MDX is compiled to HTML in the browser before saving.
+- Endpoints: `POST /admin/api/articles`, `PUT /admin/api/articles/:id`,
+  `POST /admin/api/articles/:id/status`.
+- shadcn theme lives in `src/styles/admin.css`; the public design is untouched.
+- mdxcn is a curated subset (Callout, Quote, Steps, Faq, Terminal, GraphStat,
+  GraphTable, GraphTimeline), not the full library. The full registry ships a
+  broken barrel and 60+ files.
+- The vendored mdxcn files are excluded from Biome (see `biome.json` overrides)
+  and one broken import in `graph-frame.tsx` was fixed to `@/lib/graph-markdown`.
+- mdxcn graph tokens and utilities live in `src/styles/mdxcn.css`, imported by
+  both the public site and the admin, because mdxcn components render in
+  article HTML on the public site.
+- Vitest needs `@vitejs/plugin-react`: the project tsconfig uses
+  `jsx: preserve` for Astro, so `.tsx` components need a real JSX transform in
+  tests.
+- E2E: create, publish and read back an article; a draft stays 404.
 
 ### P3 — Slugs and redirects
 

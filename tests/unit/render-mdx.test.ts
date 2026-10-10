@@ -22,4 +22,14 @@ describe("renderMdxToHtml", () => {
     const html = await renderMdxToHtml("<Badge>Nouveau</Badge>", { Badge });
     expect(html).toContain('<span class="badge">Nouveau</span>');
   });
+
+  it("renders a curated mdxcn component", async () => {
+    const { mdxComponents } = await import("@/lib/mdx-components");
+    const html = await renderMdxToHtml(
+      '<Callout type="tip">\n\nUn conseil utile.\n\n</Callout>',
+      mdxComponents,
+    );
+    expect(html).toContain("Un conseil utile.");
+    expect(html.length).toBeGreaterThan(40);
+  });
 });

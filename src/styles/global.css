@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./mdxcn.css";
 
 @theme {
   --color-background: #ffffff;
