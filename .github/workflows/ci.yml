@@ -86,14 +86,18 @@ jobs:
           if echo "$feed" | grep -q "brouillon"; then fail "rss leaked a draft"; fi
 
           printf 'RIFF0000WEBPVP8 ' > /tmp/t.webp
-          upload=$(curl -s --max-time 10 -X POST \
+          upload=$(curl -s -L --max-time 10 -X POST \
             -F "file=@/tmp/t.webp;type=image/webp" \
             -F "width=4" -F "height=4" -F "alt=smoke" \
             http://127.0.0.1:8787/admin/api/media)
-          echo "upload: $upload"
           media_key=$(echo "$upload" | sed -E 's/.*"key":"([^"]+)".*/\1/')
-          [ -n "$media_key" ] || fail "media upload returned no key"
-          check "/media/$media_key" 200
+          echo "media key: $media_key"
+          [ -n "$media_key" ] || fail "media upload returned no key: $upload"
+          raw=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8787/media/$media_key")
+          echo "GET /media/$media_key -> $raw"
+          follow=$(curl -s -L -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8787/media/$media_key")
+          echo "GET /media/$media_key (follow) -> $follow"
+          [ "$follow" = "200" ] || fail "media not served (got $follow)"
 
           echo "Runtime smoke test passed."
 

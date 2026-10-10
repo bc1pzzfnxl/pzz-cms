@@ -2,7 +2,9 @@ import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async ({ params }) => {
-  const key = params.key;
+  // `trailingSlash: "always"` can append a slash to the matched key; the R2 key
+  // itself never ends with one.
+  const key = (params.key ?? "").replace(/\/+$/, "");
   if (!key) return new Response("Not found", { status: 404 });
 
   const object = await env.MEDIA.get(key);
