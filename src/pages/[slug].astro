@@ -1,0 +1,57 @@
+---
+import { env } from "cloudflare:workers";
+import { createContent } from "../content";
+import MainLayout from "../layouts/MainLayout.astro";
+
+const content = createContent(env.DB);
+const slug = Astro.params.slug ?? "";
+
+const article = await content.getPublishedBySlug(slug);
+
+if (!article) {
+  const redirect = await content.getRedirect(Astro.url.pathname);
+  if (redirect) {
+    return Astro.redirect(redirect.toPath, 301);
+  }
+  Astro.response.status = 404;
+}
+
+const title = article?.title ?? "Page introuvable";
+const description = article?.description ?? "La page demandée n'existe pas ou a été déplacée.";
+
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime())
+    ? dateStr
+    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(date);
+};
+
+const publishDate = formatDate(article?.publishedAt);
+---
+
+<MainLayout title={title} description={description} ogType={article ? "article" : "website"}>
+    <article>
+        {
+            article ? (
+                <>
+                    <h1>{article.title}</h1>
+                    {publishDate && (
+                        <div class="article-meta">
+                            <time datetime={article.publishedAt ?? undefined}>{publishDate}</time>
+                        </div>
+                    )}
+                    <div set:html={article.bodyHtml} />
+                </>
+            ) : (
+                <>
+                    <h1>Page introuvable</h1>
+                    <p>La page demandée n'existe pas ou a été déplacée.</p>
+                </>
+            )
+        }
+    </article>
+    <div class="article-footer">
+        <a href="/" class="back-link">← Retour</a>
+    </div>
+</MainLayout>

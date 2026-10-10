@@ -5,6 +5,15 @@
   "name": "pzz-cms",
   "compatibility_date": "2026-03-17",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "d1_databases": [
+    {
+      // Placeholder ID. Replace it with your own database id before deploying
+      // (bunx wrangler d1 create pzz-cms). Local development ignores it.
+      "binding": "DB",
+      "database_name": "pzz-cms",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
   "observability": {
     "enabled": true
   }

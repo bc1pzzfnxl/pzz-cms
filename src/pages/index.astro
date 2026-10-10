@@ -1,6 +1,11 @@
 ---
+import { env } from "cloudflare:workers";
+import { createContent } from "../content";
 import MainLayout from "../layouts/MainLayout.astro";
 import { site } from "../lib/site";
+
+const content = createContent(env.DB);
+const posts = await content.listPublished();
 
 const siteSchema = {
   "@context": "https://schema.org",
@@ -28,6 +33,18 @@ const siteSchema = {
         <h2 style="font-size: 0.9rem; text-transform: uppercase; color: #666; margin-bottom: 20px;">
             Articles
         </h2>
-        <p>Aucun article pour le moment.</p>
+        {
+            posts.length > 0 ? (
+                <ul>
+                    {posts.map((post) => (
+                        <li>
+                            <a href={`/${post.slug}/`}>{post.title}</a>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p>Aucun article pour le moment.</p>
+            )
+        }
     </section>
 </MainLayout>

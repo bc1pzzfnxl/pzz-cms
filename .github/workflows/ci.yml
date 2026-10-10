@@ -30,6 +30,11 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Prepare local D1
+        run: |
+          bunx wrangler d1 migrations apply DB --local
+          bunx wrangler d1 execute DB --local --file=./scripts/seed.sql
+
       # Boots the built Worker on the real workerd runtime and checks that
       # routes answer. This is the execution gate the local sandbox cannot
       # provide. See PLAN.md, "Environment note".
@@ -39,37 +44,34 @@ jobs:
           bunx wrangler dev --config dist/server/wrangler.json --port 8787 --ip 127.0.0.1 > /tmp/wrangler.log 2>&1 &
           SERVER_PID=$!
 
+          fail() {
+            echo "::error::$1"
+            cat /tmp/wrangler.log
+            kill "$SERVER_PID" 2>/dev/null || true
+            exit 1
+          }
+
+          expect() {
+            local path="$1" want="$2"
+            local got
+            got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8787$path" || true)
+            echo "GET $path -> $got (want $want)"
+            [ "$got" = "$want" ] || fail "Expected $want for $path, got $got"
+          }
+
           ready=0
           for _ in $(seq 1 60); do
             code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8787/ || true)
             if [ "$code" = "200" ]; then ready=1; break; fi
             sleep 1
           done
+          [ "$ready" = "1" ] || fail "Worker did not answer on / within 60s"
 
-          if [ "$ready" != "1" ]; then
-            echo "::error::Worker did not answer on / within 60s"
-            cat /tmp/wrangler.log
-            kill "$SERVER_PID" 2>/dev/null || true
-            exit 1
-          fi
-          echo "GET / -> 200"
-
-          missing=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:8787/does-not-exist/)
-          echo "GET /does-not-exist/ -> $missing"
-          if [ "$missing" != "404" ]; then
-            echo "::error::Expected 404 for an unknown route"
-            cat /tmp/wrangler.log
-            kill "$SERVER_PID" 2>/dev/null || true
-            exit 1
-          fi
-
-          sitemap=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:8787/sitemap-index.xml)
-          echo "GET /sitemap-index.xml -> $sitemap"
-          if [ "$sitemap" != "200" ]; then
-            echo "::error::Expected 200 for the sitemap"
-            kill "$SERVER_PID" 2>/dev/null || true
-            exit 1
-          fi
+          expect "/" 200
+          expect "/premier-article/" 200
+          expect "/brouillon/" 404
+          expect "/ancien-slug/" 301
+          expect "/sitemap-index.xml" 200
 
           kill "$SERVER_PID" 2>/dev/null || true
           echo "Runtime smoke test passed."

@@ -85,8 +85,13 @@ Not needed for the MVP: `pnpm`, `npx` (replaced by `bunx`), the openSEO stack, a
 `workerd` runtime (Astro 6). In this sandbox, `workerd` accepts connections but
 never answers, and `astro dev` fails with `ECONNREFUSED` on a loopback fetch.
 Plain loopback works (verified with `Bun.serve`), so this is a sandbox
-limitation, not a code problem. Locally, verify with `bun run build` and the
-checks; run `astro dev` on a normal machine or in CI with a real Worker runtime.
+limitation, not a code problem.
+
+Resolved by CI: the `Runtime smoke test (workerd)` job in `.github/workflows/ci.yml`
+boots the built Worker on GitHub Actions and checks that `/` (200), an unknown
+route (404) and `/sitemap-index.xml` (200) answer. `workerd` runs fine there.
+Runtime verification therefore happens in CI, not locally. On a normal machine,
+`bun run dev` works as usual.
 
 ## 5. Skills check
 
