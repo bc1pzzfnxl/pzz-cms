@@ -11,7 +11,7 @@ A light, MDX-first CMS built on Astro and Cloudflare Workers. It is developed as
 | Blog repository | `bc1pzzfnxl-blog`, **private**. Holds the Markdown articles. Receives the CMS code in phase P7 via a `feat/cms` branch and a PR. |
 | License | MIT (proposed, see section 6). |
 | Content storage | Cloudflare D1. Code and articles are separated: code goes through Git, articles go through the admin. |
-| Content format | Pure MDX. Components from mdxcn, plus optional `numbers` and `kugiri`, are available inside articles. |
+| Content format | Pure MDX. Components from mdxcn, plus optional `numbers` and `kugiri`, are available inside articles. Pre-rendered to HTML at save time (ADR 0005). |
 | Editor | MDXEditor with custom components. |
 | Rendering | Astro SSR on Cloudflare Workers. Publication is immediate. |
 | Deployment | Cloudflare Workers (Astro adapter + `wrangler.jsonc`). Cloudflare Pages is not used. HTTPS is mandatory. |
@@ -156,12 +156,25 @@ Notes from the build:
 - `wrangler` cannot run in this sandbox (see the environment note above). Build
   and checks are the verifiable gates here.
 
-### P1 — Read path
+### P1 — Read path — DONE
 
 - D1 schema: `articles`, `redirects`, `media`. Migrations with `bunx wrangler d1 migrations`.
 - Content module (deep module, TDD). Routes `/[slug]/` and index, same URLs as the blog.
 - Synthetic seed data only.
 - **Exit:** routes render from seed data. Every URL of the sitemap from the seed responds with the same status.
+
+Notes from the build:
+
+- The content module depends on a small `Database` interface, so it is unit
+  tested on `bun:sqlite` in memory (no `workerd`).
+- MDX is pre-rendered to HTML at save time and stored in `body_html` (ADR 0005).
+  The public route renders that HTML.
+- Unknown slugs fall back to a 301 (redirect table) or a 404.
+- CI seeds local D1 and asserts the real routes on `workerd`: `/` 200,
+  `/premier-article/` 200, `/brouillon/` 404, `/ancien-slug/` 301,
+  `/sitemap-index.xml` 200.
+- Vitest runs under Bun (`bunx --bun vitest`) so `bun:sqlite` resolves; Node
+  cannot load that builtin.
 
 ### P2 — Admin
 
