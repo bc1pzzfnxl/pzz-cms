@@ -14,8 +14,8 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "bunx --bun vitest run",
+    "test:watch": "bunx --bun vitest",
     "check": "biome check . && astro check && vitest run",
     "prepare": "husky"
   },
