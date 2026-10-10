@@ -176,9 +176,10 @@ Notes from the build:
 - Vitest runs under Bun (`bunx --bun vitest`) so `bun:sqlite` resolves; Node
   cannot load that builtin.
 
-### P2 — Admin — DONE (Cloudflare Access pending)
+### P2 — Admin — DONE
 
-- `/admin` protected by Cloudflare Access (`wizard` for dashboard steps). **Pending:** the Access policy is a dashboard step, not yet done.
+- `/admin` protected by Cloudflare Access. **Done:** a self-hosted (Public DNS) app on `bc1pzzfnxl.com` path `admin`, with an allow-policy on the owner's email. Verified: `/` stays 200, `/admin/` redirects to the Cloudflare login.
+- The staging Worker (`pzz-cms.bc1pzzfnxl.workers.dev`) stays **open** on purpose: CI runs Playwright against it, and a login gate would break the E2E run. Protecting it would need an Access service token.
 - MDXEditor with mdxcn components. Draft and published states.
 - **Exit:** create, edit and publish an article end to end (Playwright).
 
@@ -307,11 +308,15 @@ Notes from the build:
 
 ## 7. Open points
 
-1. **License.** Proposed MIT (same as `skill-seo-astro`). Confirm or choose another.
-2. **Repo creation.** `gh repo create bc1pzzfnxl/pzz-cms --public` is an external action. It runs only after your confirmation.
-3. **Cloudflare Access (P2).** Dashboard steps are done by you, guided by `wizard`.
+1. **License.** MIT is in place.
+2. **Repo creation.** Done: `bc1pzzfnxl/pzz-cms` is public.
+3. **Cloudflare Access (P2).** Done: app on `bc1pzzfnxl.com` path `admin`.
 4. **Hosting on Raspberry Pi.** Not part of this plan. Revisit after P7.
 5. **Blog transition (P7).** Timing, to decide when P6 parity is green.
+6. **App-level auth (OIDC).** Deferred. Cloudflare Access is used now (ADR 0003).
+   For open-source portability, a provider-agnostic OIDC seam (VoidAuth, Keycloak,
+   Authentik) is the candidate after P7; a built-in passkey option is the longer
+   term ideal (EmDash does this).
 
 ## 8. Repository layout (target)
 
