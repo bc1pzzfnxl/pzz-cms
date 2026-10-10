@@ -202,11 +202,22 @@ Notes from the build:
   tests.
 - E2E: create, publish and read back an article; a draft stays 404.
 
-### P3 — Slugs and redirects
+### P3 — Slugs and redirects — DONE
 
 - Slug generation (ASCII kebab-case, accents removed), uniqueness check, edit before publication.
 - Slug change after publication creates a 301 in `redirects` and updates the sitemap.
 - **Exit:** unit tests for slug rules, E2E test for the redirect.
+
+Notes from the build:
+
+- `slugify` and `uniqueSlug` (P1) cover generation and de-duplication; the slug
+  stays editable from the admin.
+- `updateArticle` records a 301 when a published article's slug changes, and
+  re-points existing redirects instead of chaining them.
+- The sitemap is not dynamic yet; once it is (P4) it will reflect the new slug
+  automatically, since it reads published articles.
+- E2E: rename a published slug, assert the old URL answers 301 and the new one
+  200.
 
 ### P4 — SEO
 
