@@ -128,5 +128,25 @@ export function toInsertSql(articles: MigratedArticle[]): string {
       )}, ${sqlValue(a.author)}, ${sqlValue(a.publishedAt)}, ${sqlValue(a.updatedAt)});`,
   );
 
-  return ["BEGIN TRANSACTION;", ...rows, "COMMIT;", ""].join("\n");
+  // D1 does not allow explicit BEGIN/COMMIT; wrangler applies the file as a
+  // batch.
+  return [...rows, ""].join("\n");
+}
+
+export interface MigratedMedia {
+  r2Key: string;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+}
+
+/** INSERT statements for the migrated media rows (dimensions prevent CLS). */
+export function toMediaInsertSql(media: MigratedMedia[]): string {
+  const rows = media.map(
+    (item) =>
+      `INSERT INTO media (id, r2_key, width, height, alt) VALUES (${sqlValue(item.r2Key)}, ${sqlValue(
+        item.r2Key,
+      )}, ${item.width ?? "NULL"}, ${item.height ?? "NULL"}, ${sqlValue(item.alt)});`,
+  );
+  return [...rows, ""].join("\n");
 }

@@ -48,7 +48,15 @@ describe("compareFacts", () => {
     expect(diffs[0]).toMatchObject({
       field: "jsonLdTypes",
       old: "BlogPosting, BreadcrumbList",
-      next: "BlogPosting",
+      next: "missing: BreadcrumbList",
     });
+  });
+
+  it("allows added JSON-LD types", () => {
+    const next = OLD.replace(
+      "</head>",
+      '<script type="application/ld+json">{"@type":"BreadcrumbList"}</script><script type="application/ld+json">{"@type":"FAQPage"}</script></head>',
+    );
+    expect(compareFacts("/x/", extractPageFacts(OLD), extractPageFacts(next))).toEqual([]);
   });
 });

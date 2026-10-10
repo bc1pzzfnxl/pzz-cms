@@ -22,8 +22,21 @@ async function fetchText(url: string): Promise<{ status: number; text: string }>
   return { status: response.status, text };
 }
 
-const sitemap = await (await fetch(`${oldBase}${sitemapPath}`)).text();
-const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+const sitemapUrl = `${oldBase}${sitemapPath}`;
+
+async function collectUrls(url: string, seen = new Set<string>()): Promise<string[]> {
+  if (seen.has(url)) return [];
+  seen.add(url);
+  const xml = await (await fetch(url)).text();
+  const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+  if (/<sitemapindex/i.test(xml)) {
+    const nested = await Promise.all(locs.map((loc) => collectUrls(loc, seen)));
+    return nested.flat();
+  }
+  return locs;
+}
+
+const urls = await collectUrls(sitemapUrl);
 const paths = [...new Set(urls.map((url) => new URL(url).pathname))].sort();
 
 console.log(`Comparing ${paths.length} URL(s): ${oldBase} vs ${newBase}\n`);

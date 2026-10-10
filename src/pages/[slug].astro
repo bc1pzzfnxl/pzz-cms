@@ -3,7 +3,7 @@ import { env } from "cloudflare:workers";
 import { createContent } from "../content";
 import MainLayout from "../layouts/MainLayout.astro";
 import { absoluteUrl, blogPostingSchema, breadcrumbSchema } from "../lib/seo";
-import { mediaPublicPath } from "../lib/media";
+import { mediaKeysInHtml, mediaPublicPath, optimizeBodyImages } from "../lib/media";
 import { site } from "../lib/site";
 
 const content = createContent(env.DB);
@@ -20,6 +20,14 @@ if (!article) {
 }
 
 const cover = article?.ogImageKey ? await content.getMediaByKey(article.ogImageKey) : null;
+
+const dimensions = new Map<string, { width: number; height: number }>();
+if (article) {
+  for (const key of mediaKeysInHtml(article.bodyHtml)) {
+    const media = await content.getMediaByKey(key);
+    if (media?.width && media?.height) dimensions.set(key, { width: media.width, height: media.height });
+  }
+}
 
 const title = article?.title ?? "Page introuvable";
 const description = article?.description ?? "La page demandée n'existe pas ou a été déplacée.";
@@ -93,7 +101,7 @@ const schemas = article
                             </figure>
                         )
                     }
-                    <div set:html={article.bodyHtml} />
+                    <div set:html={optimizeBodyImages(article.bodyHtml, dimensions)} />
                 </>
             ) : (
                 <>

@@ -59,10 +59,14 @@ export function compareFacts(url: string, oldFacts: PageFacts, newFacts: PageFac
     }
   }
 
-  const oldTypes = oldFacts.jsonLdTypes.join(", ");
-  const newTypes = newFacts.jsonLdTypes.join(", ");
-  if (oldTypes !== newTypes) {
-    diffs.push({ url, field: "jsonLdTypes", old: oldTypes, next: newTypes });
+  const missingTypes = oldFacts.jsonLdTypes.filter((type) => !newFacts.jsonLdTypes.includes(type));
+  if (missingTypes.length > 0) {
+    diffs.push({
+      url,
+      field: "jsonLdTypes",
+      old: oldFacts.jsonLdTypes.join(", "),
+      next: `missing: ${missingTypes.join(", ")}`,
+    });
   }
 
   return diffs;

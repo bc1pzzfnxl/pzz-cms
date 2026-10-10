@@ -87,12 +87,12 @@ describe("parseArticleFile", () => {
 });
 
 describe("toInsertSql", () => {
-  it("escapes single quotes and emits a transaction", () => {
+  it("escapes single quotes and emits inserts without a transaction", () => {
     const { article } = parseArticleFile("x.md", "---\ntitle: L'appel\n---\n\ncorps");
     article.bodyHtml = "<p>corps</p>";
     const sql = toInsertSql([article]);
-    expect(sql).toContain("BEGIN TRANSACTION;");
+    expect(sql).toContain("INSERT INTO articles");
     expect(sql).toContain("'L''appel'");
-    expect(sql).toContain("COMMIT;");
+    expect(sql).not.toContain("BEGIN TRANSACTION");
   });
 });
