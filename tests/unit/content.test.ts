@@ -192,4 +192,22 @@ describe("content module — admin write path", () => {
       toPath: "/chaine-3/",
     });
   });
+
+  it("records media and reads it back", async () => {
+    const media = await content.createMedia({
+      r2Key: "images/a-x.webp",
+      width: 800,
+      height: 600,
+      alt: "Une image",
+    });
+
+    expect(media).toMatchObject({
+      r2Key: "images/a-x.webp",
+      width: 800,
+      height: 600,
+      alt: "Une image",
+    });
+    expect(await content.getMediaByKey("images/a-x.webp")).toEqual(media);
+    expect(await content.getMediaByKey("images/absent.webp")).toBeNull();
+  });
 });

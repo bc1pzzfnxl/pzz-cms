@@ -6,5 +6,6 @@
 declare module "cloudflare:workers" {
   export const env: {
     DB: import("./content/types").Database;
+    MEDIA: import("./lib/r2").R2BucketLike;
   };
 }

@@ -6,7 +6,10 @@ import type {
   ArticleStatus,
   ArticleSummary,
   CreateArticleInput,
+  CreateMediaInput,
   Database,
+  Media,
+  MediaRow,
   Redirect,
   UpdateArticleInput,
 } from "./types";
@@ -56,6 +59,10 @@ export interface Content {
   createArticle(input: CreateArticleInput): Promise<Article>;
   updateArticle(id: string, input: UpdateArticleInput): Promise<Article>;
   setStatus(id: string, status: ArticleStatus): Promise<Article>;
+
+  // Media
+  createMedia(input: CreateMediaInput): Promise<Media>;
+  getMediaByKey(r2Key: string): Promise<Media | null>;
 }
 
 export function createContent(db: Database): Content {
@@ -94,6 +101,25 @@ export function createContent(db: Database): Content {
       .prepare("UPDATE redirects SET to_path = ? WHERE to_path = ?")
       .bind(toPath, fromPath)
       .run();
+  }
+
+  function toMedia(row: MediaRow): Media {
+    return {
+      id: row.id,
+      r2Key: row.r2_key,
+      width: row.width,
+      height: row.height,
+      alt: row.alt,
+      createdAt: row.created_at,
+    };
+  }
+
+  async function getMediaByKey(r2Key: string): Promise<Media | null> {
+    const row = await db
+      .prepare("SELECT id, r2_key, width, height, alt, created_at FROM media WHERE r2_key = ?")
+      .bind(r2Key)
+      .first<MediaRow>();
+    return row ? toMedia(row) : null;
   }
 
   return {
@@ -181,7 +207,7 @@ export function createContent(db: Database): Content {
 
       await db
         .prepare(
-          "INSERT INTO articles (id, slug, title, description, body_mdx, body_html, status, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO articles (id, slug, title, description, body_mdx, body_html, status, og_image_key, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(
           id,
@@ -191,6 +217,7 @@ export function createContent(db: Database): Content {
           input.bodyMdx ?? "",
           input.bodyHtml ?? "",
           status,
+          input.ogImageKey ?? null,
           publishedAt,
         )
         .run();
@@ -265,5 +292,20 @@ export function createContent(db: Database): Content {
 
       return getArticleOrThrow(id);
     },
+
+    // ── Media ─────────────────────────────────────────────────────────────
+    async createMedia(input) {
+      const id = crypto.randomUUID();
+      await db
+        .prepare("INSERT INTO media (id, r2_key, width, height, alt) VALUES (?, ?, ?, ?, ?)")
+        .bind(id, input.r2Key, input.width ?? null, input.height ?? null, input.alt ?? null)
+        .run();
+
+      const media = await getMediaByKey(input.r2Key);
+      if (!media) throw new Error(`Media not found after insert: ${input.r2Key}`);
+      return media;
+    },
+
+    getMediaByKey,
   };
 }

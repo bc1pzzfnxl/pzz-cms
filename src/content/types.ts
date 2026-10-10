@@ -59,6 +59,7 @@ export interface CreateArticleInput {
   bodyMdx?: string;
   bodyHtml?: string;
   status?: ArticleStatus;
+  ogImageKey?: string | null;
 }
 
 export interface UpdateArticleInput {
@@ -73,6 +74,32 @@ export interface UpdateArticleInput {
 export interface Redirect {
   fromPath: string;
   toPath: string;
+}
+
+export interface Media {
+  id: string;
+  r2Key: string;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+  createdAt: string;
+}
+
+export interface CreateMediaInput {
+  r2Key: string;
+  width?: number | null;
+  height?: number | null;
+  alt?: string | null;
+}
+
+/** Shape of a `media` row as stored in D1. */
+export interface MediaRow {
+  id: string;
+  r2_key: string;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+  created_at: string;
 }
 
 /** Shape of an `articles` row as stored in D1. */

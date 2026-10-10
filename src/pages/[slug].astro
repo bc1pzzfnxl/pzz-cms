@@ -3,6 +3,7 @@ import { env } from "cloudflare:workers";
 import { createContent } from "../content";
 import MainLayout from "../layouts/MainLayout.astro";
 import { absoluteUrl, blogPostingSchema, breadcrumbSchema } from "../lib/seo";
+import { mediaPublicPath } from "../lib/media";
 import { site } from "../lib/site";
 
 const content = createContent(env.DB);
@@ -18,10 +19,14 @@ if (!article) {
   Astro.response.status = 404;
 }
 
+const cover = article?.ogImageKey ? await content.getMediaByKey(article.ogImageKey) : null;
+
 const title = article?.title ?? "Page introuvable";
 const description = article?.description ?? "La page demandée n'existe pas ou a été déplacée.";
 const url = absoluteUrl(site.url, `/${slug}/`);
-const image = site.defaultCover;
+const image = article?.ogImageKey
+  ? absoluteUrl(site.url, mediaPublicPath(article.ogImageKey))
+  : site.defaultCover;
 
 const formatDate = (dateStr?: string | null) => {
   if (!dateStr) return "";
@@ -71,6 +76,23 @@ const schemas = article
                             <time datetime={article.publishedAt ?? undefined}>{publishDate}</time>
                         </div>
                     )}
+                    {
+                        article.ogImageKey && (
+                            <figure class="article-cover-wrapper">
+                                <img
+                                    src={mediaPublicPath(article.ogImageKey)}
+                                    alt={cover?.alt ?? article.title}
+                                    class="article-cover"
+                                    width={cover?.width ?? undefined}
+                                    height={cover?.height ?? undefined}
+                                    loading="eager"
+                                    fetchpriority="high"
+                                    decoding="async"
+                                />
+                                {cover?.alt && <figcaption class="article-cover-caption">{cover.alt}</figcaption>}
+                            </figure>
+                        )
+                    }
                     <div set:html={article.bodyHtml} />
                 </>
             ) : (

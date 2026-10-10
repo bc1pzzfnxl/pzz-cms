@@ -20,6 +20,7 @@ import {
   UndoRedo,
 } from "@mdxeditor/editor";
 import { useState } from "react";
+import { convertToWebp } from "../../lib/image";
 import { mdxComponents } from "../../lib/mdx-components";
 import { renderMdxToHtml } from "../../lib/render-mdx";
 
@@ -32,6 +33,7 @@ interface InitialArticle {
   description: string;
   bodyMdx: string;
   status: Status;
+  ogImageKey: string | null;
 }
 
 interface Props {
@@ -48,8 +50,42 @@ export default function ArticleEditor({ initial }: Props) {
   const [description, setDescription] = useState(initial?.description ?? "");
   const [bodyMdx, setBodyMdx] = useState(initial?.bodyMdx ?? "");
   const [status, setStatus] = useState<Status>(initial?.status ?? "draft");
+  const [ogImageKey, setOgImageKey] = useState<string | null>(initial?.ogImageKey ?? null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(
+    initial?.ogImageKey ? `/media/${initial.ogImageKey}` : null,
+  );
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  async function uploadCover(file: File) {
+    setUploading(true);
+    setMessage(null);
+    try {
+      const { blob, width, height } = await convertToWebp(file);
+      const form = new FormData();
+      const name = `${file.name.replace(/\.[^.]+$/, "") || "image"}.webp`;
+      form.append("file", new File([blob], name, { type: "image/webp" }));
+      form.append("width", String(width));
+      form.append("height", String(height));
+      form.append("alt", title);
+
+      const res = await fetch("/admin/api/media", { method: "POST", body: form });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        setMessage(err.error ?? "Échec de l'envoi de l'image.");
+        return;
+      }
+      const data = (await res.json()) as { key: string; url: string };
+      setOgImageKey(data.key);
+      setCoverUrl(data.url);
+      setMessage("Image envoyée. Enregistrez pour l'appliquer.");
+    } catch (error) {
+      setMessage(`Erreur image : ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function save(): Promise<{ id: string; slug: string } | null> {
     if (!title.trim()) {
@@ -67,6 +103,7 @@ export default function ArticleEditor({ initial }: Props) {
         description,
         bodyMdx,
         bodyHtml,
+        ogImageKey,
       };
 
       const res = await fetch(
@@ -173,6 +210,27 @@ export default function ArticleEditor({ initial }: Props) {
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
+      </div>
+
+      <div>
+        <span className="block text-sm font-medium">Image de couverture</span>
+        {coverUrl && (
+          <img src={coverUrl} alt="" className="mt-2 h-32 rounded-md border object-cover" />
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          data-testid="cover-input"
+          disabled={uploading}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void uploadCover(file);
+          }}
+          className="mt-2 block text-sm"
+        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          Convertie en WebP dans le navigateur avant l'envoi.
+        </p>
       </div>
 
       <div>

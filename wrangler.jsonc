@@ -14,6 +14,14 @@
       "database_id": "00000000-0000-0000-0000-000000000000"
     }
   ],
+  "r2_buckets": [
+    {
+      // Replace with your own bucket before deploying
+      // (bunx wrangler r2 bucket create pzz-cms-media). Local dev ignores it.
+      "binding": "MEDIA",
+      "bucket_name": "pzz-cms-media"
+    }
+  ],
   "observability": {
     "enabled": true
   }

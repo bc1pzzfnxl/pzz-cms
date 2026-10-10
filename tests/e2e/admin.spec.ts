@@ -65,3 +65,39 @@ test("changing a published slug creates a 301", async ({ page }) => {
   expect(moved.headers().location).toContain("/nouveau-slug/");
   expect((await page.request.get("/nouveau-slug/")).status()).toBe(200);
 });
+
+test("upload a cover: it becomes WebP and serves on the public page", async ({ page }) => {
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+
+  await page.goto("/admin/");
+  await page.getByRole("link", { name: "Nouvel article" }).click();
+  await page.getByTestId("title").fill("Article avec image");
+
+  const editor = page.locator('[data-testid="body-editor"] [contenteditable="true"]').first();
+  await editor.click();
+  await page.keyboard.type("Corps avec image.");
+
+  await page.getByTestId("cover-input").setInputFiles({
+    name: "cover.png",
+    mimeType: "image/png",
+    buffer: png,
+  });
+  await expect(page.getByTestId("message")).toContainText("Image envoyée");
+
+  await page.getByTestId("save").click();
+  await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
+  await page.getByTestId("publish").click();
+  await expect(page).toHaveURL(/\/admin\/?$/);
+
+  const article = await page.request.get("/article-avec-image/");
+  expect(article.status()).toBe(200);
+  const match = (await article.text()).match(/\/media\/images\/[^"']+\.webp/);
+  expect(match).not.toBeNull();
+
+  const media = await page.request.get(match?.[0] as string);
+  expect(media.status()).toBe(200);
+  expect(media.headers()["content-type"]).toContain("image/webp");
+});
