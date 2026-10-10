@@ -1,0 +1,37 @@
+---
+import { getImageDimensions } from "../lib/imageMeta";
+
+interface Props {
+  src: string;
+  alt?: string;
+  width?: number | string;
+  height?: number | string;
+  loading?: "lazy" | "eager";
+  decoding?: "async" | "auto" | "sync";
+  [key: string]: any;
+}
+
+const {
+  src,
+  alt = "",
+  width: propWidth,
+  height: propHeight,
+  loading = "lazy",
+  decoding = "async",
+  ...rest
+} = Astro.props;
+
+const dimensions = !propWidth || !propHeight ? getImageDimensions(src) : {};
+const width = propWidth || dimensions.width;
+const height = propHeight || dimensions.height;
+---
+
+<img
+  src={src}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={loading}
+  decoding={decoding}
+  {...rest}
+/>

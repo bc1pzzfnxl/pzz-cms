@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Astro
+.astro/
+dist/
+
+# Cloudflare
+.wrangler/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+
+# Local D1 state
+.mf/
+.migrations/
+
+# Tooling
+.vscode/
+.DS_Store
+
+# Tests
+test-results/
+playwright-report/

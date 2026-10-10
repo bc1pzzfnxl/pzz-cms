@@ -1,0 +1,27 @@
+import { describe, expect, it } from "vitest";
+import { getImageDimensions } from "@/lib/imageMeta";
+import { cn } from "@/lib/utils";
+
+describe("cn", () => {
+  it("joins class names", () => {
+    expect(cn("a", "b")).toBe("a b");
+  });
+
+  it("drops falsy values", () => {
+    expect(cn("a", undefined, false, "b")).toBe("a b");
+  });
+
+  it("resolves conflicting tailwind classes, last one wins", () => {
+    expect(cn("p-2", "p-4")).toBe("p-4");
+  });
+});
+
+describe("getImageDimensions", () => {
+  it("returns an empty object for an unknown image", () => {
+    expect(getImageDimensions("/images/unknown.webp")).toEqual({});
+  });
+
+  it("returns an empty object when no source is given", () => {
+    expect(getImageDimensions()).toEqual({});
+  });
+});

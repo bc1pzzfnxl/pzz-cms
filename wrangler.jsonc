@@ -1,0 +1,11 @@
+{
+  // Minimal Worker configuration. The Cloudflare adapter generates the
+  // entrypoint, the assets directory and the runtime bindings at build time.
+  // Add your own bindings (D1, R2, KV) here as the CMS needs them.
+  "name": "pzz-cms",
+  "compatibility_date": "2026-03-17",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": {
+    "enabled": true
+  }
+}

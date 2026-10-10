@@ -1,0 +1,237 @@
+# pzz-cms — Implementation Plan
+
+A light, MDX-first CMS built on Astro and Cloudflare Workers. It is developed as a **public open-source project** in this repository. Once it is stable, its code is pushed into `bc1pzzfnxl-blog` (private, it holds the Markdown articles), which replaces the rendering engine of https://bc1pzzfnxl.com. The blog's design and URLs stay the same.
+
+## 1. Decisions
+
+| Topic | Decision |
+|---|---|
+| Goal | Build `pzz-cms` first as a public open-source CMS, then swap the engine of `bc1pzzfnxl-blog`. |
+| Repository | `pzz-cms`, **public**, on GitHub. Holds code only. No article, no personal data, no secret. |
+| Blog repository | `bc1pzzfnxl-blog`, **private**. Holds the Markdown articles. Receives the CMS code in phase P7 via a `feat/cms` branch and a PR. |
+| License | MIT (proposed, see section 6). |
+| Content storage | Cloudflare D1. Code and articles are separated: code goes through Git, articles go through the admin. |
+| Content format | Pure MDX. Components from mdxcn, plus optional `numbers` and `kugiri`, are available inside articles. |
+| Editor | MDXEditor with custom components. |
+| Rendering | Astro SSR on Cloudflare Workers. Publication is immediate. |
+| Deployment | Cloudflare Workers (Astro adapter + `wrangler.jsonc`). Cloudflare Pages is not used. HTTPS is mandatory. |
+| Admin access | Cloudflare Access, single user (the owner). |
+| Slugs | ASCII kebab-case generated from the title. Editable before publication. A change creates a 301 in the `redirects` table and updates the sitemap. |
+| Titles | `title` in frontmatter, with accents. It feeds `<h1>`, `<title>` and JSON-LD. File names are ASCII slugs. |
+| URLs | Domain `bc1pzzfnxl.com` unchanged. `trailingSlash: "always"` kept. Sitemap at the same address. |
+| Language | French UI and content. Code and docs in English. Multilingual support is v2. |
+| Media | Cloudflare R2. WebP conversion in the browser (canvas) before upload. Dimensions stored in D1. |
+| SEO | Modules from `skill-seo-astro` are added one by one. The blog layout is not overwritten. |
+| Linting and hooks | Biome (lint and format), TypeScript `strict`, Husky + lint-staged on pre-commit, GitHub Actions CI. |
+| Commits | Conventional Commits. Branches `feat/…`, `fix/…`, `chore/…`. |
+| Tests | Vitest (unit), D1 locally through `wrangler dev`, Playwright (E2E), parity script against the blog's sitemap. |
+| Out of scope | openSEO, DataForSEO, Raspberry Pi hosting (later), translation plugin (v2), design overhaul (after migration). |
+
+## 2. Data policy (public vs private)
+
+The CMS repo is public, so the following rules apply from P0:
+
+- No article, Markdown file, image or D1 data is committed to `pzz-cms`. Test fixtures are synthetic.
+- The migration script (P6) reads the blog's Markdown **locally**, at runtime, and writes to D1. It never copies content into the repo.
+- Secrets (Cloudflare API tokens, Access policies with personal emails, `.dev.vars`) are never committed. They are listed in `.gitignore`.
+- `wrangler.jsonc` in the public repo is a template: the D1 and R2 IDs are placeholders, filled per deployment.
+- The blog's private repo keeps the articles. When the CMS code lands there (P7), the articles are untouched.
+
+## 3. Facts from the existing blog
+
+- `output: "server"` with `@astrojs/cloudflare`. The blog is already SSR on Workers.
+- `wrangler.jsonc` targets Workers with an `ASSETS` binding.
+- `package.json` still has a `deploy` script targeting Pages. Removed in P7.
+- `package.json` has an `editor` script pointing to a missing `editor/` folder. Removed in P7, as confirmed.
+- `trailingSlash: "always"` and a redirect for `/le-mystère-de-barabbas/`.
+- `checklist.md` lists open SEO items: `BreadcrumbList`, RSS, custom 404, author page, internal linking.
+- Dependencies (keep the same major versions to avoid a mismatch at the swap): `astro` 7.1.3, `@astrojs/cloudflare` 14.1.4, `@astrojs/mdx` 7.0.3, `@astrojs/sitemap` 3.7.3, `@astrojs/react` 6.x, Tailwind 4.x, React 19, `motion`.
+
+## 4. Tools check
+
+Checked on this machine:
+
+| Tool | Status | How to run |
+|---|---|---|
+| Bun | Installed | `bun install`, `bun run`, `bunx` |
+| Git | Installed (2.47.3) | — |
+| GitHub CLI (`gh`) | Installed (2.102.0) | Repo creation, PRs, CI |
+| Wrangler | Global binary needs `node`, not installed. Works through Bun. | `bunx wrangler` |
+| Node / npm / pnpm | Not installed, not used (see AGENTS.md) | — |
+
+Tools to add (all through Bun):
+
+| Tool | Phase | Purpose |
+|---|---|---|
+| `astro`, `@astrojs/cloudflare`, `@astrojs/mdx`, `@astrojs/react`, `@astrojs/sitemap`, `@astrojs/rss` | P0, P4 | Same versions as the blog where they exist |
+| `tailwindcss`, `@tailwindcss/vite` | P0 | Blog design |
+| `wrangler` (dev dependency) | P0 | D1, R2, local dev, deploy |
+| shadcn CLI (`bunx shadcn@latest init`) | P0 | Admin UI components (AGENTS.md requires shadcn/ui) |
+| mdxcn (`bunx shadcn@latest add https://mdxcn.dev/r/all.json`) | P2 | MDX components |
+| `@mdxeditor/editor` | P2 | MDX editor |
+| `vitest` | P0 onward | Unit tests |
+| `@playwright/test` (+ `bunx playwright install chromium`) | P1 onward | E2E tests |
+| `@biomejs/biome` | P0 | Lint and format (`bunx biome check --write .`) |
+| `typescript` | P0 | `strict: true` |
+| `husky`, `lint-staged` | P0 | Pre-commit: Biome on staged files, typecheck, unit tests |
+| `sharp` | P6 only | Migration script for existing images, run with Bun (not in Workers) |
+| `numbers`, `kugiri` (optional) | P8 | Animated counters and scroll text as MDX components |
+
+Not needed for the MVP: `pnpm`, `npx` (replaced by `bunx`), the openSEO stack, a Raspberry Pi runtime.
+
+### Environment note
+
+`astro dev` and `astro preview` run the Cloudflare Vite plugin on the real
+`workerd` runtime (Astro 6). In this sandbox, `workerd` accepts connections but
+never answers, and `astro dev` fails with `ECONNREFUSED` on a loopback fetch.
+Plain loopback works (verified with `Bun.serve`), so this is a sandbox
+limitation, not a code problem. Locally, verify with `bun run build` and the
+checks; run `astro dev` on a normal machine or in CI with a real Worker runtime.
+
+## 5. Skills check
+
+| Skill | Use | Phase |
+|---|---|---|
+| `skill-seo-astro` | Required by AGENTS.md (`astro.config.*` present). Source of JSON-LD, RSS, 404, robots, llms.txt, image rehype plugin. Run with `bunx`. Never run `init` on the blog (it overwrites `index.astro` and `[slug].astro`). | P0, P4, P5 |
+| `mdxcn` | MDX components for articles | P2 |
+| `component-gallery` | UI wording and components for the admin (delete confirmation, empty states) | P2 |
+| `web-design-guidelines` | Review of admin and public UI | P2, P4 |
+| `shadscan` | UI audit (mobile layout, responsive) before the swap | P7 |
+| `tdd` | Test-first for slugs, redirects, D1 reads and writes | P1 to P3 |
+| `setup-pre-commit` | Husky, lint-staged, typecheck, tests | P0 |
+| `domain-modeling` | `GLOSSARY.md` and ADRs for hard-to-reverse decisions (D1 as source of truth, Workers, Cloudflare Access, public repo) | P0 |
+| `codebase-design` | Deep modules: a content module with a small interface (`getArticle`, `listPublished`, `saveDraft`, `publish`) hiding D1 | P1 |
+| `writing-for-agents` | Repo-level `AGENTS.md` for pzz-cms | P0 |
+| `writing-guidelines` | Review of docs and article prose | P7 |
+| `code-review` | Review of the `feat/cms` branch against standards and plan | P7 |
+| `pr` | PR body for `feat/cms` | P7 |
+| `wizard` | Steps only you can do: Cloudflare Access setup, Search Console ownership, DNS switch | P2, P7 |
+| `numbers` | Animated counters as MDX components (stats in articles) | P8 (optional) |
+| `kugiri` | Word-by-word or typewriter text reveal, scroll text as MDX components | P8 (optional) |
+| `env-style` | Favicon for local dev environments | P0 (optional) |
+| `vercel-react-best-practices` | Optional React performance review for the admin | P2 (optional) |
+| `diagnosing-bugs` | Any bug that resists a first fix | All |
+
+Not used:
+
+| Skill | Reason |
+|---|---|
+| `voidauth` | Replaced by Cloudflare Access. |
+| `deploy-to-vercel`, `vercel-cli-with-tokens`, `vercel-optimize` | The project deploys to Cloudflare. |
+| `svgl` | No brand logos needed for the MVP. |
+| `shieldcn` | README badges, after the first release (the repo is public, so badges will be useful then). |
+| `migrate-to-shoehorn` | Only if tests use `as` casts. |
+
+## 6. Phases
+
+Each phase ends with checks. A phase is done only when its checks pass (AGENTS.md: typecheck, lint, tests).
+
+Standard check command, defined in `package.json` from P0:
+
+```bash
+bun run check   # biome check + tsc --noEmit + vitest run
+```
+
+### P0 — Foundation (public repo) — DONE
+
+- `git init`, then `gh repo create bc1pzzfnxl/pzz-cms --public` (confirm before running).
+- LICENSE (MIT), README, CONTRIBUTING.md, SECURITY.md, `.gitignore` (`node_modules`, `dist`, `.wrangler`, `.dev.vars`, local D1 state).
+- Astro SSR with the Cloudflare adapter, Bun, TypeScript `strict`, Tailwind, blog design copied in `MainLayout`.
+- Biome configured. Husky + lint-staged: Biome on staged files, typecheck, unit tests.
+- GitHub Actions CI: install, `bun run check`, build.
+- `GLOSSARY.md`, first ADRs in `docs/adr/`, repo `AGENTS.md`.
+- **Exit:** `bun run build`, `bunx wrangler dev`, `bun run check` and CI all pass. Biome verified on a deliberately bad file, then reverted.
+
+Notes from the build:
+
+- Biome does not understand `.astro` component usage (false "unused import").
+  `.astro` files are excluded from Biome and covered by `astro check` instead.
+- `astro check` needs TypeScript 6.x. TypeScript 7 (the native compiler) does not
+  expose the API `astro check` uses, so the project pins `typescript@^6`.
+- `wrangler` cannot run in this sandbox (see the environment note above). Build
+  and checks are the verifiable gates here.
+
+### P1 — Read path
+
+- D1 schema: `articles`, `redirects`, `media`. Migrations with `bunx wrangler d1 migrations`.
+- Content module (deep module, TDD). Routes `/[slug]/` and index, same URLs as the blog.
+- Synthetic seed data only.
+- **Exit:** routes render from seed data. Every URL of the sitemap from the seed responds with the same status.
+
+### P2 — Admin
+
+- `/admin` protected by Cloudflare Access (`wizard` for dashboard steps).
+- MDXEditor with mdxcn components. Draft and published states.
+- **Exit:** create, edit and publish an article end to end (Playwright).
+
+### P3 — Slugs and redirects
+
+- Slug generation (ASCII kebab-case, accents removed), uniqueness check, edit before publication.
+- Slug change after publication creates a 301 in `redirects` and updates the sitemap.
+- **Exit:** unit tests for slug rules, E2E test for the redirect.
+
+### P4 — SEO
+
+- JSON-LD (`BlogPosting`, `WebSite`, `BreadcrumbList`), Open Graph, Twitter cards.
+- Sitemap, RSS (`@astrojs/rss`), custom 404, `robots.txt`, `llms.txt`, author page, internal linking.
+- **Exit:** every item of the blog's `checklist.md` section 2 is ticked and tested.
+
+### P5 — Media
+
+- WebP conversion in the browser (canvas) before upload to R2. Dimensions stored in `media`.
+- **Exit:** an uploaded image renders with `width` and `height`, no layout shift.
+
+### P6 — Migration and parity
+
+- Local script (Bun, `sharp` for images) reads the blog's `.mdx` files and imports them into D1. Old URLs and redirects are kept. Nothing is committed to the public repo.
+- Parity script: crawls every URL of the blog's sitemap on staging and compares status codes, titles, canonical tags and JSON-LD.
+- **Exit:** parity report has no difference. chrome-devtools is used for visual checks.
+
+### P7 — Switch
+
+- Copy the CMS code into `bc1pzzfnxl-blog` on `feat/cms`, open a PR, review with `code-review`, describe with `pr`.
+- Remove the Pages `deploy` script and the `editor` script.
+- Final `shadscan` audit. DNS switch and Search Console check (`wizard`).
+- **Exit:** the domain serves the new engine, and the parity check passes against production.
+
+### P8 — Optional enhancements
+
+- `numbers` and `kugiri` as MDX components for article content (counters, scroll and typewriter text).
+- Design improvements to the blog (after the switch).
+- **Exit:** each component has a unit test and renders in MDXEditor and on the public page.
+
+## 7. Open points
+
+1. **License.** Proposed MIT (same as `skill-seo-astro`). Confirm or choose another.
+2. **Repo creation.** `gh repo create bc1pzzfnxl/pzz-cms --public` is an external action. It runs only after your confirmation.
+3. **Cloudflare Access (P2).** Dashboard steps are done by you, guided by `wizard`.
+4. **Hosting on Raspberry Pi.** Not part of this plan. Revisit after P7.
+5. **Blog transition (P7).** Timing, to decide when P6 parity is green.
+
+## 8. Repository layout (target)
+
+```
+pzz-cms/
+├── PLAN.md
+├── README.md
+├── LICENSE
+├── AGENTS.md              # repo-level, adds to the global one
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── GLOSSARY.md
+├── docs/adr/              # hard-to-reverse decisions
+├── migrations/            # D1 migrations
+├── scripts/               # migration and parity scripts (no content)
+├── .github/workflows/     # CI
+├── src/
+│   ├── content/           # content module (deep module)
+│   ├── components/        # shadcn, mdxcn, numbers, kugiri
+│   ├── layouts/           # MainLayout (blog design)
+│   ├── lib/               # SEO helpers, slugs, redirects, WebP conversion
+│   └── pages/             # public pages and /admin
+├── tests/                 # unit (Vitest) and E2E (Playwright), synthetic data only
+├── astro.config.mjs
+├── wrangler.jsonc         # template, IDs filled per deployment
+├── biome.json
+└── package.json
+```
