@@ -239,10 +239,26 @@ Notes from the build:
 - Internal linking stays editorial (manual links between articles); not
   automated.
 
-### P5 — Media
+### P5 — Media — DONE
 
 - WebP conversion in the browser (canvas) before upload to R2. Dimensions stored in `media`.
 - **Exit:** an uploaded image renders with `width` and `height`, no layout shift.
+
+Notes from the build:
+
+- `src/lib/image.ts` converts to WebP on a canvas in the browser (Workers cannot
+  run image tooling).
+- `POST /admin/api/media/` stores the object in R2 and records key, width,
+  height and alt in D1. `GET /media/<key>/` streams it with immutable caching.
+- Two Astro gotchas, both load-bearing:
+  - `trailingSlash: "always"` means endpoint URLs must be called **with** a
+    trailing slash, and the media route only matches `/media/<key>/`.
+  - Astro's CSRF guard rejects cross-origin form POSTs; callers must send a
+    same-origin `Origin` header (the browser does).
+- The article cover and `og:image` use the media key, with intrinsic dimensions
+  from D1 (zero CLS).
+- Unit tests cover the media helpers and the content media methods; E2E uploads
+  a PNG, asserts WebP conversion and public serving.
 
 ### P6 — Migration and parity
 

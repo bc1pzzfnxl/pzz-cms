@@ -40,3 +40,15 @@ installed; always call it as `bunx wrangler`.
 - `src/content/` will hold the content module: the only place that talks to D1.
 - `src/pages/` holds routes, public and admin.
 - `migrations/` holds D1 migrations. Number them in order.
+
+## Astro gotchas
+
+- `trailingSlash: "always"` is on. Endpoint URLs must be called **with** a
+  trailing slash (`/admin/api/articles/`), and dynamic rest routes only match
+  with one (`/media/<key>/`).
+- Astro's CSRF guard rejects cross-origin form POSTs: callers must send a
+  same-origin `Origin` header.
+- Do not run `skill-seo-astro init` here: it overwrites `index.astro` and
+  `[slug].astro`.
+- `.astro` files are excluded from Biome (false positives); `astro check` covers
+  them. Vendored mdxcn files are excluded too (see `biome.json` overrides).
