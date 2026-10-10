@@ -16,7 +16,7 @@ describe("mediaObjectKey", () => {
 });
 
 describe("mediaPublicPath", () => {
-  it("prefixes the key with /media/", () => {
-    expect(mediaPublicPath("images/a-x.webp")).toBe("/media/images/a-x.webp");
+  it("prefixes the key with /media/ and a trailing slash", () => {
+    expect(mediaPublicPath("images/a-x.webp")).toBe("/media/images/a-x.webp/");
   });
 });

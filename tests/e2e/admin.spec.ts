@@ -94,7 +94,7 @@ test("upload a cover: it becomes WebP and serves on the public page", async ({ p
 
   const article = await page.request.get("/article-avec-image/");
   expect(article.status()).toBe(200);
-  const match = (await article.text()).match(/\/media\/images\/[^"']+\.webp/);
+  const match = (await article.text()).match(/\/media\/images\/[^"']+\.webp\/?/);
   expect(match).not.toBeNull();
 
   const media = await page.request.get(match?.[0] as string);

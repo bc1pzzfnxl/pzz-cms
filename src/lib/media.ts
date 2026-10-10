@@ -6,7 +6,10 @@ export function mediaObjectKey(name: string, random: string): string {
   return `images/${base}-${random}.webp`;
 }
 
-/** Public URL path for a media object key. */
+/**
+ * Public URL path for a media object key. Ends with a slash because the site
+ * uses `trailingSlash: "always"`; the media route only matches with it.
+ */
 export function mediaPublicPath(r2Key: string): string {
-  return `/media/${r2Key}`;
+  return `/media/${r2Key}/`;
 }

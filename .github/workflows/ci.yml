@@ -94,11 +94,8 @@ jobs:
           media_key=$(echo "$upload" | sed -E 's/.*"key":"([^"]+)".*/\1/')
           echo "media key: $media_key"
           [ -n "$media_key" ] || fail "media upload returned no key: $upload"
-          noslash=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8787/media/$media_key")
-          echo "GET /media/$media_key -> $noslash"
           slash=$(curl -s -o /tmp/media.out -w '%{http_code}' --max-time 5 "http://127.0.0.1:8787/media/$media_key/")
           echo "GET /media/$media_key/ -> $slash"
-          echo "body: $(head -c 60 /tmp/media.out)"
           [ "$slash" = "200" ] || fail "media not served (got $slash)"
 
           echo "Runtime smoke test passed."
