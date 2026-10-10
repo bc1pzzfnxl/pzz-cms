@@ -219,11 +219,25 @@ Notes from the build:
 - E2E: rename a published slug, assert the old URL answers 301 and the new one
   200.
 
-### P4 — SEO
+### P4 — SEO — DONE
 
 - JSON-LD (`BlogPosting`, `WebSite`, `BreadcrumbList`), Open Graph, Twitter cards.
 - Sitemap, RSS (`@astrojs/rss`), custom 404, `robots.txt`, `llms.txt`, author page, internal linking.
 - **Exit:** every item of the blog's `checklist.md` section 2 is ticked and tested.
+
+Notes from the build:
+
+- `src/lib/seo.ts` holds the schemas (unit tested). Article pages emit
+  `BlogPosting` + `BreadcrumbList` and full OG article metadata.
+- The sitemap is dynamic: `/sitemap.xml` reads published articles from D1 and
+  `/sitemap-index.xml` is kept because the blog declares it in Search Console.
+- `/rss.xml` via `@astrojs/rss`. `/auteur/` renders a `Person` schema.
+- `public/robots.txt` and `public/llms.txt` are served as static assets.
+- `@astrojs/sitemap` was dropped: under SSR it produced an empty static sitemap
+  that shadowed the dynamic route.
+- CI asserts the sitemap and RSS contain a published article and never a draft.
+- Internal linking stays editorial (manual links between articles); not
+  automated.
 
 ### P5 — Media
 
