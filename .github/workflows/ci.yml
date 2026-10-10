@@ -8,6 +8,8 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:8787
     steps:
       - uses: actions/checkout@v4
 
@@ -24,7 +26,7 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      - name: Test
+      - name: Unit tests
         run: bun run test
 
       - name: Build
@@ -36,43 +38,47 @@ jobs:
           bunx wrangler d1 migrations apply DB --local --persist-to "$PERSIST"
           bunx wrangler d1 execute DB --local --persist-to "$PERSIST" --file=./scripts/seed.sql
 
-      # Boots the built Worker on the real workerd runtime and checks that
-      # routes answer. This is the execution gate the local sandbox cannot
-      # provide. See PLAN.md, "Environment note".
+      # Boots the built Worker on the real workerd runtime. This is the
+      # execution gate the local sandbox cannot provide. See PLAN.md,
+      # "Environment note".
+      - name: Start preview server (workerd)
+        run: |
+          nohup bunx wrangler dev --config dist/server/wrangler.json \
+            --persist-to "$PWD/.wrangler/state" --port 8787 --ip 127.0.0.1 \
+            > /tmp/wrangler.log 2>&1 &
+          echo $! > /tmp/server.pid
+          for _ in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8787/ || true)
+            [ "$code" = "200" ] && exit 0
+            sleep 1
+          done
+          cat /tmp/wrangler.log
+          echo "::error::Worker did not answer on / within 60s"
+          exit 1
+
       - name: Runtime smoke test (workerd)
         run: |
           set -euo pipefail
-          bunx wrangler dev --config dist/server/wrangler.json --persist-to "$PWD/.wrangler/state" --port 8787 --ip 127.0.0.1 > /tmp/wrangler.log 2>&1 &
-          SERVER_PID=$!
-
-          fail() {
-            echo "::error::$1"
-            cat /tmp/wrangler.log
-            kill "$SERVER_PID" 2>/dev/null || true
-            exit 1
-          }
-
-          expect() {
-            local path="$1" want="$2"
-            local got
+          fail() { echo "::error::$1"; cat /tmp/wrangler.log; exit 1; }
+          check() {
+            local path="$1" want="$2" got
             got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8787$path" || true)
             echo "GET $path -> $got (want $want)"
             [ "$got" = "$want" ] || fail "Expected $want for $path, got $got"
           }
-
-          ready=0
-          for _ in $(seq 1 60); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8787/ || true)
-            if [ "$code" = "200" ]; then ready=1; break; fi
-            sleep 1
-          done
-          [ "$ready" = "1" ] || fail "Worker did not answer on / within 60s"
-
-          expect "/" 200
-          expect "/premier-article/" 200
-          expect "/brouillon/" 404
-          expect "/ancien-slug/" 301
-          expect "/sitemap-index.xml" 200
-
-          kill "$SERVER_PID" 2>/dev/null || true
+          check "/" 200
+          check "/premier-article/" 200
+          check "/brouillon/" 404
+          check "/ancien-slug/" 301
+          check "/sitemap-index.xml" 200
           echo "Runtime smoke test passed."
+
+      - name: Install Playwright browser
+        run: bunx playwright install --with-deps chromium
+
+      - name: E2E (Playwright)
+        run: bun run e2e
+
+      - name: Stop preview server
+        if: always()
+        run: kill "$(cat /tmp/server.pid)" 2>/dev/null || true

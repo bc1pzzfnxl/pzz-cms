@@ -1,0 +1,41 @@
+---
+import { env } from "cloudflare:workers";
+import ArticleEditor from "../../components/admin/ArticleEditor";
+import { createContent } from "../../content";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const id = Astro.params.id ?? "new";
+
+const article = id === "new" ? null : await content.getArticleById(id);
+
+if (id !== "new" && !article) {
+  Astro.response.status = 404;
+}
+
+const initial = article
+  ? {
+      id: article.id,
+      title: article.title,
+      slug: article.slug,
+      description: article.description,
+      bodyMdx: article.bodyMdx,
+      status: article.status,
+    }
+  : null;
+---
+
+<AdminLayout title={initial ? initial.title : "Nouvel article"}>
+    {
+        id !== "new" && !initial ? (
+            <div>
+                <h1 class="text-2xl font-semibold">Article introuvable</h1>
+                <a href="/admin" class="mt-4 inline-block text-sm hover:underline">
+                    ← Retour aux articles
+                </a>
+            </div>
+        ) : (
+            <ArticleEditor client:only="react" initial={initial} />
+        )
+    }
+</AdminLayout>

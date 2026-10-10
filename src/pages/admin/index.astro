@@ -1,0 +1,72 @@
+---
+import { env } from "cloudflare:workers";
+import { createContent } from "../../content";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const articles = await content.listAll();
+
+const formatDate = (dateStr: string | null) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime())
+    ? dateStr
+    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(date);
+};
+---
+
+<AdminLayout title="Articles">
+    <div class="mb-8 flex items-center justify-between">
+        <h1 class="text-2xl font-semibold">Articles</h1>
+        <a
+            href="/admin/new"
+            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
+            Nouvel article
+        </a>
+    </div>
+
+    {
+        articles.length > 0 ? (
+            <table class="w-full border-collapse text-sm">
+                <thead>
+                    <tr class="border-b text-left text-muted-foreground">
+                        <th class="py-2 pr-4 font-medium">Titre</th>
+                        <th class="py-2 pr-4 font-medium">Statut</th>
+                        <th class="py-2 pr-4 font-medium">Modifié</th>
+                        <th class="py-2 font-medium" />
+                    </tr>
+                </thead>
+                <tbody>
+                    {articles.map((article) => (
+                        <tr class="border-b">
+                            <td class="py-3 pr-4">
+                                <a href={`/admin/${article.id}`} class="font-medium hover:underline">
+                                    {article.title}
+                                </a>
+                                <div class="text-xs text-muted-foreground">/{article.slug}/</div>
+                            </td>
+                            <td class="py-3 pr-4">
+                                {article.status === "published" ? (
+                                    <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">publié</span>
+                                ) : (
+                                    <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                                        brouillon
+                                    </span>
+                                )}
+                            </td>
+                            <td class="py-3 pr-4 text-muted-foreground">{formatDate(article.updatedAt)}</td>
+                            <td class="py-3 text-right">
+                                <a href={`/admin/${article.id}`} class="text-sm hover:underline">
+                                    Modifier
+                                </a>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        ) : (
+            <p class="text-muted-foreground">Aucun article pour le moment.</p>
+        )
+    }
+</AdminLayout>

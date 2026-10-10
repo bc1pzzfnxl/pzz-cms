@@ -1,0 +1,32 @@
+---
+import "../styles/admin.css";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="noindex, nofollow" />
+        <title>{title} · pzz-cms</title>
+    </head>
+    <body>
+        <header class="border-b">
+            <nav class="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+                <a href="/admin" class="font-medium">pzz-cms</a>
+                <a href="/" target="_blank" rel="noreferrer" class="text-sm text-muted-foreground hover:underline">
+                    Voir le site ↗
+                </a>
+            </nav>
+        </header>
+        <main class="mx-auto max-w-4xl px-6 py-10">
+            <slot />
+        </main>
+    </body>
+</html>
