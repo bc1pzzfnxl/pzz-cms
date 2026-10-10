@@ -1,0 +1,29 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import { personSchema } from "../lib/seo";
+import { site } from "../lib/site";
+
+const schema = personSchema(site);
+---
+
+<MainLayout title={`À propos — ${site.author.name}`} description={site.author.bio}>
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />
+    <article>
+        <h1>{site.author.name}</h1>
+        <p>{site.author.bio}</p>
+        {
+            site.author.sameAs.length > 0 && (
+                <ul>
+                    {site.author.sameAs.map((url) => (
+                        <li>
+                            <a href={url} rel="me">
+                                {url}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            )
+        }
+        <a href="/" class="back-link">← Retour</a>
+    </article>
+</MainLayout>

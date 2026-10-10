@@ -22,6 +22,10 @@ export interface SiteConfig {
   author: {
     name: string;
     url: string;
+    /** Short biography for the author page and E-E-A-T signals. */
+    bio: string;
+    /** Verified profiles, used as `sameAs` in Schema.org. */
+    sameAs: string[];
   };
 }
 
@@ -36,5 +40,7 @@ export const site: SiteConfig = {
   author: {
     name: "bc1pzzfnxl",
     url: "https://bc1pzzfnxl.com",
+    bio: "Auteur du blog bc1pzzfnxl : théologie biblique, exégèse et pensée personnelle.",
+    sameAs: [],
   },
 };

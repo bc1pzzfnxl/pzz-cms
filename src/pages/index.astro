@@ -2,29 +2,13 @@
 import { env } from "cloudflare:workers";
 import { createContent } from "../content";
 import MainLayout from "../layouts/MainLayout.astro";
+import { websiteSchema } from "../lib/seo";
 import { site } from "../lib/site";
 
 const content = createContent(env.DB);
 const posts = await content.listPublished();
 
-const siteSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: site.name,
-  url: site.url,
-  description: site.description,
-  inLanguage: site.locale,
-  publisher: {
-    "@type": "Person",
-    name: site.author.name,
-    url: site.author.url,
-    image: site.logo,
-    logo: {
-      "@type": "ImageObject",
-      url: site.logo,
-    },
-  },
-};
+const siteSchema = websiteSchema(site);
 ---
 
 <MainLayout title="Home">

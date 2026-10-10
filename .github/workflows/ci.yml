@@ -70,7 +70,12 @@ jobs:
           check "/premier-article/" 200
           check "/brouillon/" 404
           check "/ancien-slug/" 301
+          check "/auteur/" 200
+          check "/sitemap.xml" 200
           check "/sitemap-index.xml" 200
+          check "/rss.xml" 200
+          check "/robots.txt" 200
+          check "/llms.txt" 200
           echo "Runtime smoke test passed."
 
       - name: Install Playwright browser

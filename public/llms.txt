@@ -1,0 +1,14 @@
+# bc1pzzfnxl
+
+> Blog personnel : théologie biblique, exégèse et pensée personnelle. Articles en
+> français, publiés en MDX.
+
+## Articles
+
+- [Accueil](https://bc1pzzfnxl.com/) : liste des articles, du plus récent au plus ancien.
+- [À propos](https://bc1pzzfnxl.com/auteur/) : auteur et expertise.
+- [Flux RSS](https://bc1pzzfnxl.com/rss.xml)
+- [Sitemap](https://bc1pzzfnxl.com/sitemap-index.xml)
+
+Chaque article est disponible à `https://bc1pzzfnxl.com/<slug>/`, où `<slug>` est
+en ASCII kebab-case.
