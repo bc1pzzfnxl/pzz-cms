@@ -260,11 +260,15 @@ Notes from the build:
 - Unit tests cover the media helpers and the content media methods; E2E uploads
   a PNG, asserts WebP conversion and public serving.
 
-### P6 — Migration and parity — TOOLING DONE (run pending staging)
+### P6 — Migration and parity — DONE
 
 - Local script (Bun, `sharp` for images) reads the blog's `.mdx` files and imports them into D1. Old URLs and redirects are kept. Nothing is committed to the public repo.
 - Parity script: crawls every URL of the blog's sitemap on staging and compares status codes, titles, canonical tags and JSON-LD.
 - **Exit:** parity report has no difference. chrome-devtools is used for visual checks.
+
+Result: **parity OK** against production (`https://bc1pzzfnxl.com` vs the
+staging Worker) for all 5 URLs. Titles, canonicals, `<h1>` and status match;
+`BreadcrumbList` is an allowed addition.
 
 Notes from the build:
 
