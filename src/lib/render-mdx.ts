@@ -19,5 +19,10 @@ export async function renderMdxToHtml(
 ): Promise<string> {
   const mod = await evaluate(source, { ...runtime, development: false });
   const MdxContent = mod.default as ComponentType<{ components?: MdxComponents }>;
-  return renderToStaticMarkup(createElement(MdxContent, { components }));
+  const html = renderToStaticMarkup(createElement(MdxContent, { components }));
+
+  // React 19 emits a <link rel="preload"> for every image it renders. Body
+  // images must never be preloaded (only the cover is, by MainLayout), so drop
+  // them. See the SEO rules in skill-seo-astro.
+  return html.replace(/<link[^>]*\brel="preload"[^>]*>/gi, "");
 }

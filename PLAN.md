@@ -260,11 +260,30 @@ Notes from the build:
 - Unit tests cover the media helpers and the content media methods; E2E uploads
   a PNG, asserts WebP conversion and public serving.
 
-### P6 — Migration and parity
+### P6 — Migration and parity — TOOLING DONE (run pending staging)
 
 - Local script (Bun, `sharp` for images) reads the blog's `.mdx` files and imports them into D1. Old URLs and redirects are kept. Nothing is committed to the public repo.
 - Parity script: crawls every URL of the blog's sitemap on staging and compares status codes, titles, canonical tags and JSON-LD.
 - **Exit:** parity report has no difference. chrome-devtools is used for visual checks.
+
+Notes from the build:
+
+- `src/lib/migration.ts` (unit tested): frontmatter parsing, slug, description,
+  image-key extraction, `/images/*` → `/media/images/*/` rewriting, SQL export.
+- `scripts/migrate.ts` reads a content directory, compiles each body to HTML and
+  writes `migration-output/articles.sql` + `r2-upload.sh`. Output is gitignored;
+  the articles stay private.
+- Verified locally on the 4 reference articles: 4 rows, 12 images, and the SQL
+  applies cleanly to `migrations/0001_init.sql` in SQLite.
+- `src/lib/parity.ts` (unit tested) + `scripts/parity.ts`: fetch both sites,
+  compare status, title, canonical, h1 and JSON-LD types; exits non-zero on any
+  difference.
+- React 19 `renderToStaticMarkup` emits a `<link rel="preload">` per image; the
+  compiler strips them so body images are never preloaded (only the cover is).
+- **Pending:** the parity run needs a staging deploy and the production sitemap.
+- **Known gap:** body image `width`/`height` are not injected yet (CLS on body
+  images). The cover has intrinsic dimensions from D1; body images rely on the
+  media table, which is not consulted at render time.
 
 ### P7 — Switch
 

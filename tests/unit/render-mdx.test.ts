@@ -32,4 +32,10 @@ describe("renderMdxToHtml", () => {
     expect(html).toContain("Un conseil utile.");
     expect(html.length).toBeGreaterThan(40);
   });
+
+  it("never preloads body images", async () => {
+    const html = await renderMdxToHtml("![alt](/media/images/a.webp/)");
+    expect(html).toContain("<img");
+    expect(html).not.toContain("preload");
+  });
 });
