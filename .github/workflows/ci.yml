@@ -87,6 +87,7 @@ jobs:
 
           printf 'RIFF0000WEBPVP8 ' > /tmp/t.webp
           upload=$(curl -s --max-time 10 -X POST \
+            -H "Origin: http://127.0.0.1:8787" \
             -F "file=@/tmp/t.webp;type=image/webp" \
             -F "width=4" -F "height=4" -F "alt=smoke" \
             http://127.0.0.1:8787/admin/api/media/)
