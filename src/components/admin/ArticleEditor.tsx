@@ -70,7 +70,7 @@ export default function ArticleEditor({ initial }: Props) {
       form.append("height", String(height));
       form.append("alt", title);
 
-      const res = await fetch("/admin/api/media", { method: "POST", body: form });
+      const res = await fetch("/admin/api/media/", { method: "POST", body: form });
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         setMessage(err.error ?? "Échec de l'envoi de l'image.");
@@ -107,7 +107,7 @@ export default function ArticleEditor({ initial }: Props) {
       };
 
       const res = await fetch(
-        articleId ? `/admin/api/articles/${articleId}` : "/admin/api/articles",
+        articleId ? `/admin/api/articles/${articleId}/` : "/admin/api/articles/",
         {
           method: articleId ? "PUT" : "POST",
           headers: { "content-type": "application/json" },
@@ -143,7 +143,7 @@ export default function ArticleEditor({ initial }: Props) {
 
     setBusy(true);
     try {
-      const res = await fetch(`/admin/api/articles/${saved.id}/status`, {
+      const res = await fetch(`/admin/api/articles/${saved.id}/status/`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status: next }),
