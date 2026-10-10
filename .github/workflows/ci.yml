@@ -85,6 +85,16 @@ jobs:
           echo "$feed" | grep -q "premier-article" || fail "rss missing a published article"
           if echo "$feed" | grep -q "brouillon"; then fail "rss leaked a draft"; fi
 
+          printf 'RIFF0000WEBPVP8 ' > /tmp/t.webp
+          upload=$(curl -s --max-time 10 -X POST \
+            -F "file=@/tmp/t.webp;type=image/webp" \
+            -F "width=4" -F "height=4" -F "alt=smoke" \
+            http://127.0.0.1:8787/admin/api/media)
+          echo "upload: $upload"
+          media_key=$(echo "$upload" | sed -E 's/.*"key":"([^"]+)".*/\1/')
+          [ -n "$media_key" ] || fail "media upload returned no key"
+          check "/media/$media_key" 200
+
           echo "Runtime smoke test passed."
 
       - name: Install Playwright browser
