@@ -32,8 +32,9 @@ jobs:
 
       - name: Prepare local D1
         run: |
-          bunx wrangler d1 migrations apply DB --local
-          bunx wrangler d1 execute DB --local --file=./scripts/seed.sql
+          PERSIST="$PWD/.wrangler/state"
+          bunx wrangler d1 migrations apply DB --local --persist-to "$PERSIST"
+          bunx wrangler d1 execute DB --local --persist-to "$PERSIST" --file=./scripts/seed.sql
 
       # Boots the built Worker on the real workerd runtime and checks that
       # routes answer. This is the execution gate the local sandbox cannot
@@ -41,7 +42,7 @@ jobs:
       - name: Runtime smoke test (workerd)
         run: |
           set -euo pipefail
-          bunx wrangler dev --config dist/server/wrangler.json --port 8787 --ip 127.0.0.1 > /tmp/wrangler.log 2>&1 &
+          bunx wrangler dev --config dist/server/wrangler.json --persist-to "$PWD/.wrangler/state" --port 8787 --ip 127.0.0.1 > /tmp/wrangler.log 2>&1 &
           SERVER_PID=$!
 
           fail() {
