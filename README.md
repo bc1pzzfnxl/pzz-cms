@@ -63,6 +63,20 @@ bun run build
 bunx wrangler deploy --config wrangler.deploy.jsonc
 ```
 
+## R2 cost control
+
+R2's free tier is 10 GB storage, 1M Class A (writes) and 10M Class B (reads)
+operations per month. Three things keep usage inside it:
+
+- **Edge caching.** Media responses are stored with the Cache API
+  (`caches.default`), so image views are served from Cloudflare's cache, not R2.
+  R2 is read at most once per colo per object. Verified: `cf-cache-status: HIT`
+  on repeat requests.
+- **Upload caps.** Images are converted to WebP in the browser (max 1600 px
+  wide) and the upload endpoint rejects anything above 1 MB.
+- **Spending limit.** Set a hard cap in the dashboard: **Manage Account →
+  Billing → set a spending limit**. Notifications alone do not cap usage.
+
 ## Cloudflare Access
 
 The admin (`/admin`) is gated by Cloudflare Access. Enabling Access and creating

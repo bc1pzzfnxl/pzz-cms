@@ -250,6 +250,9 @@ Notes from the build:
   run image tooling).
 - `POST /admin/api/media/` stores the object in R2 and records key, width,
   height and alt in D1. `GET /media/<key>/` streams it with immutable caching.
+- Media responses are cached at the edge (`caches.default`), so R2 reads stay
+  well inside the free tier; uploads are capped at 1 MB. A dashboard spending
+  limit is the hard stop (README, "R2 cost control").
 - Two Astro gotchas, both load-bearing:
   - `trailingSlash: "always"` means endpoint URLs must be called **with** a
     trailing slash, and the media route only matches `/media/<key>/`.

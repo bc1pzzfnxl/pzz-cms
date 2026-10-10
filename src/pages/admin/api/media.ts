@@ -21,6 +21,9 @@ export const POST: APIRoute = async ({ request }) => {
   if (file.type !== "image/webp") {
     return json({ error: "Format WebP requis (conversion dans le navigateur)." }, 400);
   }
+  if (file.size > 1024 * 1024) {
+    return json({ error: "Image trop lourde : 1 Mo maximum." }, 413);
+  }
 
   const width = Number(form.get("width")) || null;
   const height = Number(form.get("height")) || null;
