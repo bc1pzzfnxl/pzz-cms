@@ -42,6 +42,34 @@ export interface ArticleSummary {
   publishedAt: string | null;
 }
 
+/** Admin listing row: includes drafts and status. */
+export interface AdminArticleSummary {
+  id: string;
+  slug: string;
+  title: string;
+  status: ArticleStatus;
+  publishedAt: string | null;
+  updatedAt: string;
+}
+
+export interface CreateArticleInput {
+  title: string;
+  slug?: string;
+  description?: string;
+  bodyMdx?: string;
+  bodyHtml?: string;
+  status?: ArticleStatus;
+}
+
+export interface UpdateArticleInput {
+  title?: string;
+  slug?: string;
+  description?: string;
+  bodyMdx?: string;
+  bodyHtml?: string;
+  ogImageKey?: string | null;
+}
+
 export interface Redirect {
   fromPath: string;
   toPath: string;

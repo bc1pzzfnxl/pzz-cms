@@ -97,3 +97,65 @@ describe("content module", () => {
     expect(await content.getRedirect("/jamais-vu/")).toBeNull();
   });
 });
+
+describe("content module — admin write path", () => {
+  let content: Content;
+
+  beforeEach(() => {
+    const sqlite = new Sqlite(":memory:");
+    seed(sqlite);
+    content = createContent(createBunDatabase(sqlite));
+  });
+
+  it("creates a draft with a slug derived from the title", async () => {
+    const article = await content.createArticle({ title: "Le Mystère de Barabbas" });
+    expect(article.slug).toBe("le-mystere-de-barabbas");
+    expect(article.status).toBe("draft");
+    expect(article.publishedAt).toBeNull();
+  });
+
+  it("de-duplicates slugs on collision", async () => {
+    const article = await content.createArticle({ title: "Premier article" });
+    expect(article.slug).toBe("premier-article-2");
+  });
+
+  it("creates a published article with a publication date", async () => {
+    const article = await content.createArticle({
+      title: "Nouveau",
+      status: "published",
+      bodyMdx: "# Nouveau",
+      bodyHtml: "<h1>Nouveau</h1>",
+    });
+    expect(article.status).toBe("published");
+    expect(article.publishedAt).not.toBeNull();
+    expect(await content.getPublishedBySlug(article.slug)).not.toBeNull();
+  });
+
+  it("updates fields and bumps updated_at", async () => {
+    const created = await content.createArticle({ title: "Titre initial" });
+    const updated = await content.updateArticle(created.id, {
+      title: "Titre modifié",
+      bodyHtml: "<p>Corps</p>",
+    });
+    expect(updated.title).toBe("Titre modifié");
+    expect(updated.bodyHtml).toBe("<p>Corps</p>");
+    expect(updated.updatedAt >= updated.createdAt).toBe(true);
+  });
+
+  it("publishes then unpublishes", async () => {
+    const created = await content.createArticle({ title: "À publier" });
+    const published = await content.setStatus(created.id, "published");
+    expect(published.status).toBe("published");
+    expect(published.publishedAt).not.toBeNull();
+
+    const drafted = await content.setStatus(created.id, "draft");
+    expect(drafted.status).toBe("draft");
+    expect(await content.getPublishedBySlug(created.slug)).toBeNull();
+  });
+
+  it("lists drafts and published articles for the admin", async () => {
+    const rows = await content.listAll();
+    expect(rows).toHaveLength(3);
+    expect(rows.some((row) => row.status === "draft")).toBe(true);
+  });
+});
