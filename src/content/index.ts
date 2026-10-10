@@ -78,6 +78,24 @@ export function createContent(db: Database): Content {
     return results.map((row) => row.slug);
   }
 
+  /**
+   * Record a permanent redirect and re-point any redirect that targeted the old
+   * path, so chains never build up.
+   */
+  async function createRedirect(fromPath: string, toPath: string): Promise<void> {
+    if (fromPath === toPath) return;
+    await db
+      .prepare(
+        "INSERT INTO redirects (from_path, to_path) VALUES (?, ?) ON CONFLICT(from_path) DO UPDATE SET to_path = excluded.to_path",
+      )
+      .bind(fromPath, toPath)
+      .run();
+    await db
+      .prepare("UPDATE redirects SET to_path = ? WHERE to_path = ?")
+      .bind(toPath, fromPath)
+      .run();
+  }
+
   return {
     // ── Public read path ──────────────────────────────────────────────────
     async listPublished() {
@@ -189,8 +207,17 @@ export function createContent(db: Database): Content {
         values.push(input.title);
       }
       if (input.slug !== undefined) {
+        const current = await getArticleById(id);
+        const base = slugify(input.slug);
+        const taken = (await listSlugs()).filter((slug) => slug !== current?.slug);
+        const nextSlug = uniqueSlug(base, taken);
+
+        if (current && nextSlug !== current.slug && current.status === "published") {
+          await createRedirect(`/${current.slug}/`, `/${nextSlug}/`);
+        }
+
         sets.push("slug = ?");
-        values.push(slugify(input.slug));
+        values.push(nextSlug);
       }
       if (input.description !== undefined) {
         sets.push("description = ?");

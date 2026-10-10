@@ -158,4 +158,38 @@ describe("content module — admin write path", () => {
     expect(rows).toHaveLength(3);
     expect(rows.some((row) => row.status === "draft")).toBe(true);
   });
+
+  it("creates a 301 redirect when a published article's slug changes", async () => {
+    const created = await content.createArticle({ title: "Ancien titre", status: "published" });
+    const updated = await content.updateArticle(created.id, { slug: "nouveau-titre" });
+
+    expect(updated.slug).toBe("nouveau-titre");
+    expect(await content.getRedirect("/ancien-titre/")).toEqual({
+      fromPath: "/ancien-titre/",
+      toPath: "/nouveau-titre/",
+    });
+  });
+
+  it("does not create a redirect for a draft", async () => {
+    const created = await content.createArticle({ title: "Brouillon titre" });
+    await content.updateArticle(created.id, { slug: "brouillon-renomme" });
+    expect(await content.getRedirect("/brouillon-titre/")).toBeNull();
+  });
+
+  it("de-duplicates a slug on update", async () => {
+    const created = await content.createArticle({ title: "Unique" });
+    const updated = await content.updateArticle(created.id, { slug: "premier-article" });
+    expect(updated.slug).toBe("premier-article-2");
+  });
+
+  it("re-points an existing redirect instead of chaining", async () => {
+    const created = await content.createArticle({ title: "Chaine", status: "published" });
+    await content.updateArticle(created.id, { slug: "chaine-2" });
+    await content.updateArticle(created.id, { slug: "chaine-3" });
+
+    expect(await content.getRedirect("/chaine/")).toEqual({
+      fromPath: "/chaine/",
+      toPath: "/chaine-3/",
+    });
+  });
 });

@@ -37,3 +37,31 @@ test("a draft is not visible on the public site", async ({ page }) => {
   const response = await page.request.get("/brouillon-e2e/");
   expect(response.status()).toBe(404);
 });
+
+test("changing a published slug creates a 301", async ({ page }) => {
+  await page.goto("/admin/");
+  await page.getByRole("link", { name: "Nouvel article" }).click();
+  await page.getByTestId("title").fill("Article slug test");
+
+  const editor = page.locator('[data-testid="body-editor"] [contenteditable="true"]').first();
+  await editor.click();
+  await page.keyboard.type("Corps de l'article.");
+
+  await page.getByTestId("save").click();
+  await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
+  const editUrl = page.url();
+
+  await page.getByTestId("publish").click();
+  await expect(page).toHaveURL(/\/admin\/?$/);
+  expect((await page.request.get("/article-slug-test/")).status()).toBe(200);
+
+  await page.goto(editUrl);
+  await page.getByTestId("slug").fill("nouveau-slug");
+  await page.getByTestId("save").click();
+  await expect(page.getByTestId("message")).toContainText("Enregistré");
+
+  const moved = await page.request.get("/article-slug-test/", { maxRedirects: 0 });
+  expect(moved.status()).toBe(301);
+  expect(moved.headers().location).toContain("/nouveau-slug/");
+  expect((await page.request.get("/nouveau-slug/")).status()).toBe(200);
+});
