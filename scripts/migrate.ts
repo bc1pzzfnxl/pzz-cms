@@ -3,7 +3,7 @@
  *
  *   bun scripts/migrate.ts [contentDir] [outDir]
  *
- * Defaults: contentDir = ../bc1pzzfnxl-blog/src/content, outDir = migration-output
+ * Defaults: contentDir = ../your-blog/src/content, outDir = migration-output
  *
  * It writes `articles.sql` and `media.sql` (apply with wrangler d1 execute) and
  * `r2-upload.sh` (upload the referenced images to R2). Nothing here is
@@ -22,7 +22,7 @@ import {
 import { renderMdxToHtml } from "../src/lib/render-mdx";
 
 const contentDir = resolve(
-  process.argv[2] ?? process.env.BLOG_CONTENT_DIR ?? "../bc1pzzfnxl-blog/src/content",
+  process.argv[2] ?? process.env.BLOG_CONTENT_DIR ?? "../your-blog/src/content",
 );
 const outDir = resolve(process.argv[3] ?? "migration-output");
 const blogRoot = resolve(contentDir, "..", "..");

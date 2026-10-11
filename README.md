@@ -101,7 +101,7 @@ tag into `.dev.vars`.
 Import an existing Markdown blog into D1:
 
 ```bash
-bun run migrate ../bc1pzzfnxl-blog/src/content   # writes migration-output/ (gitignored)
+bun run migrate ../your-blog/src/content   # writes migration-output/ (gitignored)
 bunx wrangler d1 execute DB --remote --config wrangler.deploy.jsonc --file=migration-output/articles.sql
 bunx wrangler d1 execute DB --remote --config wrangler.deploy.jsonc --file=migration-output/media.sql
 bash migration-output/r2-upload.sh
@@ -110,7 +110,7 @@ bash migration-output/r2-upload.sh
 Compare the old blog and the CMS, URL by URL:
 
 ```bash
-bun run parity https://bc1pzzfnxl.com https://pzz-cms.bc1pzzfnxl.workers.dev /sitemap-index.xml
+bun run parity https://example.com https://your-worker.workers.dev /sitemap-index.xml
 ```
 
 ## Data policy

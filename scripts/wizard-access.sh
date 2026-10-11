@@ -221,9 +221,9 @@ say "This app protects the admin path and nothing else."
 open_url "https://one.dash.cloudflare.com/"
 step "Go to Access → Applications → Add an application → Self-hosted."
 step "Name it 'pzz-cms admin'."
-step "Domain: pzz-cms.bc1pzzfnxl.workers.dev (the staging Worker)."
+step "Domain: your-worker.workers.dev (the staging Worker)."
 step "Path: admin"
-note "After the switch (P7), add a second app for bc1pzzfnxl.com with path 'admin'."
+note "After the switch (P7), add a second app for example.com with path 'admin'."
 step "Save the application."
 pause "Saved the application? Press Enter."
 
@@ -245,7 +245,7 @@ write_env CF_ACCESS_AUD "$CF_ACCESS_AUD"
 # ── Stage 5: verify ───────────────────────────────────────────────────────
 stage "Verify the gate"
 say "Open the admin in a private window; it must ask for a Cloudflare login."
-open_url "https://pzz-cms.bc1pzzfnxl.workers.dev/admin/"
+open_url "https://your-worker.workers.dev/admin/"
 if confirm "Did the Cloudflare Access login appear (and not the admin)?"; then
   note "The admin is now gated."
 else

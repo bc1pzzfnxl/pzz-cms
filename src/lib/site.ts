@@ -1,10 +1,10 @@
 /**
- * Site-level configuration. This is the single place where branding, the
- * canonical URL and the default metadata live. The blog (bc1pzzfnxl-blog)
- * overrides these values; the CMS itself stays generic.
+ * Site configuration. This is the single place where branding, the canonical
+ * URL and the default metadata live. Replace these values with your own; the
+ * engine reads them everywhere (layout, SEO, admin).
  */
 export interface SiteConfig {
-  /** Short site name, used in the `<title>` suffix and the header. */
+  /** Short site name, used in the `<title>` suffix, the header and the admin. */
   name: string;
   /** Canonical origin, no trailing slash. */
   url: string;
@@ -30,17 +30,17 @@ export interface SiteConfig {
 }
 
 export const site: SiteConfig = {
-  name: "bc1pzzfnxl",
-  url: "https://bc1pzzfnxl.com",
-  description: "Blog perso | Théologie Chrétienne et Juive | Pensée personnelle",
-  tagline: "Théologie biblique, exégèse et pensée personnelle.",
-  locale: "fr",
-  logo: "https://bc1pzzfnxl.com/logo.png",
-  defaultCover: "https://bc1pzzfnxl.com/images/default-cover.webp",
+  name: "Example",
+  url: "https://example.com",
+  description: "A short description of the site, used as the default meta description.",
+  tagline: "A tagline shown next to the site name on the home page.",
+  locale: "en",
+  logo: "https://example.com/logo.png",
+  defaultCover: "https://example.com/images/default-cover.webp",
   author: {
-    name: "bc1pzzfnxl",
-    url: "https://bc1pzzfnxl.com",
-    bio: "Auteur du blog bc1pzzfnxl : théologie biblique, exégèse et pensée personnelle.",
+    name: "Your name",
+    url: "https://example.com",
+    bio: "A short biography for the author page.",
     sameAs: [],
   },
 };

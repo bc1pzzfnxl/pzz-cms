@@ -11,10 +11,10 @@ import {
 
 const RAW = `---
 title: Le Mystère de Barabbas
-author: bc1pzzfnxl
+author: example
 date: '2026-07-03T00:00:00.000Z'
 dateModified: '2026-09-06'
-image: 'https://bc1pzzfnxl.com/images/barabbas.webp'
+image: 'https://example.com/images/barabbas.webp'
 imageAlt: Ecce Homo
 ---
 
@@ -33,7 +33,7 @@ describe("slugFromFilename", () => {
 
 describe("mediaKeyFromImageUrl", () => {
   it("extracts a media key from an absolute URL", () => {
-    expect(mediaKeyFromImageUrl("https://bc1pzzfnxl.com/images/barabbas.webp")).toBe(
+    expect(mediaKeyFromImageUrl("https://example.com/images/barabbas.webp")).toBe(
       "images/barabbas.webp",
     );
   });
