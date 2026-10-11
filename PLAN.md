@@ -312,9 +312,12 @@ Done:
 - Verified on production: the 5 original URLs return 200 with JSON-LD;
   `/admin/` still redirects to Cloudflare Access; `/sitemap.xml` and `/rss.xml`
   return 200; parity between staging and production is OK.
-- **Follow-up:** the Cloudflare "Workers Builds" integration on the blog repo
-  fails (it does not use Bun). It should be reconfigured (`bun install && bun run
-  build` / `bunx wrangler deploy`) or disconnected. The switch was done manually.
+- **Follow-up resolved:** the Cloudflare "Workers Builds" integration on the blog
+  repo now succeeds. It needed the `BUN_VERSION` build variable (`1.4.3`): the
+  build image ships Bun 1.2, which cannot read the `bun.lock` lockfile
+  (lockfileVersion 2). The blog's deploy command is `npx wrangler versions
+  upload` (a preview upload, not a live deploy), so production still deploys
+  manually.
 
 ### P8 — Optional enhancements — PARTIAL
 
