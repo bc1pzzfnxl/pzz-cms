@@ -293,12 +293,28 @@ Notes from the build:
   images). The cover has intrinsic dimensions from D1; body images rely on the
   media table, which is not consulted at render time.
 
-### P7 — Switch
+### P7 — Switch — DONE
 
 - Copy the CMS code into `bc1pzzfnxl-blog` on `feat/cms`, open a PR, review with `code-review`, describe with `pr`.
 - Remove the Pages `deploy` script and the `editor` script.
 - Final `shadscan` audit. DNS switch and Search Console check (`wizard`).
 - **Exit:** the domain serves the new engine, and the parity check passes against production.
+
+Done:
+
+- PR [bc1pzzfnxl-blog#1](https://github.com/bc1pzzfnxl/bc1pzzfnxl-blog/pull/1) merged into `main`.
+- The blog's `src/content/*.md` were removed (content lives in D1; kept in git history).
+- The Pages `deploy` script and the `editor` script are gone; `bun run deploy`
+  uses the adapter entrypoint (`@astrojs/cloudflare/entrypoints/server`), so a
+  plain `wrangler deploy` works.
+- Deployed manually to the existing blog Worker. **No DNS change**: the domain
+  already pointed there, so nothing was lost.
+- Verified on production: the 5 original URLs return 200 with JSON-LD;
+  `/admin/` still redirects to Cloudflare Access; `/sitemap.xml` and `/rss.xml`
+  return 200; parity between staging and production is OK.
+- **Follow-up:** the Cloudflare "Workers Builds" integration on the blog repo
+  fails (it does not use Bun). It should be reconfigured (`bun install && bun run
+  build` / `bunx wrangler deploy`) or disconnected. The switch was done manually.
 
 ### P8 — Optional enhancements
 
