@@ -19,7 +19,7 @@ import {
   toolbarPlugin,
   UndoRedo,
 } from "@mdxeditor/editor";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { convertToWebp } from "../../lib/image";
 import { mdxComponents } from "../../lib/mdx-components";
 import { renderMdxToHtml } from "../../lib/render-mdx";
@@ -57,6 +57,31 @@ export default function ArticleEditor({ initial }: Props) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState("");
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
+  // Live preview: the same compiler used on save, so the author sees exactly
+  // what will be published (Stat, Reveal, mdxcn components included).
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const html = await renderMdxToHtml(bodyMdx, mdxComponents);
+        if (!cancelled) {
+          setPreview(html);
+          setPreviewError(null);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPreviewError(error instanceof Error ? error.message : String(error));
+        }
+      }
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [bodyMdx]);
 
   async function uploadCover(file: File) {
     setUploading(true);
@@ -264,6 +289,17 @@ export default function ArticleEditor({ initial }: Props) {
             ]}
           />
         </div>
+      </div>
+
+      <div>
+        <span className="block text-sm font-medium">Aperçu</span>
+        <div
+          data-testid="preview"
+          className="mdx-preview mt-1 rounded-md border p-4"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: compiled locally from the author's own MDX
+          dangerouslySetInnerHTML={{ __html: preview }}
+        />
+        {previewError && <p className="mt-1 text-xs text-destructive">{previewError}</p>}
       </div>
 
       {message && (

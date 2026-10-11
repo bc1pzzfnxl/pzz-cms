@@ -134,3 +134,32 @@
     @apply font-sans;
   }
 }
+
+/* Live preview of article MDX (uses the real compiler). */
+.mdx-preview {
+  font-size: 1rem;
+  line-height: 1.65;
+}
+.mdx-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.mdx-preview h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem;
+}
+.mdx-preview h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+}
+.mdx-preview p {
+  margin-bottom: 1rem;
+}
+.mdx-preview blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted-foreground);
+}
