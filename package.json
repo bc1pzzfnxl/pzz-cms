@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "description": "A light, MDX-first CMS built on Astro and Cloudflare Workers.",
   "license": "MIT",
+  "engines": {
+    "bun": ">=1.4.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

@@ -63,6 +63,12 @@ bun run build
 bunx wrangler deploy --config wrangler.deploy.jsonc
 ```
 
+### Cloudflare Workers Builds
+
+If you use Workers Builds, set the `BUN_VERSION` build variable to `1.4.3` (or
+`latest`). The build image ships Bun 1.2, which cannot read the `bun.lock`
+lockfile (lockfileVersion 2).
+
 ## R2 cost control
 
 R2's free tier is 10 GB storage, 1M Class A (writes) and 10M Class B (reads)
