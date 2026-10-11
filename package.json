@@ -41,6 +41,7 @@
     "astro-icon": "^1.1.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "kugiri": "^0.5.3",
     "lucide-react": "^1.55.0",
     "motion": "^12.43.0",
     "radix-ui": "^1.7.0",

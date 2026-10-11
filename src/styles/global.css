@@ -12,3 +12,31 @@ html.dark-mode {
   --color-foreground: #ffffff;
   --color-border: #27272a;
 }
+
+/*
+ * Article motion components (P8). The value and the text stay in the markup for
+ * SEO and no-JS; `enhance-articles` adds the motion.
+ */
+.mdx-stat {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.mdx-stat-suffix {
+  margin-left: 0.15em;
+}
+
+[data-enhance="on"] .mdx-reveal [data-word] {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.6em);
+}
+[data-enhance="on"] .mdx-reveal[data-revealed] [data-word] {
+  animation: mdx-rise 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation-delay: calc(var(--word, 0) * 30ms);
+}
+@keyframes mdx-rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
