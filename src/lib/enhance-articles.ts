@@ -77,9 +77,42 @@ function enhanceReveals(): void {
   for (const el of targets) observer.observe(el);
 }
 
+/**
+ * Reveal an article's headings and paragraphs word by word on scroll. The text
+ * is in the markup; this only adds motion. Opt out per block with `<Reveal>`.
+ */
+function enhanceArticle(): void {
+  const root = document.querySelector<HTMLElement>("[data-reveal-article]");
+  if (!root || prefersReducedMotion()) return;
+
+  const targets = [...root.querySelectorAll<HTMLElement>("h2, h3, p")].filter(
+    (el) =>
+      (el.textContent ?? "").trim().length > 0 &&
+      !el.closest("[data-reveal]") &&
+      !el.querySelector("[data-reveal]"),
+  );
+  if (targets.length === 0) return;
+
+  document.documentElement.dataset.enhance = "on";
+  splitText(targets, { type: ["words"], mask: "words" });
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        (entry.target as HTMLElement).dataset.revealed = "";
+        observer.unobserve(entry.target);
+      }
+    },
+    { threshold: 0.15 },
+  );
+  for (const el of targets) observer.observe(el);
+}
+
 function run(): void {
   enhanceStats();
   enhanceReveals();
+  enhanceArticle();
 }
 
 if (document.readyState === "loading") {

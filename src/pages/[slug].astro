@@ -101,7 +101,7 @@ const schemas = article
                             </figure>
                         )
                     }
-                    <div set:html={optimizeBodyImages(article.bodyHtml, dimensions)} />
+                    <div class="article-body" data-reveal-article set:html={optimizeBodyImages(article.bodyHtml, dimensions)} />
                 </>
             ) : (
                 <>

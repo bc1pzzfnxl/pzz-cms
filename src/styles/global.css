@@ -25,14 +25,14 @@ html.dark-mode {
   margin-left: 0.15em;
 }
 
-[data-enhance="on"] .mdx-reveal [data-word] {
+[data-enhance="on"] [data-word] {
   display: inline-block;
   opacity: 0;
   transform: translateY(0.6em);
 }
-[data-enhance="on"] .mdx-reveal[data-revealed] [data-word] {
+[data-enhance="on"] [data-revealed] [data-word] {
   animation: mdx-rise 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-  animation-delay: calc(var(--word, 0) * 30ms);
+  animation-delay: calc(var(--word, 0) * 22ms);
 }
 @keyframes mdx-rise {
   to {
