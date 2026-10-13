@@ -9,7 +9,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     env:
-      PLAYWRIGHT_BASE_URL: http://127.0.0.1:8787
+      PLAYWRIGHT_BASE_URL: http://localhost:8787
       SETUP_TOKEN: ci-setup-token
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
             --persist-to "$PWD/.wrangler/state" --port 8787 --ip 127.0.0.1 \
             --var AUTH_PROVIDER:passkey \
             --var BETTER_AUTH_SECRET:ci-secret-0123456789abcdef0123456789abcdef \
-            --var BETTER_AUTH_URL:http://127.0.0.1:8787 \
+            --var BETTER_AUTH_URL:http://localhost:8787 \
             --var SETUP_TOKEN:ci-setup-token \
             --var OWNER_EMAIL:owner@example.com \
             > /tmp/wrangler.log 2>&1 &
@@ -98,6 +98,10 @@ jobs:
 
       - name: E2E (Playwright)
         run: bun run e2e
+
+      - name: Server log (on failure)
+        if: failure()
+        run: tail -n 100 /tmp/wrangler.log
 
       - name: Stop preview server
         if: always()
