@@ -12,7 +12,11 @@ export default function Setup({ token }: Props) {
   async function register() {
     setBusy(true);
     setError(null);
-    const result = await authClient.passkey.addPasskey({ name: "Admin", context: token });
+    const result = await authClient.passkey.addPasskey({
+      name: "Admin",
+      context: token,
+      createSession: true,
+    });
     if (result?.error) {
       setError(result.error.message ?? "Échec de l'enregistrement.");
       setBusy(false);
