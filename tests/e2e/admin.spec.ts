@@ -1,4 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { registerPasskey } from "./helpers";
+
+const SETUP_TOKEN = process.env.SETUP_TOKEN ?? "ci-setup-token";
+
+// The admin is behind auth now: register a passkey before each test.
+test.beforeEach(async ({ page }) => {
+  await registerPasskey(page, SETUP_TOKEN);
+});
 
 test("create, publish and read back an article", async ({ page }) => {
   await page.goto("/admin/");

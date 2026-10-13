@@ -1,0 +1,41 @@
+---
+import { env } from "cloudflare:workers";
+import { migrateAuthSchema } from "../../auth/providers/better-auth";
+import Setup from "../../components/auth/setup";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+
+const token = Astro.url.searchParams.get("token") ?? "";
+const valid = Boolean(env.SETUP_TOKEN) && token === env.SETUP_TOKEN;
+
+let created: string[] = [];
+if (valid) {
+  const result = await migrateAuthSchema();
+  created = [...result.created, ...result.added];
+}
+---
+
+<AdminLayout title="Installation">
+    {
+        valid ? (
+            <>
+                <h1 class="text-2xl font-semibold">Enregistrer la passkey</h1>
+                <p class="mt-2 text-sm text-muted-foreground">
+                    Un seul enregistrement. Retire <code>SETUP_TOKEN</code> ensuite.
+                </p>
+                {created.length > 0 && (
+                    <p class="mt-2 text-xs text-muted-foreground">Tables créées : {created.join(", ")}</p>
+                )}
+                <div class="mt-6">
+                    <Setup client:only="react" token={token} />
+                </div>
+            </>
+        ) : (
+            <>
+                <h1 class="text-2xl font-semibold">Lien invalide</h1>
+                <p class="mt-2 text-sm text-muted-foreground">
+                    Ce lien d'installation est incorrect ou a expiré.
+                </p>
+            </>
+        )
+    }
+</AdminLayout>

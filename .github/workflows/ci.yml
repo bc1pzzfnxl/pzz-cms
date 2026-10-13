@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8787
+      SETUP_TOKEN: ci-setup-token
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +38,16 @@ jobs:
           PERSIST="$PWD/.wrangler/state"
           bunx wrangler d1 migrations apply DB --local --persist-to "$PERSIST"
           bunx wrangler d1 execute DB --local --persist-to "$PERSIST" --file=./scripts/seed.sql
+
+      - name: Configure auth for CI
+        run: |
+          cat > .dev.vars <<'EOF'
+          AUTH_PROVIDER=passkey
+          BETTER_AUTH_SECRET=ci-secret-0123456789abcdef0123456789abcdef
+          BETTER_AUTH_URL=http://127.0.0.1:8787
+          SETUP_TOKEN=ci-setup-token
+          OWNER_EMAIL=owner@example.com
+          EOF
 
       # Boots the built Worker on the real workerd runtime. This is the
       # execution gate the local sandbox cannot provide. See PLAN.md,
