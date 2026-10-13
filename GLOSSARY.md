@@ -55,3 +55,23 @@ sitemap, the RSS feed, `robots.txt` and `llms.txt`.
 The state where the new engine answers the same URLs as the old blog, with the
 same status codes, titles, canonical tags and JSON-LD. Checked by a script
 during migration.
+
+## Auth provider
+
+The module behind the auth seam: `passkey` (default), `access`, or `none`.
+Selected by `AUTH_PROVIDER`. See ADR 0007.
+
+## Session
+
+An authenticated visit: a cookie mapped to a row in the auth store. Created on
+passkey sign-in or registration, lasting 30 days.
+
+## Passkey
+
+A WebAuthn credential bound to the site's domain. The admin's login method.
+Stored by Better Auth; the owner registers the first one through `/admin/setup`.
+
+## Owner
+
+The single account allowed into the admin. There is no signup; the owner row is
+created during the passkey setup.

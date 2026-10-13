@@ -203,6 +203,26 @@ Notes from the build:
   tests.
 - E2E: create, publish and read back an article; a draft stays 404.
 
+### P2b — Authentication — DONE
+
+- Passkeys (Better Auth) behind a small auth seam (`AuthProvider`).
+- **Exit:** the admin is protected in-app; the owner registers a passkey and
+  signs in; tested in CI with a virtual WebAuthn authenticator.
+
+Notes from the build:
+
+- `AUTH_PROVIDER` selects `passkey` (default), `access`, or `none`.
+- No signup; `/admin/setup` (guarded by `SETUP_TOKEN`) creates the owner and
+  registers the first passkey, then creates a session.
+- Sessions live in D1, 30 days. Recovery: `bun run auth:reset`.
+- Two Astro traps, both load-bearing:
+  - Astro emits the `trailingSlash` redirect **before** middleware, so the auth
+    API must be served from middleware; `trailingSlash` is now `"ignore"` with a
+    canonical redirect for pages.
+  - `addPasskey` needs `createSession: true`; sign-in must not use
+    `autoFill: true` without a `autocomplete="webauthn"` input.
+- E2E uses a CDP virtual authenticator (`WebAuthn.addVirtualAuthenticator`).
+
 ### P3 — Slugs and redirects — DONE
 
 - Slug generation (ASCII kebab-case, accents removed), uniqueness check, edit before publication.
@@ -354,10 +374,8 @@ Not done:
 3. **Cloudflare Access (P2).** Done: app on `example.com` path `admin`.
 4. **Hosting on Raspberry Pi.** Not part of this plan. Revisit after P7.
 5. **Blog transition (P7).** Timing, to decide when P6 parity is green.
-6. **App-level auth (OIDC).** Deferred. Cloudflare Access is used now (ADR 0003).
-   For open-source portability, a provider-agnostic OIDC seam (VoidAuth, Keycloak,
-   Authentik) is the candidate after P7; a built-in passkey option is the longer
-   term ideal (EmDash does this).
+6. **App-level auth — DONE (ADR 0007).** Passkeys (Better Auth) behind a
+   provider seam; `access` kept as an option. See "P2b — Authentication".
 
 ## 8. Repository layout (target)
 

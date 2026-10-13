@@ -83,18 +83,26 @@ operations per month. Three things keep usage inside it:
 - **Spending limit.** Set a hard cap in the dashboard: **Manage Account →
   Billing → set a spending limit**. Notifications alone do not cap usage.
 
-## Cloudflare Access
+## Authentication
 
-The admin (`/admin`) is gated by Cloudflare Access. Enabling Access and creating
-the application is a dashboard step; run the guided wizard:
+The admin (`/admin`) is protected in-app by a small auth seam. `AUTH_PROVIDER`
+selects `passkey` (default), `access`, or `none`. The default is passkeys
+(Better Auth), which is portable: it runs on Cloudflare or any Node host.
+
+Register the owner passkey once (there is no signup):
+
+1. set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `SETUP_TOKEN`, `OWNER_EMAIL`;
+2. open `/admin/setup?token=<SETUP_TOKEN>` and register the passkey;
+3. remove `SETUP_TOKEN`.
+
+Recover a lost passkey:
 
 ```bash
-./scripts/wizard-access.sh
+bun run auth:reset --config wrangler.deploy.jsonc
 ```
 
-It walks you through enabling Access, creating the app for the admin path,
-adding an allow policy for your email, and captures the team name and audience
-tag into `.dev.vars`.
+Cloudflare Access stays available as the `access` adapter
+(`scripts/wizard-access.sh`).
 
 ## Migration
 

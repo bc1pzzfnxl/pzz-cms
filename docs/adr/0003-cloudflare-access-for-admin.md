@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted.
+Superseded by [ADR 0007](./0007-passkey-auth.md). Access remains available as
+the `access` adapter of the auth seam.
 
 ## Context
 
