@@ -8,7 +8,7 @@ export default function Login() {
   async function signIn() {
     setBusy(true);
     setError(null);
-    const result = await authClient.signIn.passkey({ autoFill: true });
+    const result = await authClient.signIn.passkey();
     if (result?.error) {
       setError(result.error.message ?? "Échec de la connexion.");
       setBusy(false);
