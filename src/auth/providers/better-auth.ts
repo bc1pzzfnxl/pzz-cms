@@ -41,7 +41,25 @@ function buildAuth() {
             if (!env.SETUP_TOKEN || context !== env.SETUP_TOKEN) {
               throw new Error("Invalid setup token.");
             }
-            return { id: "owner", name: site.author.name, email: ownerEmail };
+            return { id: "owner", name: site.author.name };
+          },
+          // The owner row must exist before the passkey is stored (foreign key).
+          afterVerification: async ({ ctx, user }) => {
+            const adapter = ctx.context.internalAdapter;
+            if (!(await adapter.findUserById(user.id))) {
+              await adapter.createUser(
+                {
+                  id: user.id,
+                  name: user.name,
+                  email: ownerEmail,
+                  emailVerified: true,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                },
+                { method: "passkey" },
+              );
+            }
+            return { userId: user.id };
           },
         },
       }),
