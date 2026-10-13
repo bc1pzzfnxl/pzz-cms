@@ -2,17 +2,23 @@ import { defineMiddleware } from "astro:middleware";
 import { getAuthProvider } from "./auth";
 
 /**
- * Protect the admin. The login and setup pages, and the auth API, stay public
- * so a session can be obtained.
+ * Protect the admin. The login and setup pages stay public so a session can be
+ * obtained.
+ *
+ * The auth API is handled here, before Astro routing: `trailingSlash: "always"`
+ * would otherwise 301 the auth endpoints and break the Better Auth routes.
  */
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
+  if (pathname.startsWith("/api/auth")) {
+    const response = await getAuthProvider().handle(context.request);
+    return response ?? new Response("Not found", { status: 404 });
+  }
+
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
   const isPublicAdmin = pathname.startsWith("/admin/login") || pathname.startsWith("/admin/setup");
-  const isAuthApi = pathname.startsWith("/api/auth");
-
-  if (!isAdmin || isPublicAdmin || isAuthApi) {
+  if (!isAdmin || isPublicAdmin) {
     return next();
   }
 
