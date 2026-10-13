@@ -12,7 +12,7 @@ export default defineConfig({
   site: "https://bc1pzzfnxl.com",
   output: "server",
   adapter: cloudflare(),
-  trailingSlash: "always",
+  trailingSlash: "ignore",
   markdown: {
     processor: unified({
       rehypePlugins: [rehypeOptimizedImages],

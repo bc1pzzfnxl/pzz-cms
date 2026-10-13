@@ -16,6 +16,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return response ?? new Response("Not found", { status: 404 });
   }
 
+  // Canonicalize page URLs to the trailing-slash form (trailingSlash is
+  // "ignore" so the auth API is not redirected). Files and assets are left
+  // alone.
+  const isAsset = pathname.startsWith("/_") || pathname.startsWith("/media/");
+  const lastSegment = pathname.split("/").pop() ?? "";
+  const looksLikeFile = lastSegment.includes(".");
+  const isRead = context.request.method === "GET" || context.request.method === "HEAD";
+  if (isRead && !isAsset && !looksLikeFile && !pathname.endsWith("/")) {
+    const url = new URL(context.request.url);
+    return context.redirect(`${pathname}/${url.search}`, 301);
+  }
+
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
   const isPublicAdmin = pathname.startsWith("/admin/login") || pathname.startsWith("/admin/setup");
   if (!isAdmin || isPublicAdmin) {
