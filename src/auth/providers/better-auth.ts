@@ -22,7 +22,14 @@ function buildAuth() {
     database: env.DB as never,
     emailAndPassword: { enabled: false },
     session: { expiresIn: 60 * 60 * 24 * 30 },
-    advanced: { database: { generateId: () => crypto.randomUUID() } },
+    advanced: {
+      database: {
+        generateId: () => crypto.randomUUID(),
+        // The auth tables are created by the setup route; do not hard-fail
+        // initialization when they are not there yet.
+        validateSchema: false,
+      },
+    },
     plugins: [
       passkey({
         rpID: new URL(origin).hostname,

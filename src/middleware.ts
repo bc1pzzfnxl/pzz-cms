@@ -16,7 +16,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  const session = await getAuthProvider().getSession(context.request);
+  let session = null;
+  try {
+    session = await getAuthProvider().getSession(context.request);
+  } catch {
+    // Tables not created yet, or a transient failure: treat as unauthenticated.
+    session = null;
+  }
   if (session) {
     context.locals.session = session;
     return next();

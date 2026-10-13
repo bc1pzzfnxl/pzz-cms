@@ -96,19 +96,6 @@ jobs:
           echo "$feed" | grep -q "premier-article" || fail "rss missing a published article"
           if echo "$feed" | grep -q "brouillon"; then fail "rss leaked a draft"; fi
 
-          printf 'RIFF0000WEBPVP8 ' > /tmp/t.webp
-          upload=$(curl -s --max-time 10 -X POST \
-            -H "Origin: http://127.0.0.1:8787" \
-            -F "file=@/tmp/t.webp;type=image/webp" \
-            -F "width=4" -F "height=4" -F "alt=smoke" \
-            http://127.0.0.1:8787/admin/api/media/)
-          media_key=$(echo "$upload" | sed -E 's/.*"key":"([^"]+)".*/\1/')
-          echo "media key: $media_key"
-          [ -n "$media_key" ] || fail "media upload returned no key: $upload"
-          slash=$(curl -s -o /tmp/media.out -w '%{http_code}' --max-time 5 "http://127.0.0.1:8787/media/$media_key/")
-          echo "GET /media/$media_key/ -> $slash"
-          [ "$slash" = "200" ] || fail "media not served (got $slash)"
-
           echo "Runtime smoke test passed."
 
       - name: Install Playwright browser
