@@ -32,6 +32,13 @@ describe("JsonDocumentView", () => {
     expect(html).toContain("Sortie de l&#x27;UE");
   });
 
+  it("renders a vertical table of contents", () => {
+    const html = render(DATA);
+    expect(html).toContain("Sommaire");
+    expect(html).toContain('href="#s-themes"');
+    expect(html).toContain('href="#s-themes-1"');
+  });
+
   it("renders sections, cards and definition rows", () => {
     const html = render(DATA);
     expect(html).toContain("Themes");

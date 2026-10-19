@@ -1,0 +1,156 @@
+/*
+ * JSON documents. Shared by the public site and the admin preview, so both
+ * render the same headings, cards and tree.
+ */
+
+.json-toc {
+  margin: 1.5rem 0 2.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+.json-toc-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+.json-toc-list,
+.json-toc-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.json-toc-list > li {
+  margin: 0.3rem 0;
+}
+.json-toc-list ul {
+  margin: 0.3rem 0 0.3rem 0.9rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid #e5e7eb;
+}
+.json-toc-list li {
+  display: block;
+}
+.json-toc-list a {
+  text-decoration: none;
+}
+.json-toc-list a:hover {
+  text-decoration: underline;
+}
+
+.json-document {
+  margin-top: 1.5rem;
+}
+.json-meta {
+  margin-bottom: 2.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+.json-section {
+  margin-top: 2.5rem;
+}
+.json-subsection {
+  margin-top: 1.25rem;
+}
+
+.json-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+.json-card {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid #111827;
+  border-radius: 8px;
+}
+.json-card:nth-child(even) {
+  border-left-color: #9ca3af;
+}
+.json-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.json-defs {
+  margin: 0.75rem 0;
+}
+.json-def {
+  display: grid;
+  grid-template-columns: minmax(7rem, 12rem) 1fr;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.json-def dt {
+  font-weight: 600;
+}
+.json-def dd {
+  margin: 0;
+}
+
+.json-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+}
+.json-chip {
+  padding: 0.25rem 0.65rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.json-list {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.75rem 0;
+}
+.json-list li {
+  display: list-item;
+  margin-bottom: 0.35rem;
+}
+.json-empty {
+  color: #9ca3af;
+}
+
+@media (max-width: 640px) {
+  .json-def {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  .json-card {
+    padding: 1rem;
+  }
+}
+
+html.dark-mode .json-toc,
+html.dark-mode .json-meta,
+html.dark-mode .json-card,
+html.dark-mode .json-chip {
+  border-color: #27272a;
+}
+html.dark-mode .json-toc-list ul {
+  border-left-color: #27272a;
+}
+html.dark-mode .json-meta {
+  background: #161618;
+}
+html.dark-mode .json-card {
+  border-left-color: #e5e7eb;
+}
+html.dark-mode .json-card:nth-child(even) {
+  border-left-color: #6b7280;
+}
+html.dark-mode .json-def {
+  border-bottom-color: #1f1f22;
+}
