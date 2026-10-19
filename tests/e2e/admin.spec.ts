@@ -6,6 +6,21 @@ test.beforeEach(async ({ page }) => {
   await signInWithPassword(page);
 });
 
+/** Save a new article, wait for the create response, then open its editor. */
+async function saveNewArticle(page: Page): Promise<string> {
+  const created = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/admin/api/articles/") &&
+      response.request().method() === "POST" &&
+      response.status() === 201,
+  );
+  await page.getByTestId("save").click();
+  const response = await created;
+  const data = (await response.json()) as { id: string };
+  await page.goto(`/admin/${data.id}/`);
+  return data.id;
+}
+
 /** Publish the open article and wait for the status API to confirm it. */
 async function publish(page: Page) {
   const published = page.waitForResponse(
@@ -30,9 +45,7 @@ test("create, publish and read back an article", async ({ page }) => {
   await page.keyboard.type("Bonjour depuis le test.");
   await expect(editor).toContainText("Bonjour");
 
-  await page.getByTestId("save").click();
-  await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
-
+  await saveNewArticle(page);
   await publish(page);
 
   await page.goto("/article-de-test-e2e/");
@@ -45,8 +58,7 @@ test("a draft is not visible on the public site", async ({ page }) => {
   await page.getByRole("link", { name: "Nouvel article" }).click();
 
   await page.getByTestId("title").fill("Brouillon E2E");
-  await page.getByTestId("save").click();
-  await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
+  await saveNewArticle(page);
 
   const response = await page.request.get("/brouillon-e2e/");
   expect(response.status()).toBe(404);
@@ -61,9 +73,8 @@ test("changing a published slug creates a 301", async ({ page }) => {
   await editor.click();
   await page.keyboard.type("Corps de l'article.");
 
-  await page.getByTestId("save").click();
-  await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
-  const editUrl = page.url();
+  const id = await saveNewArticle(page);
+  const editUrl = `/admin/${id}/`;
 
   await publish(page);
   expect((await page.request.get("/article-slug-test/")).status()).toBe(200);
@@ -100,9 +111,7 @@ test("upload a cover: it becomes WebP and serves on the public page", async ({ p
   });
   await expect(page.getByTestId("message")).toContainText("Image envoyée");
 
-  await page.getByTestId("save").click();
-  await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
-
+  await saveNewArticle(page);
   await publish(page);
 
   const article = await page.request.get("/article-avec-image/");
