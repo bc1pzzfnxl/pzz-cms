@@ -1,28 +1,19 @@
 import type { Page } from "@playwright/test";
 
-/**
- * Attach a virtual WebAuthn authenticator (Chromium/CDP) so passkey flows can
- * be driven in tests without a physical device.
- */
-export async function attachVirtualAuthenticator(page: Page): Promise<void> {
-  const client = await page.context().newCDPSession(page);
-  await client.send("WebAuthn.enable");
-  await client.send("WebAuthn.addVirtualAuthenticator", {
-    options: {
-      protocol: "ctap2",
-      transport: "internal",
-      hasResidentKey: true,
-      hasUserVerification: true,
-      isUserVerified: true,
-      automaticPresenceSimulation: true,
-    },
-  });
-}
+export const SETUP_TOKEN = process.env.SETUP_TOKEN ?? "ci-setup-token";
+export const ADMIN_EMAIL = process.env.OWNER_EMAIL ?? "owner@example.com";
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "ci-admin-password-0123456789";
 
-/** Register the owner passkey through the one-shot setup route. */
-export async function registerPasskey(page: Page, token: string): Promise<void> {
-  await attachVirtualAuthenticator(page);
-  await page.goto(`/admin/setup/?token=${encodeURIComponent(token)}`);
-  await page.getByTestId("passkey-register").click();
+/**
+ * Seed the owner (idempotent) and sign in with the password. Each test gets a
+ * fresh context, so it authenticates itself.
+ */
+export async function signInWithPassword(page: Page): Promise<void> {
+  await page.goto(`/admin/setup/?token=${encodeURIComponent(SETUP_TOKEN)}`);
+  await page.context().clearCookies();
+  await page.goto("/admin/login/");
+  await page.getByTestId("email").fill(ADMIN_EMAIL);
+  await page.getByTestId("password").fill(ADMIN_PASSWORD);
+  await page.getByTestId("password-signin").click();
   await page.waitForURL(/\/admin\/?$/);
 }

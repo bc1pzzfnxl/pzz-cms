@@ -86,23 +86,20 @@ operations per month. Three things keep usage inside it:
 ## Authentication
 
 The admin (`/admin`) is protected in-app by a small auth seam. `AUTH_PROVIDER`
-selects `passkey` (default), `access`, or `none`. The default is passkeys
-(Better Auth), which is portable: it runs on Cloudflare or any Node host.
+selects `password` (default), `access`, or `none`. Password auth uses Better
+Auth (email/password, hashed in D1); it is portable and works everywhere.
 
-Register the owner passkey once (there is no signup):
+Create the owner account once (there is no signup):
 
-1. set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `SETUP_TOKEN`, `OWNER_EMAIL`;
-2. open `/admin/setup?token=<SETUP_TOKEN>` and register the passkey;
-3. remove `SETUP_TOKEN`.
+1. set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `SETUP_TOKEN`, `OWNER_EMAIL`,
+   `ADMIN_PASSWORD`;
+2. open `/admin/setup?token=<SETUP_TOKEN>`; this creates the owner;
+3. sign in at `/admin/login`, then remove `SETUP_TOKEN`.
 
-Recover a lost passkey:
+Change the password: update `ADMIN_PASSWORD`, run `bun run auth:reset`, then
+open the setup URL again. Recovery is the same command.
 
-```bash
-bun run auth:reset --config wrangler.deploy.jsonc
-```
-
-Cloudflare Access stays available as the `access` adapter
-(`scripts/wizard-access.sh`).
+Cloudflare Access stays available as the `access` adapter.
 
 ## Migration
 

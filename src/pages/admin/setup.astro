@@ -1,7 +1,6 @@
 ---
 import { env } from "cloudflare:workers";
 import { ensureOwnerAccount, migrateAuthSchema } from "../../auth/providers/better-auth";
-import Setup from "../../components/auth/setup";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 
 const token = Astro.url.searchParams.get("token") ?? "";
@@ -19,16 +18,16 @@ if (valid) {
     {
         valid ? (
             <>
-                <h1 class="text-2xl font-semibold">Enregistrer la passkey</h1>
+                <h1 class="text-2xl font-semibold">Compte prêt</h1>
                 <p class="mt-2 text-sm text-muted-foreground">
-                    Un seul enregistrement. Retire <code>SETUP_TOKEN</code> ensuite.
+                    Le compte propriétaire est créé. Connecte-toi avec ton mot de passe.
                 </p>
                 {created.length > 0 && (
                     <p class="mt-2 text-xs text-muted-foreground">Tables créées : {created.join(", ")}</p>
                 )}
-                <div class="mt-6">
-                    <Setup client:only="react" token={token} />
-                </div>
+                <a href="/admin/login/" class="mt-6 inline-block text-sm hover:underline">
+                    Aller à la connexion →
+                </a>
             </>
         ) : (
             <>

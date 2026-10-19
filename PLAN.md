@@ -205,23 +205,23 @@ Notes from the build:
 
 ### P2b — Authentication — DONE
 
-- Passkeys (Better Auth) behind a small auth seam (`AuthProvider`).
-- **Exit:** the admin is protected in-app; the owner registers a passkey and
-  signs in; tested in CI with a virtual WebAuthn authenticator.
+- Password auth (Better Auth) behind a small auth seam (`AuthProvider`).
+- **Exit:** the admin is protected in-app; the owner signs in with a password;
+  tested in CI.
 
 Notes from the build:
 
-- `AUTH_PROVIDER` selects `passkey` (default), `access`, or `none`.
-- No signup; `/admin/setup` (guarded by `SETUP_TOKEN`) creates the owner and
-  registers the first passkey, then creates a session.
+- `AUTH_PROVIDER` selects `password` (default), `access`, or `none`.
+- No signup; `/admin/setup` (guarded by `SETUP_TOKEN`) creates the owner from
+  `OWNER_EMAIL` + `ADMIN_PASSWORD`; a hook refuses a second account.
 - Sessions live in D1, 30 days. Recovery: `bun run auth:reset`.
+- Passkeys were evaluated and removed: many machines have no usable
+  authenticator, which would lock the owner out.
 - Two Astro traps, both load-bearing:
   - Astro emits the `trailingSlash` redirect **before** middleware, so the auth
     API must be served from middleware; `trailingSlash` is now `"ignore"` with a
     canonical redirect for pages.
-  - `addPasskey` needs `createSession: true`; sign-in must not use
-    `autoFill: true` without a `autocomplete="webauthn"` input.
-- E2E uses a CDP virtual authenticator (`WebAuthn.addVirtualAuthenticator`).
+  - `trailingSlash: "always"` would otherwise 301 the Better Auth routes.
 
 ### P3 — Slugs and redirects — DONE
 

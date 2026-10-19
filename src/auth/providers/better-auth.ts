@@ -1,5 +1,4 @@
 import { env } from "cloudflare:workers";
-import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { getMigrations } from "better-auth/db/migration";
 import { site } from "../../lib/site";
@@ -10,11 +9,10 @@ function ownerEmail(): string {
 }
 
 /**
- * Passkey provider (Better Auth), with an email/password fallback for machines
- * without a passkey. The database is the D1 binding here; the seam keeps it
- * swappable for another host. No signup: the owner is seeded once from
- * `OWNER_EMAIL` + `ADMIN_PASSWORD`, and the first passkey is registered through
- * the one-shot setup route, guarded by `SETUP_TOKEN`.
+ * Password provider (Better Auth). Portable: the database is the D1 binding
+ * here, but the seam keeps it swappable for another host. No signup: the owner
+ * is seeded once from `OWNER_EMAIL` + `ADMIN_PASSWORD`, and a hook refuses any
+ * second account.
  */
 function buildAuth() {
   const origin = env.BETTER_AUTH_URL ?? site.url;
@@ -46,47 +44,6 @@ function buildAuth() {
         validateSchema: false,
       },
     },
-    plugins: [
-      passkey({
-        rpID: new URL(origin).hostname,
-        rpName: site.name,
-        origin,
-        registration: {
-          requireSession: false,
-          resolveUser: async ({ ctx, context }) => {
-            if (!env.SETUP_TOKEN || context !== env.SETUP_TOKEN) {
-              throw new Error("Invalid setup token.");
-            }
-            const found = await ctx.context.internalAdapter.findUserByEmail(ownerEmail());
-            if (found) return { id: found.user.id, name: found.user.name };
-            return { id: "owner", name: site.author.name };
-          },
-          // The owner row must exist before the passkey is stored (foreign key).
-          afterVerification: async ({ ctx, user }) => {
-            const adapter = ctx.context.internalAdapter;
-            let existing = await adapter.findUserById(user.id);
-            if (!existing) {
-              const found = await adapter.findUserByEmail(ownerEmail());
-              existing = found?.user ?? null;
-            }
-            if (!existing) {
-              existing = await adapter.createUser(
-                {
-                  id: user.id,
-                  name: user.name,
-                  email: ownerEmail(),
-                  emailVerified: true,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                },
-                { method: "passkey" },
-              );
-            }
-            return { userId: existing.id };
-          },
-        },
-      }),
-    ],
   });
 }
 
@@ -123,8 +80,8 @@ export async function migrateAuthSchema(): Promise<{ created: string[]; added: s
 }
 
 /**
- * Seed the single owner account from `OWNER_EMAIL` + `ADMIN_PASSWORD` so the
- * password fallback works. Idempotent: a second signup is blocked by the hook.
+ * Seed the single owner account from `OWNER_EMAIL` + `ADMIN_PASSWORD`.
+ * Idempotent: a second signup is blocked by the hook.
  */
 export async function ensureOwnerAccount(): Promise<void> {
   if (!env.ADMIN_PASSWORD) return;

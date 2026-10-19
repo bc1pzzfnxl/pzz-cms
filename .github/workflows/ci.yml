@@ -12,6 +12,7 @@ jobs:
       PLAYWRIGHT_BASE_URL: http://localhost:8787
       SETUP_TOKEN: ci-setup-token
       ADMIN_PASSWORD: ci-admin-password-0123456789
+      OWNER_EMAIL: owner@example.com
     steps:
       - uses: actions/checkout@v4
 
