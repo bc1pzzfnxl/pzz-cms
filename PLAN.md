@@ -212,8 +212,9 @@ Notes from the build:
 Notes from the build:
 
 - `AUTH_PROVIDER` selects `password` (default), `access`, or `none`.
-- No signup; `/admin/setup` (guarded by `SETUP_TOKEN`) creates the owner from
-  `OWNER_EMAIL` + `ADMIN_PASSWORD`; a hook refuses a second account.
+- No signup; `/admin/setup` (guarded by `SETUP_TOKEN`) lets the owner choose a
+  password; a hook refuses a second account. The password changes at
+  `/admin/password` (current + new, keeps the session).
 - Sessions live in D1, 30 days. Recovery: `bun run auth:reset`.
 - Passkeys were evaluated and removed: many machines have no usable
   authenticator, which would lock the owner out.

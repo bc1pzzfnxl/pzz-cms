@@ -1,33 +1,23 @@
 ---
 import { env } from "cloudflare:workers";
-import { ensureOwnerAccount, migrateAuthSchema } from "../../auth/providers/better-auth";
+import Setup from "../../components/auth/setup";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 
 const token = Astro.url.searchParams.get("token") ?? "";
 const valid = Boolean(env.SETUP_TOKEN) && token === env.SETUP_TOKEN;
-
-let created: string[] = [];
-if (valid) {
-  const result = await migrateAuthSchema();
-  created = [...result.created, ...result.added];
-  await ensureOwnerAccount();
-}
 ---
 
 <AdminLayout title="Installation">
     {
         valid ? (
             <>
-                <h1 class="text-2xl font-semibold">Compte prêt</h1>
+                <h1 class="text-2xl font-semibold">Créer le compte propriétaire</h1>
                 <p class="mt-2 text-sm text-muted-foreground">
-                    Le compte propriétaire est créé. Connecte-toi avec ton mot de passe.
+                    Choisis ton mot de passe. Il est haché en base ; aucun secret à gérer.
                 </p>
-                {created.length > 0 && (
-                    <p class="mt-2 text-xs text-muted-foreground">Tables créées : {created.join(", ")}</p>
-                )}
-                <a href="/admin/login/" class="mt-6 inline-block text-sm hover:underline">
-                    Aller à la connexion →
-                </a>
+                <div class="mt-6">
+                    <Setup client:only="react" token={token} email={env.OWNER_EMAIL ?? ""} />
+                </div>
             </>
         ) : (
             <>

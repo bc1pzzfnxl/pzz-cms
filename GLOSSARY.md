@@ -70,3 +70,8 @@ password sign-in, lasting 30 days.
 
 The single account allowed into the admin. There is no signup; the owner row is
 created during the setup.
+
+## Password
+
+The admin's login secret. Chosen by the owner at `/admin/setup`, hashed in D1 by
+Better Auth, changed at `/admin/password`. No password secret is configured.

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_EMAIL, SETUP_TOKEN, signInWithPassword } from "./helpers";
+import { ADMIN_EMAIL, ADMIN_PASSWORD, ensureOwner, signInWithPassword } from "./helpers";
+
+const NEW_PASSWORD = "ci-new-password-9876543210";
 
 test("the admin is protected without a session", async ({ page }) => {
   await page.goto("/admin/");
@@ -12,8 +14,7 @@ test("sign in with the password", async ({ page }) => {
 });
 
 test("a wrong password is rejected", async ({ page }) => {
-  await page.goto(`/admin/setup/?token=${encodeURIComponent(SETUP_TOKEN)}`);
-  await page.context().clearCookies();
+  await ensureOwner(page);
 
   await page.goto("/admin/login/");
   await page.getByTestId("email").fill(ADMIN_EMAIL);
@@ -22,4 +23,21 @@ test("a wrong password is rejected", async ({ page }) => {
 
   await expect(page.getByTestId("error")).toBeVisible();
   await expect(page).toHaveURL(/\/admin\/login/);
+});
+
+test("changing the password keeps the session, then restores it", async ({ page }) => {
+  await signInWithPassword(page);
+  await page.goto("/admin/password/");
+
+  async function change(from: string, to: string) {
+    await page.getByTestId("current-password").fill(from);
+    await page.getByTestId("new-password").fill(to);
+    await page.getByTestId("confirm-password").fill(to);
+    await page.getByTestId("change-password").click();
+    await expect(page.getByTestId("password-success")).toBeVisible();
+  }
+
+  await change(ADMIN_PASSWORD, NEW_PASSWORD);
+  await expect(page).toHaveURL(/\/admin\/password\/?$/);
+  await change(NEW_PASSWORD, ADMIN_PASSWORD);
 });

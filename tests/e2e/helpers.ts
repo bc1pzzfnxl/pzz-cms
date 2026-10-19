@@ -5,12 +5,18 @@ export const ADMIN_EMAIL = process.env.OWNER_EMAIL ?? "owner@example.com";
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "ci-admin-password-0123456789";
 
 /**
- * Seed the owner (idempotent) and sign in with the password. Each test gets a
- * fresh context, so it authenticates itself.
+ * Create the owner through the setup API (409 once it exists). The password is
+ * chosen here; the server has no password secret.
  */
+export async function ensureOwner(page: Page): Promise<void> {
+  await page.request.post("/admin/api/setup", {
+    data: { token: SETUP_TOKEN, email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+}
+
+/** Ensure the owner exists, then sign in with the password. */
 export async function signInWithPassword(page: Page): Promise<void> {
-  await page.goto(`/admin/setup/?token=${encodeURIComponent(SETUP_TOKEN)}`);
-  await page.context().clearCookies();
+  await ensureOwner(page);
   await page.goto("/admin/login/");
   await page.getByTestId("email").fill(ADMIN_EMAIL);
   await page.getByTestId("password").fill(ADMIN_PASSWORD);

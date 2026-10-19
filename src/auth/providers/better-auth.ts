@@ -4,15 +4,11 @@ import { getMigrations } from "better-auth/db/migration";
 import { site } from "../../lib/site";
 import type { AuthProvider } from "../types";
 
-function ownerEmail(): string {
-  return env.OWNER_EMAIL ?? `${site.author.name}@localhost`;
-}
-
 /**
  * Password provider (Better Auth). Portable: the database is the D1 binding
- * here, but the seam keeps it swappable for another host. No signup: the owner
- * is seeded once from `OWNER_EMAIL` + `ADMIN_PASSWORD`, and a hook refuses any
- * second account.
+ * here, but the seam keeps it swappable for another host. There is no signup:
+ * the owner chooses their password once at `/admin/setup`, and a hook refuses
+ * any second account.
  */
 function buildAuth() {
   const origin = env.BETTER_AUTH_URL ?? site.url;
@@ -22,7 +18,7 @@ function buildAuth() {
     secret: env.BETTER_AUTH_SECRET,
     // D1 binding. Better Auth ships a Kysely D1 dialect.
     database: env.DB as never,
-    emailAndPassword: { enabled: true },
+    emailAndPassword: { enabled: true, disableSignUp: true },
     databaseHooks: {
       user: {
         create: {
@@ -79,22 +75,43 @@ export async function migrateAuthSchema(): Promise<{ created: string[]; added: s
   };
 }
 
-/**
- * Seed the single owner account from `OWNER_EMAIL` + `ADMIN_PASSWORD`.
- * Idempotent: a second signup is blocked by the hook.
- */
-export async function ensureOwnerAccount(): Promise<void> {
-  if (!env.ADMIN_PASSWORD) return;
+/** Whether the single owner account already exists. */
+export async function ownerExists(): Promise<boolean> {
   const auth = buildAuth();
-  try {
-    await auth.api.signUpEmail({
-      body: {
-        email: ownerEmail(),
-        password: env.ADMIN_PASSWORD,
-        name: site.author.name,
-      },
-    });
-  } catch {
-    // The owner already exists; password sign-in still works.
+  const ctx = await auth.$context;
+  const users = await ctx.internalAdapter.listUsers(1);
+  return users.length > 0;
+}
+
+/**
+ * Create the single owner with the password chosen at setup. The password is
+ * hashed by Better Auth and stored in D1; no password secret is involved.
+ */
+export async function createOwnerAccount(email: string, password: string): Promise<void> {
+  const auth = buildAuth();
+  const ctx = await auth.$context;
+  const users = await ctx.internalAdapter.listUsers(1);
+  if (users.length > 0) {
+    throw new Error("OWNER_EXISTS");
   }
+
+  const hash = await ctx.password.hash(password);
+  const user = await ctx.internalAdapter.createUser(
+    {
+      id: crypto.randomUUID(),
+      name: site.author.name,
+      email,
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    { method: "setup" },
+  );
+
+  await ctx.internalAdapter.createAccount({
+    userId: user.id,
+    providerId: "credential",
+    accountId: user.id,
+    password: hash,
+  });
 }

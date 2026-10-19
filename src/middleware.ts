@@ -29,7 +29,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
-  const isPublicAdmin = pathname.startsWith("/admin/login") || pathname.startsWith("/admin/setup");
+  const isPublicAdmin =
+    pathname.startsWith("/admin/login") ||
+    pathname.startsWith("/admin/setup") ||
+    pathname.replace(/\/$/, "") === "/admin/api/setup";
   if (!isAdmin || isPublicAdmin) {
     return next();
   }

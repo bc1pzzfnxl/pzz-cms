@@ -89,15 +89,14 @@ The admin (`/admin`) is protected in-app by a small auth seam. `AUTH_PROVIDER`
 selects `password` (default), `access`, or `none`. Password auth uses Better
 Auth (email/password, hashed in D1); it is portable and works everywhere.
 
-Create the owner account once (there is no signup):
+First install (there is no signup):
 
-1. set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `SETUP_TOKEN`, `OWNER_EMAIL`,
-   `ADMIN_PASSWORD`;
-2. open `/admin/setup?token=<SETUP_TOKEN>`; this creates the owner;
-3. sign in at `/admin/login`, then remove `SETUP_TOKEN`.
+1. set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `SETUP_TOKEN`, `OWNER_EMAIL`;
+2. open `/admin/setup?token=<SETUP_TOKEN>` and **choose your password**;
+3. remove `SETUP_TOKEN`.
 
-Change the password: update `ADMIN_PASSWORD`, run `bun run auth:reset`, then
-open the setup URL again. Recovery is the same command.
+Change the password at `/admin/password` (current + new; keeps the session).
+Recovery: `bun run auth:reset`, then open the setup URL again.
 
 Cloudflare Access stays available as the `access` adapter.
 
