@@ -11,6 +11,7 @@ jobs:
     env:
       PLAYWRIGHT_BASE_URL: http://localhost:8787
       SETUP_TOKEN: ci-setup-token
+      ADMIN_PASSWORD: ci-admin-password-0123456789
     steps:
       - uses: actions/checkout@v4
 
@@ -51,6 +52,7 @@ jobs:
             --var BETTER_AUTH_URL:http://localhost:8787 \
             --var SETUP_TOKEN:ci-setup-token \
             --var OWNER_EMAIL:owner@example.com \
+            --var ADMIN_PASSWORD:ci-admin-password-0123456789 \
             > /tmp/wrangler.log 2>&1 &
           echo $! > /tmp/server.pid
           for _ in $(seq 1 60); do

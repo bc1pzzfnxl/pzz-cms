@@ -17,6 +17,8 @@ declare module "cloudflare:workers" {
     SETUP_TOKEN?: string;
     /** Owner email for the single account. */
     OWNER_EMAIL?: string;
+    /** Password fallback for machines without a passkey. */
+    ADMIN_PASSWORD?: string;
   };
 }
 

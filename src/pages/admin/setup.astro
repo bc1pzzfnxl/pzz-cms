@@ -1,6 +1,6 @@
 ---
 import { env } from "cloudflare:workers";
-import { migrateAuthSchema } from "../../auth/providers/better-auth";
+import { ensureOwnerAccount, migrateAuthSchema } from "../../auth/providers/better-auth";
 import Setup from "../../components/auth/setup";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 
@@ -11,6 +11,7 @@ let created: string[] = [];
 if (valid) {
   const result = await migrateAuthSchema();
   created = [...result.created, ...result.added];
+  await ensureOwnerAccount();
 }
 ---
 
