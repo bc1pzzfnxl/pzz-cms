@@ -11,12 +11,7 @@ const configIndex = process.argv.indexOf("--config");
 const config = configIndex >= 0 ? process.argv[configIndex + 1] : "wrangler.jsonc";
 const target = local ? "--local" : "--remote";
 
-const sql = [
-  "DELETE FROM passkey;",
-  "DELETE FROM session;",
-  "DELETE FROM account;",
-  "DELETE FROM user;",
-].join(" ");
+const sql = ["DELETE FROM session;", "DELETE FROM account;", "DELETE FROM user;"].join(" ");
 
 console.log(`Resetting auth on DB (${local ? "local" : "remote"}) with ${config}...`);
 await $`bunx wrangler d1 execute DB ${target} --config ${config} --command ${sql}`;
