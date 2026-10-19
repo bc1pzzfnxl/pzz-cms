@@ -29,7 +29,7 @@ function buildAuth() {
       window: 60,
       max: 100,
       customRules: {
-        "/sign-in/email": { window: 60, max: 5 },
+        "/sign-in/email": { window: 60, max: Number(env.AUTH_SIGNIN_MAX ?? 5) },
       },
     },
     advanced: {

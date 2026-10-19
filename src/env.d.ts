@@ -17,6 +17,8 @@ declare module "cloudflare:workers" {
     SETUP_TOKEN?: string;
     /** Owner email for the single account. */
     OWNER_EMAIL?: string;
+    /** Max sign-in attempts per minute per IP (default 5). */
+    AUTH_SIGNIN_MAX?: string;
   };
 }
 
