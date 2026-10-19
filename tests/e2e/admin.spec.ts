@@ -6,19 +6,11 @@ test.beforeEach(async ({ page }) => {
   await signInWithPassword(page);
 });
 
-/** Save a new article, wait for the create response, then open its editor. */
+/** Save a new article and return the editor URL once the app navigates to it. */
 async function saveNewArticle(page: Page): Promise<string> {
-  const created = page.waitForResponse(
-    (response) =>
-      response.url().endsWith("/admin/api/articles/") &&
-      response.request().method() === "POST" &&
-      response.status() === 201,
-  );
   await page.getByTestId("save").click();
-  const response = await created;
-  const data = (await response.json()) as { id: string };
-  await page.goto(`/admin/${data.id}/`);
-  return data.id;
+  await page.waitForURL(/\/admin\/[0-9a-f-]{36}\/?$/, { timeout: 30_000 });
+  return page.url();
 }
 
 /** Publish the open article and wait for the status API to confirm it. */
@@ -73,8 +65,7 @@ test("changing a published slug creates a 301", async ({ page }) => {
   await editor.click();
   await page.keyboard.type("Corps de l'article.");
 
-  const id = await saveNewArticle(page);
-  const editUrl = `/admin/${id}/`;
+  const editUrl = await saveNewArticle(page);
 
   await publish(page);
   expect((await page.request.get("/article-slug-test/")).status()).toBe(200);
