@@ -148,6 +148,82 @@ function Value({ value, path }: { value: unknown; path: string }): ReactNode {
   return null;
 }
 
+function pick(data: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = data[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number") return String(value);
+  }
+  return null;
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(
+        date,
+      );
+}
+
+/**
+ * Editorial header for a root `meta` object: a single metadata line
+ * (author · version · date) and the principles as a lead block, not a form.
+ * The title is already the page `<h1>`, so it is not repeated.
+ */
+function MetaHeader({ meta }: { meta: Record<string, unknown> }): ReactNode {
+  const known = new Set([
+    "titre",
+    "title",
+    "name",
+    "auteur",
+    "author",
+    "version",
+    "date",
+    "principes_directeurs",
+    "principes",
+    "principles",
+  ]);
+
+  const author = pick(meta, ["auteur", "author"]);
+  const version = pick(meta, ["version"]);
+  const date = pick(meta, ["date"]);
+  const principlesValue = meta.principes_directeurs ?? meta.principes ?? meta.principles;
+  const principles = Array.isArray(principlesValue)
+    ? principlesValue.filter((item): item is string => typeof item === "string")
+    : [];
+  const rest = Object.fromEntries(Object.entries(meta).filter(([key]) => !known.has(key)));
+
+  return (
+    <header className="json-hero">
+      {(author || version || date) && (
+        <ul className="json-hero-meta">
+          {author && <li>{author}</li>}
+          {version && <li>v{version}</li>}
+          {date && (
+            <li>
+              <time dateTime={date}>{formatDate(date)}</time>
+            </li>
+          )}
+        </ul>
+      )}
+
+      {principles.length > 0 && (
+        <section className="json-principles">
+          <h2>Principes directeurs</h2>
+          <ul>
+            {principles.map((principle) => (
+              <li key={principle}>{principle}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {Object.keys(rest).length > 0 && <ObjectFields data={rest} path="meta" />}
+    </header>
+  );
+}
+
 export interface JsonDocumentViewProps {
   data: unknown;
 }
@@ -201,11 +277,7 @@ export function JsonDocumentView({ data }: JsonDocumentViewProps) {
       )}
 
       <div className="json-document">
-        {meta && (
-          <header className="json-meta">
-            <ObjectFields data={meta} path="meta" />
-          </header>
-        )}
+        {meta && <MetaHeader meta={meta} />}
 
         {sections.map(([key, value]) => {
           const id = `s-${anchorOf(key)}`;

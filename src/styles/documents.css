@@ -44,12 +44,63 @@
 .json-document {
   margin-top: 1.5rem;
 }
-.json-meta {
+.json-hero {
   margin-bottom: 2.5rem;
+}
+.json-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+.json-hero-meta li {
+  display: flex;
+  align-items: baseline;
+}
+.json-hero-meta li + li::before {
+  content: "·";
+  margin-right: 0.75rem;
+  color: #d1d5db;
+}
+.json-principles {
   padding: 1.25rem 1.5rem;
   border: 1px solid #e5e7eb;
+  border-left: 3px solid #111827;
   border-radius: 8px;
   background: #f9fafb;
+}
+.json-principles h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+.json-principles ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.json-principles li {
+  position: relative;
+  padding-left: 1.1rem;
+}
+.json-principles li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #111827;
 }
 .json-section {
   margin-top: 2.5rem;
@@ -134,7 +185,6 @@
 }
 
 html.dark-mode .json-toc,
-html.dark-mode .json-meta,
 html.dark-mode .json-card,
 html.dark-mode .json-chip {
   border-color: #27272a;
@@ -142,8 +192,18 @@ html.dark-mode .json-chip {
 html.dark-mode .json-toc-list ul {
   border-left-color: #27272a;
 }
-html.dark-mode .json-meta {
+html.dark-mode .json-hero-meta {
+  color: #9ca3af;
+}
+html.dark-mode .json-hero-meta li + li::before {
+  color: #3f3f46;
+}
+html.dark-mode .json-principles {
+  border-color: #27272a;
   background: #161618;
+}
+html.dark-mode .json-principles li::before {
+  background: #e5e7eb;
 }
 html.dark-mode .json-card {
   border-left-color: #e5e7eb;

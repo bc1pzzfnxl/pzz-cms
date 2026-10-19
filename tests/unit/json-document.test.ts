@@ -25,11 +25,13 @@ function render(data: unknown): string {
 }
 
 describe("JsonDocumentView", () => {
-  it("renders the meta header", () => {
+  it("renders the meta as an editorial header", () => {
     const html = render(DATA);
-    expect(html).toContain("Programme");
     expect(html).toContain("LaJota");
+    expect(html).toContain("Principes directeurs");
     expect(html).toContain("Sortie de l&#x27;UE");
+    // The title is the page <h1>, not repeated in the header.
+    expect(html).not.toContain("<dt>Titre</dt>");
   });
 
   it("renders a vertical table of contents", () => {
@@ -55,7 +57,7 @@ describe("JsonDocumentView", () => {
   });
 
   it("escapes HTML in values", () => {
-    const html = render({ meta: { titre: "<script>alert(1)</script>" } });
+    const html = render({ meta: { auteur: "<script>alert(1)</script>" } });
     expect(html).not.toContain("<script>alert(1)</script>");
     expect(html).toContain("&lt;script&gt;");
   });
