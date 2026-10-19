@@ -1,10 +1,19 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { signInWithPassword } from "./helpers";
 
 // The admin is behind auth now: sign in before each test.
 test.beforeEach(async ({ page }) => {
   await signInWithPassword(page);
 });
+
+/** Publish the open article and wait for the status API to confirm it. */
+async function publish(page: Page) {
+  const published = page.waitForResponse(
+    (response) => response.url().includes("/status/") && response.status() === 200,
+  );
+  await page.getByTestId("publish").click();
+  await published;
+}
 
 test("create, publish and read back an article", async ({ page }) => {
   await page.goto("/admin/");
@@ -24,8 +33,7 @@ test("create, publish and read back an article", async ({ page }) => {
   await page.getByTestId("save").click();
   await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
 
-  await page.getByTestId("publish").click();
-  await expect(page).toHaveURL(/\/admin\/?$/);
+  await publish(page);
 
   await page.goto("/article-de-test-e2e/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Article de test E2E");
@@ -57,8 +65,7 @@ test("changing a published slug creates a 301", async ({ page }) => {
   await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
   const editUrl = page.url();
 
-  await page.getByTestId("publish").click();
-  await expect(page).toHaveURL(/\/admin\/?$/);
+  await publish(page);
   expect((await page.request.get("/article-slug-test/")).status()).toBe(200);
 
   await page.goto(editUrl);
@@ -95,8 +102,8 @@ test("upload a cover: it becomes WebP and serves on the public page", async ({ p
 
   await page.getByTestId("save").click();
   await expect(page).toHaveURL(/\/admin\/[0-9a-f-]{36}\/?$/);
-  await page.getByTestId("publish").click();
-  await expect(page).toHaveURL(/\/admin\/?$/);
+
+  await publish(page);
 
   const article = await page.request.get("/article-avec-image/");
   expect(article.status()).toBe(200);

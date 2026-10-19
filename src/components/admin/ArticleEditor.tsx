@@ -178,7 +178,7 @@ export default function ArticleEditor({ initial }: Props) {
         return;
       }
       setStatus(next);
-      window.location.href = "/admin";
+      window.location.assign("/admin/");
     } finally {
       setBusy(false);
     }
