@@ -18,11 +18,25 @@ function buildAuth() {
     secret: env.BETTER_AUTH_SECRET,
     // D1 binding. Better Auth ships a Kysely D1 dialect.
     database: env.DB as never,
-    emailAndPassword: { enabled: true, disableSignUp: true },
+    emailAndPassword: { enabled: true, disableSignUp: true, minPasswordLength: 12 },
     // Single owner is enforced by the setup endpoint: `disableSignUp` closes the
     // public route, and `createOwnerAccount` refuses when an owner exists.
-    session: { expiresIn: 60 * 60 * 24 * 30 },
+    session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
+    rateLimit: {
+      enabled: true,
+      // Memory limits are per isolate on Workers; the database keeps them global.
+      storage: "database",
+      window: 60,
+      max: 100,
+      customRules: {
+        "/sign-in/email": { window: 60, max: 5 },
+      },
+    },
     advanced: {
+      ipAddress: {
+        // Cloudflare sets this header; it cannot be spoofed by the client.
+        ipAddressHeaders: ["cf-connecting-ip"],
+      },
       database: {
         generateId: () => crypto.randomUUID(),
         // The auth tables are created by the setup route; do not hard-fail

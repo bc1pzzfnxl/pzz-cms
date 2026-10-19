@@ -1,6 +1,14 @@
 import { defineMiddleware } from "astro:middleware";
 import { getAuthProvider } from "./auth";
 
+function withSecurityHeaders(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("x-content-type-options", "nosniff");
+  headers.set("x-frame-options", "DENY");
+  headers.set("referrer-policy", "strict-origin-when-cross-origin");
+  return new Response(response.body, { status: response.status, headers });
+}
+
 /**
  * Protect the admin. The login and setup pages stay public so a session can be
  * obtained.
@@ -13,7 +21,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (pathname.startsWith("/api/auth")) {
     const response = await getAuthProvider().handle(context.request);
-    return response ?? new Response("Not found", { status: 404 });
+    return withSecurityHeaders(response ?? new Response("Not found", { status: 404 }));
   }
 
   // Canonicalize page URLs to the trailing-slash form (trailingSlash is
@@ -29,12 +37,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+  if (!isAdmin) {
+    return next();
+  }
+
   const isPublicAdmin =
     pathname.startsWith("/admin/login") ||
     pathname.startsWith("/admin/setup") ||
     pathname.replace(/\/$/, "") === "/admin/api/setup";
-  if (!isAdmin || isPublicAdmin) {
-    return next();
+
+  if (isPublicAdmin) {
+    return withSecurityHeaders(await next());
   }
 
   let session = null;
@@ -46,14 +59,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
   if (session) {
     context.locals.session = session;
-    return next();
+    return withSecurityHeaders(await next());
   }
 
   if (pathname.startsWith("/admin/api/")) {
-    return new Response(JSON.stringify({ error: "Non authentifié." }), {
-      status: 401,
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
+    return withSecurityHeaders(
+      new Response(JSON.stringify({ error: "Non authentifié." }), {
+        status: 401,
+        headers: { "content-type": "application/json; charset=utf-8" },
+      }),
+    );
   }
 
   return context.redirect("/admin/login");

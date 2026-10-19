@@ -1,5 +1,6 @@
 ---
 import "../styles/admin.css";
+import Logout from "../components/auth/logout";
 import { site } from "../lib/site";
 
 interface Props {
@@ -19,11 +20,17 @@ const { title } = Astro.props;
     </head>
     <body>
         <header class="border-b">
-            <nav class="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+            <nav class="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-4">
                 <a href="/admin" class="font-medium">{site.name}</a>
-                <a href="/" target="_blank" rel="noreferrer" class="text-sm text-muted-foreground hover:underline">
-                    Voir le site ↗
-                </a>
+                <div class="flex items-center gap-4">
+                    <a href="/admin/password/" class="text-sm text-muted-foreground hover:underline">
+                        Mot de passe
+                    </a>
+                    <Logout client:load />
+                    <a href="/" target="_blank" rel="noreferrer" class="text-sm text-muted-foreground hover:underline">
+                        Voir le site ↗
+                    </a>
+                </div>
             </nav>
         </header>
         <main class="mx-auto max-w-4xl px-6 py-10">

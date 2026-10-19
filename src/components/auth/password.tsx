@@ -26,7 +26,7 @@ export default function ChangePassword() {
     const result = await authClient.changePassword({
       currentPassword: current,
       newPassword: next,
-      revokeOtherSessions: false,
+      revokeOtherSessions: true,
     });
 
     if (result?.error) {
