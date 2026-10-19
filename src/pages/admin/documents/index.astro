@@ -1,0 +1,73 @@
+---
+import { env } from "cloudflare:workers";
+import DocumentUpload from "../../../components/admin/DocumentUpload";
+import { createContent } from "../../../content";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const documents = await content.listDocuments();
+
+const formatDate = (dateStr: string | null) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime())
+    ? dateStr
+    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(date);
+};
+---
+
+<AdminLayout title="Documents">
+    <div class="mb-8 flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-semibold">Documents JSON</h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Chaque fichier est servi à <code>/&lt;slug&gt;/</code>.
+            </p>
+        </div>
+        <DocumentUpload client:load />
+    </div>
+
+    {
+        documents.length > 0 ? (
+            <table class="w-full border-collapse text-sm">
+                <thead>
+                    <tr class="border-b text-left text-muted-foreground">
+                        <th class="py-2 pr-4 font-medium">Titre</th>
+                        <th class="py-2 pr-4 font-medium">Statut</th>
+                        <th class="py-2 pr-4 font-medium">Modifié</th>
+                        <th class="py-2 font-medium" />
+                    </tr>
+                </thead>
+                <tbody>
+                    {documents.map((document) => (
+                        <tr class="border-b">
+                            <td class="py-3 pr-4">
+                                <a href={`/admin/documents/${document.id}`} class="font-medium hover:underline">
+                                    {document.title}
+                                </a>
+                                <div class="text-xs text-muted-foreground">/{document.slug}/</div>
+                            </td>
+                            <td class="py-3 pr-4">
+                                {document.status === "published" ? (
+                                    <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">publié</span>
+                                ) : (
+                                    <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                                        brouillon
+                                    </span>
+                                )}
+                            </td>
+                            <td class="py-3 pr-4 text-muted-foreground">{formatDate(document.updatedAt)}</td>
+                            <td class="py-3 text-right">
+                                <a href={`/admin/documents/${document.id}`} class="text-sm hover:underline">
+                                    Modifier
+                                </a>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        ) : (
+            <p class="text-muted-foreground">Aucun document. Importe un fichier .json.</p>
+        )
+    }
+</AdminLayout>

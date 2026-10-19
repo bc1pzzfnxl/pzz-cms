@@ -40,3 +40,67 @@ html.dark-mode {
     transform: none;
   }
 }
+
+/* JSON documents (P9). Semantic, readable rendering of any JSON shape. */
+.json-document {
+  margin-top: 1.5rem;
+}
+.json-meta {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.json-section {
+  margin-top: 2.5rem;
+}
+.json-subsection {
+  margin-top: 1.25rem;
+}
+.json-card {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+.json-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.15rem;
+}
+.json-defs {
+  margin: 0.75rem 0;
+}
+.json-def {
+  display: grid;
+  grid-template-columns: minmax(7rem, 12rem) 1fr;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.json-def dt {
+  font-weight: 600;
+}
+.json-def dd {
+  margin: 0;
+}
+.json-list {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.75rem 0;
+}
+.json-list li {
+  display: list-item;
+  margin-bottom: 0.35rem;
+}
+.json-empty {
+  color: #9ca3af;
+}
+html.dark-mode .json-meta {
+  border-bottom-color: #27272a;
+}
+html.dark-mode .json-card {
+  border-color: #27272a;
+}
+html.dark-mode .json-def {
+  border-bottom-color: #1f1f22;
+}

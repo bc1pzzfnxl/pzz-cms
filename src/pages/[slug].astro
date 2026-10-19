@@ -1,9 +1,10 @@
 ---
 import { env } from "cloudflare:workers";
+import { JsonDocumentView } from "../components/documents/json-document";
 import { createContent } from "../content";
 import MainLayout from "../layouts/MainLayout.astro";
-import { absoluteUrl, blogPostingSchema, breadcrumbSchema } from "../lib/seo";
 import { mediaKeysInHtml, mediaPublicPath, optimizeBodyImages } from "../lib/media";
+import { absoluteUrl, blogPostingSchema, breadcrumbSchema, creativeWorkSchema } from "../lib/seo";
 import { site } from "../lib/site";
 
 const content = createContent(env.DB);
@@ -11,11 +12,16 @@ const slug = Astro.params.slug ?? "";
 
 const article = await content.getPublishedBySlug(slug);
 
+let document = null;
 if (!article) {
   const redirect = await content.getRedirect(Astro.url.pathname);
   if (redirect) {
     return Astro.redirect(redirect.toPath, 301);
   }
+  document = await content.getPublishedDocumentBySlug(slug);
+}
+
+if (!article && !document) {
   Astro.response.status = 404;
 }
 
@@ -29,8 +35,11 @@ if (article) {
   }
 }
 
-const title = article?.title ?? "Page introuvable";
-const description = article?.description ?? "La page demandée n'existe pas ou a été déplacée.";
+const title = article?.title ?? document?.title ?? "Page introuvable";
+const description =
+  article?.description ??
+  document?.description ??
+  "La page demandée n'existe pas ou a été déplacée.";
 const url = absoluteUrl(site.url, `/${slug}/`);
 const image = article?.ogImageKey
   ? absoluteUrl(site.url, mediaPublicPath(article.ogImageKey))
@@ -44,34 +53,59 @@ const formatDate = (dateStr?: string | null) => {
     : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(date);
 };
 
-const publishDate = formatDate(article?.publishedAt);
-const modifiedDate = formatDate(article?.updatedAt);
+const publishDate = formatDate(article?.publishedAt ?? document?.publishedAt);
+const modifiedDate = formatDate(article?.updatedAt ?? document?.updatedAt);
 
-const schemas = article
-  ? [
-      blogPostingSchema({
-        title: article.title,
-        description: article.description,
-        url,
-        image,
-        locale: site.locale,
-        publishedAt: article.publishedAt,
-        modifiedAt: article.updatedAt,
-        author: { name: site.author.name, url: site.author.url },
-        publisher: { name: site.name, url: site.url, logo: site.logo },
-      }),
-      breadcrumbSchema(site, article.title, url),
-    ]
-  : [];
+let jsonData: unknown = null;
+let jsonInvalid = false;
+if (document) {
+  try {
+    jsonData = JSON.parse(document.bodyJson);
+  } catch {
+    jsonInvalid = true;
+  }
+}
+
+const schemas = [];
+if (article) {
+  schemas.push(
+    blogPostingSchema({
+      title: article.title,
+      description: article.description,
+      url,
+      image,
+      locale: site.locale,
+      publishedAt: article.publishedAt,
+      modifiedAt: article.updatedAt,
+      author: { name: site.author.name, url: site.author.url },
+      publisher: { name: site.name, url: site.url, logo: site.logo },
+    }),
+    breadcrumbSchema(site, article.title, url),
+  );
+}
+if (document && jsonData) {
+  schemas.push(
+    creativeWorkSchema({
+      title: document.title,
+      description: document.description,
+      url,
+      locale: site.locale,
+      publishedAt: document.publishedAt,
+      modifiedAt: document.updatedAt,
+      author: { name: site.author.name, url: site.author.url },
+    }),
+    breadcrumbSchema(site, document.title, url),
+  );
+}
 ---
 
 <MainLayout
     title={title}
     description={description}
-    ogType={article ? "article" : "website"}
+    ogType={article || document ? "article" : "website"}
     image={image}
-    publishedTime={article?.publishedAt ?? undefined}
-    modifiedTime={article?.updatedAt ?? undefined}
+    publishedTime={article?.publishedAt ?? document?.publishedAt ?? undefined}
+    modifiedTime={article?.updatedAt ?? document?.updatedAt ?? undefined}
 >
     {schemas.map((schema) => <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />)}
     <article>
@@ -103,6 +137,21 @@ const schemas = article
                     }
                     <div class="article-body" data-reveal-article set:html={optimizeBodyImages(article.bodyHtml, dimensions)} />
                 </>
+            ) : document && jsonData ? (
+                <>
+                    <h1>{document.title}</h1>
+                    {publishDate && (
+                        <div class="article-meta">
+                            <time datetime={document.publishedAt ?? undefined}>{publishDate}</time>
+                        </div>
+                    )}
+                    <JsonDocumentView data={jsonData} />
+                </>
+            ) : document && jsonInvalid ? (
+                <>
+                    <h1>{document.title}</h1>
+                    <p>Le contenu de ce document est invalide.</p>
+                </>
             ) : (
                 <>
                     <h1>Page introuvable</h1>
@@ -113,6 +162,6 @@ const schemas = article
     </article>
     <div class="article-footer">
         <a href="/" class="back-link">← Retour</a>
-        {article && modifiedDate && <span class="modified-date">Modifié le {modifiedDate}</span>}
+        {modifiedDate && <span class="modified-date">Modifié le {modifiedDate}</span>}
     </div>
 </MainLayout>

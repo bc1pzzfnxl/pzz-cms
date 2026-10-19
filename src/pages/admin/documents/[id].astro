@@ -1,0 +1,40 @@
+---
+import { env } from "cloudflare:workers";
+import DocumentEditor from "../../../components/admin/DocumentEditor";
+import { createContent } from "../../../content";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const id = Astro.params.id ?? "";
+const document = await content.getDocumentById(id);
+
+if (!document) {
+  Astro.response.status = 404;
+}
+
+const initial = document
+  ? {
+      id: document.id,
+      slug: document.slug,
+      title: document.title,
+      description: document.description,
+      bodyJson: document.bodyJson,
+      status: document.status,
+    }
+  : null;
+---
+
+<AdminLayout title={initial ? initial.title : "Document"}>
+    {
+        initial ? (
+            <DocumentEditor client:only="react" initial={initial} />
+        ) : (
+            <div>
+                <h1 class="text-2xl font-semibold">Document introuvable</h1>
+                <a href="/admin/documents" class="mt-4 inline-block text-sm hover:underline">
+                    ← Retour aux documents
+                </a>
+            </div>
+        )
+    }
+</AdminLayout>

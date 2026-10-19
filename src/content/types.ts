@@ -102,6 +102,54 @@ export interface MediaRow {
   created_at: string;
 }
 
+/** A JSON document rendered as a page at /<slug>/. */
+export interface Document {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  bodyJson: string;
+  status: ArticleStatus;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminDocumentSummary {
+  id: string;
+  slug: string;
+  title: string;
+  status: ArticleStatus;
+  publishedAt: string | null;
+  updatedAt: string;
+}
+
+export interface CreateDocumentInput {
+  filename: string;
+  title?: string;
+  description?: string;
+  bodyJson: string;
+}
+
+export interface UpdateDocumentInput {
+  title?: string;
+  slug?: string;
+  description?: string;
+  bodyJson?: string;
+}
+
+export interface DocumentRow {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  body_json: string;
+  status: string;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Shape of an `articles` row as stored in D1. */
 export interface ArticleRow {
   id: string;

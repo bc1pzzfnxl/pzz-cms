@@ -96,3 +96,33 @@ export function personSchema(site: SiteConfig) {
     sameAs: site.author.sameAs,
   };
 }
+
+export interface CreativeWorkInput {
+  title: string;
+  description: string;
+  url: string;
+  locale: string;
+  publishedAt: string | null;
+  modifiedAt: string | null;
+  author: { name: string; url: string };
+}
+
+/** Schema.org CreativeWork for a JSON document page. */
+export function creativeWorkSchema(input: CreativeWorkInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: input.title,
+    description: input.description,
+    url: input.url,
+    inLanguage: input.locale,
+    author: {
+      "@type": "Person",
+      name: input.author.name,
+      url: input.author.url,
+    },
+    datePublished: input.publishedAt,
+    dateModified: input.modifiedAt ?? input.publishedAt,
+    mainEntityOfPage: { "@type": "WebPage", "@id": input.url },
+  };
+}

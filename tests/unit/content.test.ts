@@ -5,16 +5,23 @@ import type { Content } from "@/content";
 import { createContent } from "@/content";
 import { createBunDatabase } from "../helpers/bun-d1";
 
-const MIGRATION = readFileSync(new URL("../../migrations/0001_init.sql", import.meta.url), "utf8");
+const MIGRATIONS = ["../../migrations/0001_init.sql", "../../migrations/0002_documents.sql"].map(
+  (path) => readFileSync(new URL(path, import.meta.url), "utf8"),
+);
 
-function seed(sqlite: Sqlite) {
-  const sql = MIGRATION.split("\n")
+function applyMigration(sqlite: Sqlite, sql: string) {
+  const cleaned = sql
+    .split("\n")
     .filter((line) => !line.trim().startsWith("--"))
     .join("\n");
-  for (const statement of sql.split(";")) {
+  for (const statement of cleaned.split(";")) {
     const trimmed = statement.trim();
     if (trimmed) sqlite.run(trimmed);
   }
+}
+
+function seed(sqlite: Sqlite) {
+  for (const migration of MIGRATIONS) applyMigration(sqlite, migration);
   sqlite
     .query(
       "INSERT INTO articles (id, slug, title, description, body_mdx, status, published_at) VALUES (?, ?, ?, ?, ?, ?, ?)",

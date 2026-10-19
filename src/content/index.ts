@@ -1,17 +1,22 @@
 import { slugify, uniqueSlug } from "../lib/slug";
 import type {
   AdminArticleSummary,
+  AdminDocumentSummary,
   Article,
   ArticleRow,
   ArticleStatus,
   ArticleSummary,
   CreateArticleInput,
+  CreateDocumentInput,
   CreateMediaInput,
   Database,
+  Document,
+  DocumentRow,
   Media,
   MediaRow,
   Redirect,
   UpdateArticleInput,
+  UpdateDocumentInput,
 } from "./types";
 
 const ARTICLE_COLUMNS =
@@ -63,6 +68,14 @@ export interface Content {
   // Media
   createMedia(input: CreateMediaInput): Promise<Media>;
   getMediaByKey(r2Key: string): Promise<Media | null>;
+
+  // JSON documents
+  listDocuments(): Promise<AdminDocumentSummary[]>;
+  getDocumentById(id: string): Promise<Document | null>;
+  getPublishedDocumentBySlug(slug: string): Promise<Document | null>;
+  createDocument(input: CreateDocumentInput): Promise<Document>;
+  updateDocument(id: string, input: UpdateDocumentInput): Promise<Document>;
+  setDocumentStatus(id: string, status: ArticleStatus): Promise<Document>;
 }
 
 export function createContent(db: Database): Content {
@@ -120,6 +133,48 @@ export function createContent(db: Database): Content {
       .bind(r2Key)
       .first<MediaRow>();
     return row ? toMedia(row) : null;
+  }
+
+  function toDocument(row: DocumentRow): Document {
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      bodyJson: row.body_json,
+      status: row.status === "published" ? "published" : "draft",
+      publishedAt: row.published_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  async function getDocumentById(id: string): Promise<Document | null> {
+    const row = await db
+      .prepare(
+        "SELECT id, slug, title, description, body_json, status, published_at, created_at, updated_at FROM documents WHERE id = ?",
+      )
+      .bind(id)
+      .first<DocumentRow>();
+    return row ? toDocument(row) : null;
+  }
+
+  async function documentSlugs(): Promise<string[]> {
+    const { results } = await db.prepare("SELECT slug FROM documents").all<{ slug: string }>();
+    return results.map((row) => row.slug);
+  }
+
+  /** Title from the JSON body (`meta.titre`, `titre`, `title`, `name`), or a fallback. */
+  function titleFromJson(bodyJson: string, fallback: string): string {
+    try {
+      const data = JSON.parse(bodyJson) as Record<string, unknown>;
+      const meta = (data.meta ?? data) as Record<string, unknown>;
+      const candidate =
+        meta.titre ?? meta.title ?? meta.name ?? data.titre ?? data.title ?? data.name;
+      return typeof candidate === "string" && candidate.trim() ? candidate.trim() : fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   return {
@@ -307,5 +362,119 @@ export function createContent(db: Database): Content {
     },
 
     getMediaByKey,
+
+    // ── JSON documents ────────────────────────────────────────────────────
+    async listDocuments() {
+      const { results } = await db
+        .prepare(
+          "SELECT id, slug, title, status, published_at, updated_at FROM documents ORDER BY updated_at DESC",
+        )
+        .all<{
+          id: string;
+          slug: string;
+          title: string;
+          status: string;
+          published_at: string | null;
+          updated_at: string;
+        }>();
+
+      return results.map(
+        (row): AdminDocumentSummary => ({
+          id: row.id,
+          slug: row.slug,
+          title: row.title,
+          status: row.status === "published" ? "published" : "draft",
+          publishedAt: row.published_at,
+          updatedAt: row.updated_at,
+        }),
+      );
+    },
+
+    getDocumentById,
+
+    async getPublishedDocumentBySlug(slug) {
+      const row = await db
+        .prepare(
+          "SELECT id, slug, title, description, body_json, status, published_at, created_at, updated_at FROM documents WHERE slug = ? AND status = 'published'",
+        )
+        .bind(slug)
+        .first<DocumentRow>();
+      return row ? toDocument(row) : null;
+    },
+
+    async createDocument(input) {
+      const id = crypto.randomUUID();
+      const base = slugify(input.filename.replace(/\.json$/i, "")) || "document";
+      const slug = uniqueSlug(base, await documentSlugs());
+      const title = input.title?.trim() || titleFromJson(input.bodyJson, slug);
+
+      await db
+        .prepare(
+          "INSERT INTO documents (id, slug, title, description, body_json, status, published_at) VALUES (?, ?, ?, ?, ?, 'published', ?)",
+        )
+        .bind(id, slug, title, input.description ?? "", input.bodyJson, now())
+        .run();
+
+      const document = await getDocumentById(id);
+      if (!document) throw new Error(`Document not found after insert: ${id}`);
+      return document;
+    },
+
+    async updateDocument(id, input) {
+      const sets: string[] = [];
+      const values: unknown[] = [];
+
+      if (input.title !== undefined) {
+        sets.push("title = ?");
+        values.push(input.title);
+      }
+      if (input.slug !== undefined) {
+        const base = slugify(input.slug);
+        const taken = (await documentSlugs()).filter((slug) => slug !== input.slug);
+        sets.push("slug = ?");
+        values.push(uniqueSlug(base, taken));
+      }
+      if (input.description !== undefined) {
+        sets.push("description = ?");
+        values.push(input.description);
+      }
+      if (input.bodyJson !== undefined) {
+        sets.push("body_json = ?");
+        values.push(input.bodyJson);
+      }
+
+      sets.push("updated_at = ?");
+      values.push(now(), id);
+
+      await db
+        .prepare(`UPDATE documents SET ${sets.join(", ")} WHERE id = ?`)
+        .bind(...values)
+        .run();
+
+      const document = await getDocumentById(id);
+      if (!document) throw new Error(`Document not found: ${id}`);
+      return document;
+    },
+
+    async setDocumentStatus(id, status) {
+      if (status === "published") {
+        const timestamp = now();
+        await db
+          .prepare(
+            "UPDATE documents SET status = 'published', published_at = COALESCE(published_at, ?), updated_at = ? WHERE id = ?",
+          )
+          .bind(timestamp, timestamp, id)
+          .run();
+      } else {
+        await db
+          .prepare("UPDATE documents SET status = 'draft', updated_at = ? WHERE id = ?")
+          .bind(now(), id)
+          .run();
+      }
+
+      const document = await getDocumentById(id);
+      if (!document) throw new Error(`Document not found: ${id}`);
+      return document;
+    },
   };
 }
