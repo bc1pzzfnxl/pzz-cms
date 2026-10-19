@@ -53,17 +53,24 @@ function buildAuth() {
         origin,
         registration: {
           requireSession: false,
-          resolveUser: async ({ context }) => {
+          resolveUser: async ({ ctx, context }) => {
             if (!env.SETUP_TOKEN || context !== env.SETUP_TOKEN) {
               throw new Error("Invalid setup token.");
             }
+            const found = await ctx.context.internalAdapter.findUserByEmail(ownerEmail());
+            if (found) return { id: found.user.id, name: found.user.name };
             return { id: "owner", name: site.author.name };
           },
           // The owner row must exist before the passkey is stored (foreign key).
           afterVerification: async ({ ctx, user }) => {
             const adapter = ctx.context.internalAdapter;
-            if (!(await adapter.findUserById(user.id))) {
-              await adapter.createUser(
+            let existing = await adapter.findUserById(user.id);
+            if (!existing) {
+              const found = await adapter.findUserByEmail(ownerEmail());
+              existing = found?.user ?? null;
+            }
+            if (!existing) {
+              existing = await adapter.createUser(
                 {
                   id: user.id,
                   name: user.name,
@@ -75,7 +82,7 @@ function buildAuth() {
                 { method: "passkey" },
               );
             }
-            return { userId: user.id };
+            return { userId: existing.id };
           },
         },
       }),
