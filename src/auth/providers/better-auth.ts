@@ -19,18 +19,8 @@ function buildAuth() {
     // D1 binding. Better Auth ships a Kysely D1 dialect.
     database: env.DB as never,
     emailAndPassword: { enabled: true, disableSignUp: true },
-    databaseHooks: {
-      user: {
-        create: {
-          // Single owner: never allow a second account.
-          before: async (_user, ctx) => {
-            if (!ctx) return false;
-            const users = await ctx.context.internalAdapter.listUsers(1);
-            return users.length === 0;
-          },
-        },
-      },
-    },
+    // Single owner is enforced by the setup endpoint: `disableSignUp` closes the
+    // public route, and `createOwnerAccount` refuses when an owner exists.
     session: { expiresIn: 60 * 60 * 24 * 30 },
     advanced: {
       database: {
