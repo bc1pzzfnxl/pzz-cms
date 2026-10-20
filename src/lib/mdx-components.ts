@@ -1,5 +1,6 @@
 import { Callout } from "@/components/callout";
 import { Faq } from "@/components/faq";
+import { Figure } from "@/components/figure";
 import { GraphStat } from "@/components/graph-stat";
 import { GraphTable } from "@/components/graph-table";
 import { GraphTimeline } from "@/components/graph-timeline";
@@ -19,6 +20,7 @@ import type { MdxComponents } from "./render-mdx";
 export const mdxComponents = {
   Callout,
   Faq,
+  Figure,
   GraphStat,
   GraphTable,
   GraphTimeline,

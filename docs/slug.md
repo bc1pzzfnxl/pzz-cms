@@ -109,6 +109,7 @@ paste the clean tag.
 | `Steps` | a procedure; bold is the current step, italic the next |
 | `Terminal` | a command and its output |
 | `Faq` | questions and answers |
+| `Figure` | an image with a caption and an optional credit |
 | `GraphStat` | two to four large numbers |
 | `GraphTable` | tabular data |
 | `GraphTimeline` | dated events, one marked current |
@@ -176,6 +177,21 @@ Upload the image in the admin first, then reference its media path:
 ```mdx
 ![Bas-relief de Ninive](/media/images/ninive-abc123.webp/)
 ```
+
+For a visible caption and a credit, use `Figure`:
+
+```mdx
+<Figure
+  src="/media/images/ninive-abc123.webp/"
+  alt="Bas-relief de Ninive"
+  caption="Bas-relief assyrien représentant la prise de Ninive."
+  credit="Source : British Museum"
+/>
+```
+
+`alt` is required. `caption` and `credit` are optional. `Figure` accepts
+`href` (link around the image) and explicit `width`/`height` for external
+images.
 
 `optimizeBodyImages` adds intrinsic `width`/`height` from the media table,
 `loading="lazy"`, and `decoding="async"`. Body images are never preloaded; only

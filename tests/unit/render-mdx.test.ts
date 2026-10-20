@@ -134,4 +134,19 @@ Réponse.
     expect(html).toContain("Sauve, Éternel !");
     expect(html).toContain('dir="auto"');
   });
+
+  it("renders a Figure with a caption and a credit", async () => {
+    const { mdxComponents } = await import("@/lib/mdx-components");
+    const html = await renderMdxToHtml(
+      '<Figure src="/media/images/test.webp/" alt="Une image" caption="Une légende" credit="Source" />',
+      mdxComponents,
+    );
+
+    expect(html).toContain("data-figure");
+    expect(html).toContain('src="/media/images/test.webp/"');
+    expect(html).toContain('alt="Une image"');
+    expect(html).toContain("Une légende");
+    expect(html).toContain("Source");
+    expect(html).not.toContain("opacity:0");
+  });
 });

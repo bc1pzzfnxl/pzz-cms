@@ -39,3 +39,9 @@
   display: list-item;
   margin: 0.35rem 0;
 }
+
+/* Old body_html rows were compiled with a smaller original; keep them legible. */
+.article-body [data-verse] [data-no-reveal],
+.mdx-preview [data-verse] [data-no-reveal] {
+  font-size: 1.05rem;
+}
