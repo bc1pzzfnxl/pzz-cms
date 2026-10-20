@@ -254,6 +254,8 @@ export function JsonDocumentView({ data }: JsonDocumentViewProps) {
 
   return (
     <>
+      {meta && <MetaHeader meta={meta} />}
+
       {toc.length > 0 && (
         <nav className="json-toc" aria-label="Sommaire">
           <p className="json-toc-title">Sommaire</p>
@@ -277,8 +279,6 @@ export function JsonDocumentView({ data }: JsonDocumentViewProps) {
       )}
 
       <div className="json-document">
-        {meta && <MetaHeader meta={meta} />}
-
         {sections.map(([key, value]) => {
           const id = `s-${anchorOf(key)}`;
           return (

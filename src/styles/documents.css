@@ -45,7 +45,9 @@
   margin-top: 1.5rem;
 }
 .json-hero {
-  margin-bottom: 2.5rem;
+  margin: 0 0 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 .json-hero-meta {
   display: flex;
@@ -188,6 +190,9 @@ html.dark-mode .json-toc,
 html.dark-mode .json-card,
 html.dark-mode .json-chip {
   border-color: #27272a;
+}
+html.dark-mode .json-hero {
+  border-bottom-color: #27272a;
 }
 html.dark-mode .json-toc-list ul {
   border-left-color: #27272a;
