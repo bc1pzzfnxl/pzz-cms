@@ -2,6 +2,7 @@ import { evaluate } from "@mdx-js/mdx";
 import { type ComponentType, createElement, type ReactNode } from "react";
 import * as runtime from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
+import { prepareMdxHtml } from "./mdx-html";
 
 export type MdxComponent = ComponentType<{ children?: ReactNode } & Record<string, unknown>>;
 export type MdxComponents = Record<string, MdxComponent>;
@@ -23,6 +24,7 @@ export async function renderMdxToHtml(
 
   // React 19 emits a <link rel="preload"> for every image it renders. Body
   // images must never be preloaded (only the cover is, by MainLayout), so drop
-  // them. See the SEO rules in skill-seo-astro.
-  return html.replace(/<link[^>]*\brel="preload"[^>]*>/gi, "");
+  // them. See the SEO rules in skill-seo-astro. Then remove motion's hidden
+  // initial state so the precompiled article is readable without JS.
+  return prepareMdxHtml(html.replace(/<link[^>]*\brel="preload"[^>]*>/gi, ""));
 }

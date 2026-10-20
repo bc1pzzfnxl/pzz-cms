@@ -41,3 +41,21 @@ html.dark-mode {
     transform: none;
   }
 }
+
+/*
+ * Precompiled mdxcn components. `prepareMdxHtml` removes motion's hidden
+ * initial style and adds `data-mdx-reveal`; `enhance-articles` adds
+ * `data-revealed` when the block enters the viewport. Scoped to `data-enhance`
+ * so the content is fully visible without JS.
+ */
+[data-enhance="on"] [data-mdx-reveal] {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 220ms cubic-bezier(0.215, 0.61, 0.355, 1),
+    transform 220ms cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+[data-enhance="on"] [data-mdx-reveal][data-revealed] {
+  opacity: 1;
+  transform: none;
+}

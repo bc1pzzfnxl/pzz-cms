@@ -4,6 +4,7 @@ import { JsonDocumentView } from "../components/documents/json-document";
 import { createContent } from "../content";
 import MainLayout from "../layouts/MainLayout.astro";
 import { mediaKeysInHtml, mediaPublicPath, optimizeBodyImages } from "../lib/media";
+import { prepareMdxHtml } from "../lib/mdx-html";
 import { absoluteUrl, blogPostingSchema, breadcrumbSchema, creativeWorkSchema } from "../lib/seo";
 import { site } from "../lib/site";
 
@@ -26,6 +27,11 @@ if (!article && !document) {
 }
 
 const cover = article?.ogImageKey ? await content.getMediaByKey(article.ogImageKey) : null;
+
+// Older rows were compiled before the static-render fix and still carry
+// motion's inline `opacity:0`; normalize at render time so they do not need a
+// re-save. New rows already carry the marker and are left unchanged.
+const articleHtml = article ? prepareMdxHtml(article.bodyHtml) : "";
 
 const dimensions = new Map<string, { width: number; height: number }>();
 if (article) {
@@ -142,7 +148,7 @@ if (document && jsonData) {
                             </figure>
                         )
                     }
-                    <div class="article-body" data-reveal-article set:html={optimizeBodyImages(article.bodyHtml, dimensions)} />
+                    <div class="article-body" data-reveal-article set:html={optimizeBodyImages(articleHtml, dimensions)} />
                 </>
             ) : document && jsonData ? (
                 <>

@@ -45,6 +45,31 @@ function enhanceStats(): void {
   }
 }
 
+/**
+ * Reveal precompiled mdxcn components (Callout, Steps, GraphTable, ...). Their
+ * static HTML carries a `data-mdx-reveal` marker instead of motion's hidden
+ * style; this fades the block in on scroll. Always on, like the rest of the
+ * article motion.
+ */
+function enhanceMdxReveals(): void {
+  const targets = [...document.querySelectorAll<HTMLElement>("[data-mdx-reveal]")];
+  if (targets.length === 0) return;
+
+  document.documentElement.dataset.enhance = "on";
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        (entry.target as HTMLElement).dataset.revealed = "";
+        observer.unobserve(entry.target);
+      }
+    },
+    { threshold: 0.15 },
+  );
+  for (const el of targets) observer.observe(el);
+}
+
 function enhanceReveals(): void {
   const targets = [...document.querySelectorAll<HTMLElement>("[data-reveal]")].filter(
     (el) => !el.dataset.enhanced,
@@ -105,6 +130,7 @@ function enhanceArticle(): void {
 
 function run(): void {
   enhanceStats();
+  enhanceMdxReveals();
   enhanceReveals();
   enhanceArticle();
 }

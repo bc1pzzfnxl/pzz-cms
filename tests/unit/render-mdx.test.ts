@@ -33,6 +33,55 @@ describe("renderMdxToHtml", () => {
     expect(html.length).toBeGreaterThan(40);
   });
 
+  it("never leaves motion's hidden state in precompiled HTML", async () => {
+    const { mdxComponents } = await import("@/lib/mdx-components");
+    const html = await renderMdxToHtml(
+      `
+<Callout type="note" title="NOTE">Un appel.</Callout>
+
+<Quote by="Auteur">Une citation.</Quote>
+
+<Steps title="ÉTAPES">
+1. **Copier** la source
+
+   Puis la coller.
+
+2. *Enregistrer*
+</Steps>
+
+<Faq>
+### Question ?
+
+Réponse.
+</Faq>
+
+<GraphStat title="CHIFFRES">
+- **860** livrés
+- 4,100 copies
+</GraphStat>
+
+<GraphTable title="TABLEAU">
+| Agent | Jetons |
+| --- | --- |
+| Un | 10 |
+| Deux | 20 |
+</GraphTable>
+
+<GraphTimeline title="DATES">
+- 12: début
+- **18: aujourd'hui**
+- *20: suite*
+</GraphTimeline>
+      `,
+      mdxComponents,
+    );
+
+    expect(html).not.toContain("opacity:0");
+    expect(html).toContain("data-mdx-reveal");
+    expect(html).toContain("Un appel.");
+    expect(html).toContain("Une citation.");
+  });
+
   it("never preloads body images", async () => {
     const html = await renderMdxToHtml("![alt](/media/images/a.webp/)");
     expect(html).toContain("<img");
