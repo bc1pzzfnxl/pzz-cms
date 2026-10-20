@@ -16,15 +16,17 @@ import {
   linkPlugin,
   listsPlugin,
   MDXEditor,
+  type MDXEditorMethods,
   markdownShortcutPlugin,
   quotePlugin,
   thematicBreakPlugin,
   toolbarPlugin,
   UndoRedo,
 } from "@mdxeditor/editor";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { convertToWebp } from "../../lib/image";
 import { mdxComponents } from "../../lib/mdx-components";
+import { normalizeMdxJsx } from "../../lib/mdx-normalize";
 import { renderMdxToHtml } from "../../lib/render-mdx";
 
 type Status = "draft" | "published";
@@ -188,8 +190,12 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
   },
 ];
 
+const componentNames = Object.keys(mdxComponents);
+const jsxPastePattern = new RegExp(`<\\s*(?:${componentNames.join("|")})\\b`);
+
 export default function ArticleEditor({ initial }: Props) {
   const articleId = initial?.id ?? null;
+  const editorRef = useRef<MDXEditorMethods>(null);
 
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
@@ -212,7 +218,7 @@ export default function ArticleEditor({ initial }: Props) {
     let cancelled = false;
     const timer = setTimeout(async () => {
       try {
-        const html = await renderMdxToHtml(bodyMdx, mdxComponents);
+        const html = await renderMdxToHtml(normalizeMdxJsx(bodyMdx, componentNames), mdxComponents);
         if (!cancelled) {
           setPreview(html);
           setPreviewError(null);
@@ -267,12 +273,13 @@ export default function ArticleEditor({ initial }: Props) {
     setBusy(true);
     setMessage(null);
     try {
-      const bodyHtml = await renderMdxToHtml(bodyMdx, mdxComponents);
+      const source = normalizeMdxJsx(bodyMdx, componentNames);
+      const bodyHtml = await renderMdxToHtml(source, mdxComponents);
       const payload = {
         title,
         slug: slug.trim() || undefined,
         description,
-        bodyMdx,
+        bodyMdx: source,
         bodyHtml,
         ogImageKey,
       };
@@ -410,8 +417,21 @@ export default function ArticleEditor({ initial }: Props) {
           Composants : Callout, Quote, Steps, Terminal, Faq, GraphStat, GraphTable, GraphTimeline,
           Stat, Reveal, Verse. Pour du JSX brut, utilisez le mode Source (bouton Diff/Source).
         </p>
-        <div data-testid="body-editor" className="mt-1 rounded-md border">
+        <div
+          data-testid="body-editor"
+          className="mt-1 rounded-md border"
+          onPasteCapture={(event) => {
+            const text = event.clipboardData.getData("text/plain");
+            if (!jsxPastePattern.test(text)) return;
+            // Let the MDX parser create a JSX node instead of escaping the
+            // pasted tag as text.
+            event.preventDefault();
+            event.stopPropagation();
+            editorRef.current?.insertMarkdown(text);
+          }}
+        >
           <MDXEditor
+            ref={editorRef}
             markdown={bodyMdx}
             onChange={setBodyMdx}
             plugins={[

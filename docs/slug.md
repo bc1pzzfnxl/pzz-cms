@@ -92,9 +92,12 @@ in `src/lib/mdx-components.ts`. Adding a component means adding it to that map,
 not importing it per article.
 
 The editor registers every component with MDXEditor's `jsxPlugin`
-(`ArticleEditor.tsx`), so a known tag survives the rich-text view. An unknown
-tag is still escaped as text; use the Source toggle for it. If a tag was already
-saved with backslashes (`\<Callout`), remove it and paste the clean tag.
+(`ArticleEditor.tsx`), so a known tag survives the rich-text view. Pasting a
+known component is intercepted and inserted through the Markdown parser, so it
+becomes a JSX node instead of escaped text; preview and save also unescape
+known component tags as a safety net. An unknown tag still falls back to Source
+mode. If a tag was already saved with backslashes (`\<Callout`), remove it and
+paste the clean tag.
 
 ### Available components
 
@@ -274,6 +277,7 @@ Consequences for a new component:
 | The animation does not run | The component has no `data-mdx-reveal`, or `enhance-articles` did not load. After a client-side navigation, the enhancer must re-run on `astro:page-load`. |
 | Copying a heading yields `motmot` | The kugiri gap boxes lost their space in the selection; `white-space: pre` on those boxes fixes it. |
 | A pasted component tag has no spaces | `<Callouttype="tip">` is not `Callout`; the MDX compiler sees a different component. Paste the snippet as a code block, or use the editor's source mode. |
+| A pasted component appears escaped as text | The paste interceptor handles known tags; if it still happens, use Source mode. Preview and save unescape known tags. |
 | An old slug returns 404 | Check the `redirects` table; the 301 is created when the slug changes in the admin. |
 
 ## 8. File map
