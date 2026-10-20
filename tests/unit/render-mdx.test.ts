@@ -72,6 +72,8 @@ Réponse.
 - **18: aujourd'hui**
 - *20: suite*
 </GraphTimeline>
+
+<Verse reference="Jean 3:16" version="LSG">Car Dieu a tant aimé le monde.</Verse>
       `,
       mdxComponents,
     );
@@ -104,5 +106,32 @@ Réponse.
     const html = await renderMdxToHtml("<Reveal>Un texte révélé</Reveal>", mdxComponents);
     expect(html).toContain("data-reveal");
     expect(html).toContain("Un texte révélé");
+  });
+
+  it("renders a Verse with its reference, version and text", async () => {
+    const { mdxComponents } = await import("@/lib/mdx-components");
+    const html = await renderMdxToHtml(
+      '<Verse reference="Jean 3:16" version="LSG">\n\nCar Dieu a tant aimé le monde.\n\n</Verse>',
+      mdxComponents,
+    );
+
+    expect(html).toContain("data-verse");
+    expect(html).toContain("Jean 3:16");
+    expect(html).toContain("LSG");
+    expect(html).toContain("Car Dieu a tant aimé le monde.");
+    expect(html).not.toContain("opacity:0");
+  });
+
+  it("renders a Verse original text and its label", async () => {
+    const { mdxComponents } = await import("@/lib/mdx-components");
+    const html = await renderMdxToHtml(
+      '<Verse reference="Psaume 12:2" original="הוֹשִׁיעָה יְהוָה" originalLabel="Hébreu">\n\nSauve, Éternel !\n\n</Verse>',
+      mdxComponents,
+    );
+
+    expect(html).toContain("Hébreu");
+    expect(html).toContain("הוֹשִׁיעָה יְהוָה");
+    expect(html).toContain("Sauve, Éternel !");
+    expect(html).toContain('dir="auto"');
   });
 });

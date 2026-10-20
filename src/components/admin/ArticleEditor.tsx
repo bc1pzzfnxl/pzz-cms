@@ -172,6 +172,20 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
     hasChildren: true,
     Editor: GenericJsxEditor,
   },
+  {
+    name: "Verse",
+    kind: "flow",
+    props: [
+      { name: "reference", type: "string", required: true },
+      { name: "version", type: "string" },
+      { name: "original", type: "string" },
+      { name: "originalLabel", type: "string" },
+      { name: "href", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
 ];
 
 export default function ArticleEditor({ initial }: Props) {
@@ -394,7 +408,7 @@ export default function ArticleEditor({ initial }: Props) {
         <span className="block text-sm font-medium">Contenu (MDX)</span>
         <p className="mt-1 text-xs text-muted-foreground">
           Composants : Callout, Quote, Steps, Terminal, Faq, GraphStat, GraphTable, GraphTimeline,
-          Stat, Reveal. Pour du JSX brut, utilisez le mode Source (bouton Diff/Source).
+          Stat, Reveal, Verse. Pour du JSX brut, utilisez le mode Source (bouton Diff/Source).
         </p>
         <div data-testid="body-editor" className="mt-1 rounded-md border">
           <MDXEditor

@@ -102,6 +102,7 @@ saved with backslashes (`\<Callout`), remove it and paste the clean tag.
 | --- | --- |
 | `Callout` | a caveat, tip, warning, or breaking note |
 | `Quote` | one sentence someone else said, with a name under it |
+| `Verse` | a scripture quotation with a reference and an optional original-language line |
 | `Steps` | a procedure; bold is the current step, italic the next |
 | `Terminal` | a command and its output |
 | `Faq` | questions and answers |
@@ -127,6 +128,19 @@ Examples:
 <Quote by="Paul Graham" source="Taste for Makers">
   A thousand barely audible voices all singing in tune.
 </Quote>
+
+<Verse reference="Jean 3:16" version="LSG">
+  Car Dieu a tant aimé le monde qu'il a donné son Fils unique…
+</Verse>
+
+<Verse
+  reference="Psaume 12:2"
+  version="TM"
+  original="הוֹשִׁיעָה יְהוָה כִּי־גָמַר חָסִיד"
+  originalLabel="Hébreu"
+>
+  Sauve, Éternel ! Car l'homme loyal a disparu.
+</Verse>
 
 <Steps title="MIGRATION">
 1. **Sauvegarder** la base

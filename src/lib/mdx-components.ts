@@ -8,6 +8,7 @@ import { Stat } from "@/components/mdx/stat";
 import { Quote } from "@/components/quote";
 import { Steps } from "@/components/steps";
 import { Terminal } from "@/components/terminal";
+import { Verse } from "@/components/verse";
 import type { MdxComponents } from "./render-mdx";
 
 /**
@@ -26,4 +27,5 @@ export const mdxComponents = {
   Stat,
   Steps,
   Terminal,
+  Verse,
 } as unknown as MdxComponents;
