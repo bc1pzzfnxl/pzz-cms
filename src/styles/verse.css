@@ -1,0 +1,29 @@
+/*
+ * A Verse is a scripture quotation, not the generic article blockquote.
+ * These selectors outrank the article and admin-preview blockquote rules.
+ */
+.article-body .verse-text,
+.mdx-preview .verse-text {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.article-body .verse-text p,
+.mdx-preview .verse-text p {
+  margin: 0;
+}
+
+.article-body .verse-text em,
+.mdx-preview .verse-text em,
+.article-body .verse-text strong,
+.mdx-preview .verse-text strong {
+  display: inline;
+  margin: 0;
+  font-size: 1em;
+  color: inherit;
+}

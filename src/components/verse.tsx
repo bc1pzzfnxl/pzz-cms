@@ -79,7 +79,7 @@ function Verse({
 
       <blockquote
         className={cn(
-          "m-0 border-0 bg-transparent p-0 text-[1.05rem] leading-relaxed text-foreground",
+          "verse-text m-0 border-0 bg-transparent p-0 text-[1.05rem] leading-relaxed text-foreground",
           "[&_p]:m-0",
           "[&_strong]:inline [&_strong]:text-inherit",
           "[&_em]:m-0 [&_em]:inline [&_em]:text-[1em] [&_em]:text-inherit [&_em]:italic",

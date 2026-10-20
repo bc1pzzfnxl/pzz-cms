@@ -9,6 +9,7 @@
 @import "@fontsource-variable/geist";
 @import "./mdxcn.css";
 @import "./documents.css";
+@import "./verse.css";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./mdxcn.css";
 @import "./documents.css";
+@import "./verse.css";
 
 @theme {
   --color-background: #ffffff;
