@@ -189,6 +189,16 @@ enter the viewport. `global.css` scopes the hidden state to
 `[data-enhance="on"]`, which the script sets, so **without JS the content is
 visible**. The animation is always on; there is no reduced-motion check.
 
+The enhancer runs on Astro's `astro:page-load`, not only on the first
+`DOMContentLoaded`: the ClientRouter swaps the body without reloading scripts,
+so a page reached by clicking a link would otherwise never be split until a full
+refresh. Each target carries a guard, so a double event does not split twice.
+
+kugiri wraps the gap between words in an inline-block box; some browsers drop
+that space from a text selection, so copying a split heading produced
+`motmot`. `global.css` sets `white-space: pre` on those boxes to keep the gap
+copyable.
+
 Consequences for a new component:
 
 - Never rely on React state or effects for the initial content: the public page
@@ -242,7 +252,9 @@ Consequences for a new component:
 | The admin preview differs from the public page | The preview uses the same compiler; check that the component is in `mdx-components.ts` and the CSS is imported. |
 | An image has no dimensions | Upload it through the admin so the `media` row has `width`/`height`. |
 | A new component is missing in the preview | It is not registered in `src/lib/mdx-components.ts`. |
-| The animation does not run | The component has no `data-mdx-reveal`, or `enhance-articles` did not load. |
+| The animation does not run | The component has no `data-mdx-reveal`, or `enhance-articles` did not load. After a client-side navigation, the enhancer must re-run on `astro:page-load`. |
+| Copying a heading yields `motmot` | The kugiri gap boxes lost their space in the selection; `white-space: pre` on those boxes fixes it. |
+| A pasted component tag has no spaces | `<Callouttype="tip">` is not `Callout`; the MDX compiler sees a different component. Paste the snippet as a code block, or use the editor's source mode. |
 | An old slug returns 404 | Check the `redirects` table; the 301 is created when the slug changes in the admin. |
 
 ## 8. File map
