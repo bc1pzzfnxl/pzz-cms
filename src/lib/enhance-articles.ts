@@ -111,7 +111,9 @@ function enhanceArticle(): void {
     (el) =>
       (el.textContent ?? "").trim().length > 0 &&
       !el.closest("[data-reveal]") &&
-      !el.querySelector("[data-reveal]"),
+      !el.querySelector("[data-reveal]") &&
+      !el.closest("[data-no-reveal]") &&
+      !el.querySelector("[data-no-reveal]"),
   );
   if (targets.length === 0) return;
 
