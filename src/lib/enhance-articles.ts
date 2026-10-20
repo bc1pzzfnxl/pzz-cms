@@ -1,25 +1,21 @@
 /**
  * Client-side enhancement for article components. The markup is static (SEO,
  * no JS); this adds motion when the page loads. Loaded by MainLayout.
- * See PLAN.md, P8.
+ *
+ * Motion is always on, even when the OS reports `prefers-reduced-motion`
+ * (a deliberate choice: the effects are lightweight). See PLAN.md, P8.
  */
 import { splitText } from "kugiri";
 import { formatNumber, type NumberFormat } from "./format-number";
 
-function prefersReducedMotion(): boolean {
-  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-}
-
 function enhanceStats(): void {
-  const reduce = prefersReducedMotion();
-
   for (const el of document.querySelectorAll<HTMLElement>("[data-stat]")) {
     if (el.dataset.enhanced) continue;
     el.dataset.enhanced = "1";
 
     const target = Number(el.dataset.value ?? "");
     const valueEl = el.querySelector<HTMLElement>(".mdx-stat-value");
-    if (!valueEl || !Number.isFinite(target) || reduce) continue;
+    if (!valueEl || !Number.isFinite(target)) continue;
 
     const options = {
       format: (el.dataset.format as NumberFormat | undefined) ?? "plain",
@@ -50,14 +46,12 @@ function enhanceStats(): void {
 }
 
 function enhanceReveals(): void {
-  const reduce = prefersReducedMotion();
   const targets = [...document.querySelectorAll<HTMLElement>("[data-reveal]")].filter(
     (el) => !el.dataset.enhanced,
   );
   if (targets.length === 0) return;
 
   for (const el of targets) el.dataset.enhanced = "1";
-  if (reduce) return;
 
   // Scope the "hidden until revealed" CSS to JS-enabled pages, so the text
   // stays visible without JS.
@@ -83,7 +77,7 @@ function enhanceReveals(): void {
  */
 function enhanceArticle(): void {
   const root = document.querySelector<HTMLElement>("[data-reveal-article]");
-  if (!root || prefersReducedMotion()) return;
+  if (!root) return;
 
   const targets = [...root.querySelectorAll<HTMLElement>("h2, h3, p")].filter(
     (el) =>
