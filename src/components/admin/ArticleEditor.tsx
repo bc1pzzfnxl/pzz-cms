@@ -6,8 +6,11 @@ import {
   codeBlockPlugin,
   DiffSourceToggleWrapper,
   diffSourcePlugin,
+  GenericJsxEditor,
   headingsPlugin,
   imagePlugin,
+  type JsxComponentDescriptor,
+  jsxPlugin,
   ListsToggle,
   linkDialogPlugin,
   linkPlugin,
@@ -41,6 +44,135 @@ interface Props {
 }
 
 const inputClass = "mt-1 w-full rounded-md border px-3 py-2 text-sm";
+
+/**
+ * Raw JSX must survive the rich-text editor. Without descriptors MDXEditor
+ * treats `<Callout>` as HTML and escapes it to `\<Callout...\>`, which the MDX
+ * compiler then renders as text. Register every component authors may write.
+ */
+const jsxComponentDescriptors: JsxComponentDescriptor[] = [
+  {
+    name: "Callout",
+    kind: "flow",
+    props: [
+      { name: "type", type: "string" },
+      { name: "title", type: "string" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "Quote",
+    kind: "flow",
+    props: [
+      { name: "by", type: "string" },
+      { name: "source", type: "string" },
+      { name: "title", type: "string" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "Steps",
+    kind: "flow",
+    props: [
+      { name: "title", type: "string" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "Terminal",
+    kind: "flow",
+    props: [
+      { name: "title", type: "string" },
+      { name: "prompt", type: "string" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "Faq",
+    kind: "flow",
+    props: [
+      { name: "title", type: "string" },
+      { name: "entries", type: "expression" },
+      { name: "palette", type: "string" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "GraphStat",
+    kind: "flow",
+    props: [
+      { name: "title", type: "string", required: true },
+      { name: "items", type: "expression" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "GraphTable",
+    kind: "flow",
+    props: [
+      { name: "title", type: "string", required: true },
+      { name: "headers", type: "expression" },
+      { name: "rows", type: "expression" },
+      { name: "footer", type: "expression" },
+      { name: "align", type: "expression" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "GraphTimeline",
+    kind: "flow",
+    props: [
+      { name: "title", type: "string", required: true },
+      { name: "events", type: "expression" },
+      { name: "palette", type: "string" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "Stat",
+    kind: "text",
+    props: [
+      { name: "value", type: "expression", required: true },
+      { name: "format", type: "string" },
+      { name: "currency", type: "string" },
+      { name: "locale", type: "string" },
+      { name: "suffix", type: "string" },
+    ],
+    hasChildren: false,
+    Editor: GenericJsxEditor,
+  },
+  {
+    name: "Reveal",
+    kind: "text",
+    props: [],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+];
 
 export default function ArticleEditor({ initial }: Props) {
   const articleId = initial?.id ?? null;
@@ -260,6 +392,10 @@ export default function ArticleEditor({ initial }: Props) {
 
       <div>
         <span className="block text-sm font-medium">Contenu (MDX)</span>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Composants : Callout, Quote, Steps, Terminal, Faq, GraphStat, GraphTable, GraphTimeline,
+          Stat, Reveal. Pour du JSX brut, utilisez le mode Source (bouton Diff/Source).
+        </p>
         <div data-testid="body-editor" className="mt-1 rounded-md border">
           <MDXEditor
             markdown={bodyMdx}
@@ -274,6 +410,7 @@ export default function ArticleEditor({ initial }: Props) {
               imagePlugin(),
               codeBlockPlugin(),
               diffSourcePlugin(),
+              jsxPlugin({ jsxComponentDescriptors }),
               markdownShortcutPlugin(),
               toolbarPlugin({
                 toolbarContents: () => (

@@ -91,6 +91,11 @@ There is no `import` statement to write: the admin compiles with the fixed map
 in `src/lib/mdx-components.ts`. Adding a component means adding it to that map,
 not importing it per article.
 
+The editor registers every component with MDXEditor's `jsxPlugin`
+(`ArticleEditor.tsx`), so a known tag survives the rich-text view. An unknown
+tag is still escaped as text; use the Source toggle for it. If a tag was already
+saved with backslashes (`\<Callout`), remove it and paste the clean tag.
+
 ### Available components
 
 | Component | Use for |
