@@ -13,13 +13,16 @@ async function saveNewArticle(page: Page): Promise<string> {
   return page.url();
 }
 
-/** Publish the open article and wait for the status API to confirm it. */
+/** Publish the open article, wait for the API, then for the admin redirect. */
 async function publish(page: Page) {
   const published = page.waitForResponse(
     (response) => response.url().includes("/status/") && response.status() === 200,
   );
   await page.getByTestId("publish").click();
   await published;
+  // The editor navigates back to the list after a status change; wait for it
+  // before the test issues its own navigation.
+  await page.waitForURL(/\/admin\/?$/, { timeout: 30_000 });
 }
 
 test("create, publish and read back an article", async ({ page }) => {
