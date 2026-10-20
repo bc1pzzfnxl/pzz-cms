@@ -66,6 +66,13 @@ if (document) {
   }
 }
 
+// The JSON meta often carries its own date; avoid showing it twice.
+const jsonMetaDate =
+  jsonData && typeof jsonData === "object" && "meta" in jsonData
+    ? (jsonData as { meta?: { date?: unknown } }).meta?.date
+    : undefined;
+const showPublishDate = typeof jsonMetaDate !== "string";
+
 const schemas = [];
 if (article) {
   schemas.push(
@@ -140,7 +147,7 @@ if (document && jsonData) {
             ) : document && jsonData ? (
                 <>
                     <h1>{document.title}</h1>
-                    {publishDate && (
+                    {publishDate && showPublishDate && (
                         <div class="article-meta">
                             <time datetime={document.publishedAt ?? undefined}>{publishDate}</time>
                         </div>
