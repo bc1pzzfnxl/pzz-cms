@@ -45,9 +45,27 @@
   margin-top: 1.5rem;
 }
 .json-hero {
+  display: block;
   margin: 0 0 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid #e5e7eb;
+}
+/* The blog's global `li` rule (flex + 16px margin) must not leak here. */
+.json-hero-meta li,
+.json-toc-list li,
+.json-principles li,
+.json-chip {
+  margin-bottom: 0;
+}
+.json-hero-meta li {
+  display: flex;
+}
+.json-toc-list li,
+.json-principles li {
+  display: block;
+}
+.json-toc-list > li {
+  margin-bottom: 0.3rem;
 }
 .json-hero-meta {
   display: flex;

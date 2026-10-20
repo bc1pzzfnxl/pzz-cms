@@ -195,7 +195,7 @@ function MetaHeader({ meta }: { meta: Record<string, unknown> }): ReactNode {
   const rest = Object.fromEntries(Object.entries(meta).filter(([key]) => !known.has(key)));
 
   return (
-    <header className="json-hero">
+    <div className="json-hero">
       {(author || version || date) && (
         <ul className="json-hero-meta">
           {author && <li>{author}</li>}
@@ -220,7 +220,7 @@ function MetaHeader({ meta }: { meta: Record<string, unknown> }): ReactNode {
       )}
 
       {Object.keys(rest).length > 0 && <ObjectFields data={rest} path="meta" />}
-    </header>
+    </div>
   );
 }
 
