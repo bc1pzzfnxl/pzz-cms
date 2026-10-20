@@ -52,9 +52,12 @@ function enhanceStats(): void {
  * article motion.
  */
 function enhanceMdxReveals(): void {
-  const targets = [...document.querySelectorAll<HTMLElement>("[data-mdx-reveal]")];
+  const targets = [...document.querySelectorAll<HTMLElement>("[data-mdx-reveal]")].filter(
+    (el) => !el.dataset.enhanced,
+  );
   if (targets.length === 0) return;
 
+  for (const el of targets) el.dataset.enhanced = "1";
   document.documentElement.dataset.enhance = "on";
 
   const observer = new IntersectionObserver(
@@ -102,7 +105,7 @@ function enhanceReveals(): void {
  */
 function enhanceArticle(): void {
   const root = document.querySelector<HTMLElement>("[data-reveal-article]");
-  if (!root) return;
+  if (!root || root.dataset.enhanced) return;
 
   const targets = [...root.querySelectorAll<HTMLElement>("h2, h3, p")].filter(
     (el) =>
@@ -112,6 +115,7 @@ function enhanceArticle(): void {
   );
   if (targets.length === 0) return;
 
+  root.dataset.enhanced = "1";
   document.documentElement.dataset.enhance = "on";
   splitText(targets, { type: ["words"], mask: "words" });
 
@@ -135,8 +139,13 @@ function run(): void {
   enhanceArticle();
 }
 
+// Astro's ClientRouter swaps the body without reloading scripts, so the
+// enhancer must run again after each navigation. `astro:page-load` also fires
+// on the first load; the per-target guards keep the work idempotent.
+document.addEventListener("astro:page-load", run);
+
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", run);
+  document.addEventListener("DOMContentLoaded", run, { once: true });
 } else {
   run();
 }

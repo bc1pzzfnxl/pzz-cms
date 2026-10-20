@@ -43,6 +43,15 @@ html.dark-mode {
 }
 
 /*
+ * kugiri wraps each gap between words in an inline-block box. Some browsers
+ * drop that space from a text selection, so copying a heading yields
+ * "motmot". `white-space: pre` keeps the gap in the paint and in the copy.
+ */
+[data-split] span[style*="inline-size"]:not([data-word]):not([data-mask]) {
+  white-space: pre;
+}
+
+/*
  * Precompiled mdxcn components. `prepareMdxHtml` removes motion's hidden
  * initial style and adds `data-mdx-reveal`; `enhance-articles` adds
  * `data-revealed` when the block enters the viewport. Scoped to `data-enhance`
