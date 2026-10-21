@@ -120,6 +120,12 @@ html.dark-mode {
     gap: 0.2rem;
   }
 
+  .article-body .graph-spec-row,
+  .mdx-preview .graph-spec-row {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+
   .article-body .graph-compare-row > span:not(:first-child),
   .mdx-preview .graph-compare-row > span:not(:first-child) {
     text-align: left;
