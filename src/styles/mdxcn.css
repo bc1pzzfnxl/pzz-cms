@@ -95,3 +95,38 @@ html.dark-mode {
   display: grid;
   margin-bottom: 0;
 }
+
+@media (max-width: 640px) {
+  .article-body .graph-compare,
+  .mdx-preview .graph-compare {
+    min-width: 0;
+  }
+
+  .article-body .graph-compare-header,
+  .mdx-preview .graph-compare-header {
+    display: none;
+  }
+
+  .article-body .graph-compare-row,
+  .mdx-preview .graph-compare-row {
+    grid-template-columns: 1fr !important;
+    gap: 0.2rem;
+  }
+
+  .article-body .graph-compare-row > span:not(:first-child),
+  .mdx-preview .graph-compare-row > span:not(:first-child) {
+    text-align: left;
+  }
+
+  .article-body .graph-compare-row > span[data-col]::before,
+  .mdx-preview .graph-compare-row > span[data-col]::before {
+    content: attr(data-col) " : ";
+    color: var(--graph-muted);
+  }
+
+  .article-body .graph-compare-row > span:first-child,
+  .mdx-preview .graph-compare-row > span:first-child {
+    margin-top: 0.4rem;
+    font-weight: 500;
+  }
+}

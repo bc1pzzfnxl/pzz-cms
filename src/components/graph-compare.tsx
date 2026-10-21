@@ -121,14 +121,14 @@ function GraphCompare({
   const reduce = useReducedMotion();
   const item = fadeUp(reduce);
   const list = staggerList(reduce, 0.04);
-  const template = `minmax(8rem,1.2fr) repeat(${columns.length}, minmax(9rem,1fr))`;
+  const template = `minmax(8rem,1fr) repeat(${columns.length}, minmax(10rem,1.2fr))`;
 
   return (
     <Graph title={title} className={className} corner={corner}>
       <GraphBody className="graph-scroll-x">
-        <div className="flex min-w-lg flex-col gap-3">
+        <div className="graph-compare flex min-w-lg flex-col gap-3">
           <div
-            className="grid items-end gap-x-4"
+            className="graph-compare-header grid items-end gap-x-4"
             style={{ gridTemplateColumns: template }}
           >
             <span />
@@ -191,6 +191,7 @@ function GraphCompare({
                         !mark && focused && "text-foreground",
                         !mark && dim && "text-graph-muted",
                       )}
+                      data-col={column}
                       key={`${row.label}-${column}`}
                       style={
                         dim && !on && mono ? { opacity: DIM_OPACITY } : undefined
