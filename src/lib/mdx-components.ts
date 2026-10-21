@@ -2,6 +2,7 @@ import { Callout } from "@/components/callout";
 import { Faq } from "@/components/faq";
 import { Figure } from "@/components/figure";
 import { GraphCompare } from "@/components/graph-compare";
+import { GraphSpec } from "@/components/graph-spec";
 import { GraphStat } from "@/components/graph-stat";
 import { GraphTable } from "@/components/graph-table";
 import { GraphTimeline } from "@/components/graph-timeline";
@@ -23,6 +24,7 @@ export const mdxComponents = {
   Faq,
   Figure,
   GraphCompare,
+  GraphSpec,
   GraphStat,
   GraphTable,
   GraphTimeline,

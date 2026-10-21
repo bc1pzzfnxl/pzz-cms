@@ -87,6 +87,10 @@ Réponse.
 | --- | --- | --- |
 | Oui | true | false |
 </GraphCompare>
+
+<GraphSpec title="SPEC">
+- Label : Value
+</GraphSpec>
       `,
       mdxComponents,
     );
@@ -174,6 +178,21 @@ Réponse.
     expect(html).toContain("[ COMPARE ]");
     expect(html).toContain("✓");
     expect(html).toContain("–");
+    expect(html).not.toContain("opacity:0");
+  });
+
+  it("renders a GraphSpec with label and value rows", async () => {
+    const { mdxComponents } = await import("@/lib/mdx-components");
+    const html = await renderMdxToHtml(
+      `<GraphSpec title="MELCHISÉDEK">\n- Roi de : Salem\n- Prêtre de : Dieu Très-Haut\n- Première mention : Genèse 14:18\n</GraphSpec>`,
+      mdxComponents,
+    );
+
+    expect(html).toContain("graph-frame");
+    expect(html).toContain("[ MELCHISÉDEK ]");
+    expect(html).toContain("Roi de");
+    expect(html).toContain("Salem");
+    expect(html).toContain("Genèse 14:18");
     expect(html).not.toContain("opacity:0");
   });
 });

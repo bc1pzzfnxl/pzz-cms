@@ -90,6 +90,13 @@ html.dark-mode {
  * The article's global `li` rule (display: list-item) is unlayered, so it beats
  * Tailwind's layered `grid` utility. Restore the compare row grid explicitly.
  */
+.article-body .graph-compare-header,
+.mdx-preview .graph-compare-header,
+.article-body .graph-compare-row,
+.mdx-preview .graph-compare-row {
+  grid-template-columns: var(--graph-compare-columns);
+}
+
 .article-body .graph-compare-row,
 .mdx-preview .graph-compare-row {
   display: grid;
@@ -109,7 +116,7 @@ html.dark-mode {
 
   .article-body .graph-compare-row,
   .mdx-preview .graph-compare-row {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
     gap: 0.2rem;
   }
 

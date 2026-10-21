@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import {
   childItems,
@@ -129,7 +129,7 @@ function GraphCompare({
         <div className="graph-compare flex min-w-lg flex-col gap-3">
           <div
             className="graph-compare-header grid items-end gap-x-4"
-            style={{ gridTemplateColumns: template }}
+            style={{ "--graph-compare-columns": template } as CSSProperties}
           >
             <span />
             {columns.map((column, index) => {
@@ -165,7 +165,7 @@ function GraphCompare({
               <motion.li
                 className="graph-compare-row grid items-baseline gap-x-4"
                 key={row.label}
-                style={{ gridTemplateColumns: template }}
+                style={{ "--graph-compare-columns": template } as CSSProperties}
                 variants={item}
               >
                 <span className="pr-2 text-foreground">{row.label}</span>
