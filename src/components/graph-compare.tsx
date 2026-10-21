@@ -121,7 +121,7 @@ function GraphCompare({
   const reduce = useReducedMotion();
   const item = fadeUp(reduce);
   const list = staggerList(reduce, 0.04);
-  const template = `minmax(7rem,1fr) repeat(${columns.length}, minmax(4.5rem, 7rem))`;
+  const template = `minmax(8rem,1.2fr) repeat(${columns.length}, minmax(9rem,1fr))`;
 
   return (
     <Graph title={title} className={className} corner={corner}>
@@ -163,12 +163,12 @@ function GraphCompare({
           >
             {rows.map((row) => (
               <motion.li
-                className="grid items-baseline gap-x-4"
+                className="graph-compare-row grid items-baseline gap-x-4"
                 key={row.label}
                 style={{ gridTemplateColumns: template }}
                 variants={item}
               >
-                <span className="truncate text-foreground">{row.label}</span>
+                <span className="pr-2 text-foreground">{row.label}</span>
                 {columns.map((column, index) => {
                   const value = row.values[index];
                   const focused = Boolean(accent) && column === accent;

@@ -85,3 +85,13 @@ html.dark-mode {
   overflow-x: auto;
   overscroll-behavior-x: contain;
 }
+
+/*
+ * The article's global `li` rule (display: list-item) is unlayered, so it beats
+ * Tailwind's layered `grid` utility. Restore the compare row grid explicitly.
+ */
+.article-body .graph-compare-row,
+.mdx-preview .graph-compare-row {
+  display: grid;
+  margin-bottom: 0;
+}
