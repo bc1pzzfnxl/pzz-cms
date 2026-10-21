@@ -111,7 +111,6 @@ paste the clean tag.
 | `Faq` | questions and answers |
 | `Figure` | an image with a caption and an optional credit |
 | `GraphCompare` | two options side by side, with ✓/– cells |
-| `GraphSpec` | a label/value spec sheet |
 | `GraphStat` | two to four large numbers |
 | `GraphTable` | tabular data |
 | `GraphTimeline` | dated events, one marked current |
@@ -178,21 +177,11 @@ Examples:
 | Première mention | Genèse 14:18 | Genèse 17:1 |
 | Valeur | 197 | 345 |
 </GraphCompare>
-
-<GraphSpec title="MELCHISÉDEK">
-- Roi de : Salem
-- Prêtre de : Dieu Très-Haut
-- Première mention : Genèse 14:18
-- Référence NT : Hébreux 7:1-10
-</GraphSpec>
 ```
 
 `GraphCompare` reads a Markdown table with an empty first header (the row
 labels). `true`/`false` (or `yes`/`no`, `✓`/`–`) render as check marks;
 `accent="Column"` highlights one column and `palette="duo"` colors them.
-
-`GraphSpec` reads `- label : value` rows. A bold label accents its value, and a
-body paragraph under an item becomes a muted note.
 
 ### Images
 
