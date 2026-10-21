@@ -80,3 +80,8 @@ html.dark-mode {
     transparent 2px 7px
   );
 }
+
+@utility graph-scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}

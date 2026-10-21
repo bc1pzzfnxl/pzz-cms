@@ -15,6 +15,13 @@ describe("renderMdxToHtml", () => {
     expect(html).toContain("<em>italique</em>");
   });
 
+  it("parses GFM tables", async () => {
+    const html = await renderMdxToHtml("| A | B |\n| --- | --- |\n| 1 | 2 |");
+    expect(html).toContain("<table>");
+    expect(html).toContain("<th>A</th>");
+    expect(html).toContain("<td>1</td>");
+  });
+
   it("renders a provided component", async () => {
     const Badge = ({ children }: { children?: ReactNode }) =>
       createElement("span", { className: "badge" }, children);
@@ -74,6 +81,12 @@ Réponse.
 </GraphTimeline>
 
 <Verse reference="Jean 3:16" version="LSG">Car Dieu a tant aimé le monde.</Verse>
+
+<GraphCompare title="COMPARE">
+| | A | B |
+| --- | --- | --- |
+| Oui | true | false |
+</GraphCompare>
       `,
       mdxComponents,
     );
@@ -147,6 +160,20 @@ Réponse.
     expect(html).toContain('alt="Une image"');
     expect(html).toContain("Une légende");
     expect(html).toContain("Source");
+    expect(html).not.toContain("opacity:0");
+  });
+
+  it("renders a GraphCompare with check and dash cells", async () => {
+    const { mdxComponents } = await import("@/lib/mdx-components");
+    const html = await renderMdxToHtml(
+      `<GraphCompare title="COMPARE">\n| | A | B |\n| --- | --- | --- |\n| Oui | true | false |\n| Non | false | true |\n</GraphCompare>`,
+      mdxComponents,
+    );
+
+    expect(html).toContain("graph-frame");
+    expect(html).toContain("[ COMPARE ]");
+    expect(html).toContain("✓");
+    expect(html).toContain("–");
     expect(html).not.toContain("opacity:0");
   });
 });

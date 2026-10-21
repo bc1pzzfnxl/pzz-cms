@@ -131,6 +131,21 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
     Editor: GenericJsxEditor,
   },
   {
+    name: "GraphCompare",
+    kind: "flow",
+    props: [
+      { name: "title", type: "string", required: true },
+      { name: "columns", type: "expression" },
+      { name: "rows", type: "expression" },
+      { name: "accent", type: "string" },
+      { name: "palette", type: "string" },
+      { name: "corner", type: "string" },
+      { name: "className", type: "string" },
+    ],
+    hasChildren: true,
+    Editor: GenericJsxEditor,
+  },
+  {
     name: "GraphStat",
     kind: "flow",
     props: [
@@ -430,9 +445,9 @@ export default function ArticleEditor({ initial }: Props) {
       <div>
         <span className="block text-sm font-medium">Contenu (MDX)</span>
         <p className="mt-1 text-xs text-muted-foreground">
-          Composants : Callout, Quote, Steps, Terminal, Faq, Figure, GraphStat, GraphTable,
-          GraphTimeline, Stat, Reveal, Verse. Pour du JSX brut, utilisez le mode Source (bouton
-          Diff/Source).
+          Composants : Callout, Quote, Steps, Terminal, Faq, Figure, GraphCompare, GraphStat,
+          GraphTable, GraphTimeline, Stat, Reveal, Verse. Pour du JSX brut, utilisez le mode Source
+          (bouton Diff/Source).
         </p>
         <div
           data-testid="body-editor"

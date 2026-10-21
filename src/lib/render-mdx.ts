@@ -2,6 +2,7 @@ import { evaluate } from "@mdx-js/mdx";
 import { type ComponentType, createElement, type ReactNode } from "react";
 import * as runtime from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
+import remarkGfm from "remark-gfm";
 import { prepareMdxHtml } from "./mdx-html";
 
 export type MdxComponent = ComponentType<{ children?: ReactNode } & Record<string, unknown>>;
@@ -18,7 +19,11 @@ export async function renderMdxToHtml(
   source: string,
   components: MdxComponents = {},
 ): Promise<string> {
-  const mod = await evaluate(source, { ...runtime, development: false });
+  const mod = await evaluate(source, {
+    ...runtime,
+    development: false,
+    remarkPlugins: [remarkGfm],
+  });
   const MdxContent = mod.default as ComponentType<{ components?: MdxComponents }>;
   const html = renderToStaticMarkup(createElement(MdxContent, { components }));
 

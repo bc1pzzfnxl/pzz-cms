@@ -110,6 +110,7 @@ paste the clean tag.
 | `Terminal` | a command and its output |
 | `Faq` | questions and answers |
 | `Figure` | an image with a caption and an optional credit |
+| `GraphCompare` | two options side by side, with ✓/– cells |
 | `GraphStat` | two to four large numbers |
 | `GraphTable` | tabular data |
 | `GraphTimeline` | dated events, one marked current |
@@ -168,7 +169,19 @@ Examples:
 | ℵ | IVe s. | Ancien Testament |
 | B | IVe s. | Bible complète |
 </GraphTable>
+
+<GraphCompare title="EL ELYON / EL SHADDAÏ">
+| | El Elyon | El Shaddaï |
+| --- | --- | --- |
+| Sens | Dieu Très-Haut | Dieu Tout-Puissant |
+| Première mention | Genèse 14:18 | Genèse 17:1 |
+| Valeur | 197 | 345 |
+</GraphCompare>
 ```
+
+`GraphCompare` reads a Markdown table with an empty first header (the row
+labels). `true`/`false` (or `yes`/`no`, `✓`/`–`) render as check marks;
+`accent="Column"` highlights one column and `palette="duo"` colors them.
 
 ### Images
 
