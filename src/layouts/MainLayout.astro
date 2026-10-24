@@ -7,7 +7,6 @@ import "@fontsource/geist-sans/500.css";
 import "@fontsource/geist-sans/700.css";
 import "@fontsource/geist-mono/400.css";
 import "../styles/global.css";
-import ScrollProgress from "../components/ui/scroll-progress";
 import { site } from "../lib/site";
 
 interface Props {
@@ -15,6 +14,8 @@ interface Props {
   description?: string;
   ogType?: string;
   image?: string;
+  imageSrcSet?: string;
+  imageSizes?: string;
   publishedTime?: string;
   modifiedTime?: string;
 }
@@ -24,6 +25,8 @@ const {
   description = site.description,
   ogType = "website",
   image = site.defaultCover,
+  imageSrcSet,
+  imageSizes,
   publishedTime,
   modifiedTime,
 } = Astro.props;
@@ -45,7 +48,16 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
         <!-- Preload LCP Image -->
-        {image && <link rel="preload" as="image" href={image} fetchpriority="high" />}
+        {image && (
+            <link
+                rel="preload"
+                as="image"
+                href={image}
+                imagesrcset={imageSrcSet}
+                imagesizes={imageSizes}
+                fetchpriority="high"
+            />
+        )}
 
         <!-- Primary Meta Tags -->
         <title>{fullTitle}</title>
@@ -387,7 +399,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         <main>
             <slot />
         </main>
-        <ScrollProgress client:only="react" />
         <script>
             import "../lib/enhance-articles";
         </script>

@@ -25,9 +25,10 @@ import {
   UndoRedo,
 } from "@mdxeditor/editor";
 import { useEffect, useRef, useState } from "react";
-import { convertToWebp } from "../../lib/image";
+import { convertToWebp, convertToWebpVariants } from "../../lib/image";
 import { mdxComponents } from "../../lib/mdx-components";
 import { normalizeMdxJsx } from "../../lib/mdx-normalize";
+import { MEDIA_VARIANT_WIDTHS } from "../../lib/media";
 import { renderMdxToHtml } from "../../lib/render-mdx";
 
 type Status = "draft" | "published";
@@ -275,9 +276,22 @@ export default function ArticleEditor({ initial, categories }: Props) {
     setMessage(null);
     try {
       const { blob, width, height } = await convertToWebp(file);
+      const variants = await convertToWebpVariants(
+        file,
+        MEDIA_VARIANT_WIDTHS.filter((variantWidth) => variantWidth < width),
+        0.9,
+      );
       const form = new FormData();
       const name = `${file.name.replace(/\.[^.]+$/, "") || "image"}.webp`;
       form.append("file", new File([blob], name, { type: "image/webp" }));
+      for (const variant of variants) {
+        form.append(
+          `variant-${variant.width}`,
+          new File([variant.blob], `${name.replace(/\.webp$/, "")}-${variant.width}.webp`, {
+            type: "image/webp",
+          }),
+        );
+      }
       form.append("width", String(width));
       form.append("height", String(height));
       form.append("alt", title);

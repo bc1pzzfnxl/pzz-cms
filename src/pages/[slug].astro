@@ -3,7 +3,7 @@ import { env } from "cloudflare:workers";
 import { JsonDocumentView } from "../components/documents/json-document";
 import { createContent } from "../content";
 import MainLayout from "../layouts/MainLayout.astro";
-import { mediaKeysInHtml, mediaPublicPath, optimizeBodyImages } from "../lib/media";
+import { mediaKeysInHtml, mediaPublicPath, MEDIA_SIZES, mediaSrcSet, optimizeBodyImages } from "../lib/media";
 import { prepareMdxHtml } from "../lib/mdx-html";
 import { absoluteUrl, blogPostingSchema, breadcrumbSchema, creativeWorkSchema } from "../lib/seo";
 import { site } from "../lib/site";
@@ -27,6 +27,8 @@ if (!article && !document) {
 }
 
 const cover = article?.ogImageKey ? await content.getMediaByKey(article.ogImageKey) : null;
+const coverSrcSet =
+  article?.ogImageKey && cover?.width ? mediaSrcSet(article.ogImageKey, cover.width) : null;
 
 // Older rows were compiled before the static-render fix and still carry
 // motion's inline `opacity:0`; normalize at render time so they do not need a
@@ -117,6 +119,8 @@ if (document && jsonData) {
     description={description}
     ogType={article || document ? "article" : "website"}
     image={image}
+    imageSrcSet={coverSrcSet ?? undefined}
+    imageSizes={coverSrcSet ? MEDIA_SIZES : undefined}
     publishedTime={article?.publishedAt ?? document?.publishedAt ?? undefined}
     modifiedTime={article?.updatedAt ?? document?.updatedAt ?? undefined}
 >
@@ -136,6 +140,8 @@ if (document && jsonData) {
                             <figure class="article-cover-wrapper">
                                 <img
                                     src={mediaPublicPath(article.ogImageKey)}
+                                    srcset={coverSrcSet ?? undefined}
+                                    sizes={coverSrcSet ? MEDIA_SIZES : undefined}
                                     alt={cover?.alt ?? article.title}
                                     class="article-cover"
                                     width={cover?.width ?? undefined}

@@ -26,15 +26,26 @@ export const GET: APIRoute = async ({ params, request }) => {
   if (cached) return cached;
 
   const object = await env.MEDIA.get(key);
-  if (!object) return new Response("Not found", { status: 404 });
+  let found = object;
+  let cacheable = Boolean(found);
+
+  // A resized variant may not exist yet (images uploaded before variants were
+  // generated). Fall back to the original rather than showing a broken image.
+  if (!found) {
+    const original = key.replace(/@\d+(\.[a-z0-9]+)$/i, "$1");
+    if (original !== key) found = await env.MEDIA.get(original);
+    cacheable = false;
+  }
+
+  if (!found) return new Response("Not found", { status: 404 });
 
   const headers = new Headers({
-    "content-type": object.httpMetadata?.contentType ?? "application/octet-stream",
+    "content-type": found.httpMetadata?.contentType ?? "application/octet-stream",
     "cache-control": "public, max-age=31536000, immutable",
   });
-  if (object.httpEtag) headers.set("etag", object.httpEtag);
+  if (found.httpEtag) headers.set("etag", found.httpEtag);
 
-  const response = new Response(object.body, { headers });
-  await cache.put(cacheKey, response.clone());
+  const response = new Response(found.body, { headers });
+  if (cacheable) await cache.put(cacheKey, response.clone());
   return response;
 };

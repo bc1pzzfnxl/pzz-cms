@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { createContent } from "@/content";
-import { mediaObjectKey } from "@/lib/media";
+import { mediaObjectKey, mediaVariantKey } from "@/lib/media";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -33,6 +33,17 @@ export const POST: APIRoute = async ({ request }) => {
   const key = mediaObjectKey(file.name || "image.webp", crypto.randomUUID().slice(0, 8));
   const bytes = await file.arrayBuffer();
   await env.MEDIA.put(key, bytes, { httpMetadata: { contentType: "image/webp" } });
+
+  for (const field of form.keys()) {
+    if (!field.startsWith("variant-")) continue;
+    const value = form.get(field);
+    if (!(value instanceof File) || value.type !== "image/webp") continue;
+    const width = Number(field.slice("variant-".length));
+    if (!Number.isFinite(width) || width <= 0) continue;
+    await env.MEDIA.put(mediaVariantKey(key, width), await value.arrayBuffer(), {
+      httpMetadata: { contentType: "image/webp" },
+    });
+  }
 
   const media = await content.createMedia({ r2Key: key, width, height, alt });
 
