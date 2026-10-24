@@ -176,16 +176,25 @@ const formatDate = (dateStr?: string | null) => {
     <script>
         // Load the preview frame only on hover or keyboard focus: the home page
         // makes no article request until the reader asks for a preview.
-        for (const item of document.querySelectorAll(".home-item")) {
-            const frame = item.querySelector("iframe[data-src]");
-            if (!(frame instanceof HTMLIFrameElement)) continue;
-            const load = () => {
-                if (!frame.hasAttribute("src")) {
-                    frame.setAttribute("src", frame.dataset.src ?? "");
-                }
-            };
-            item.addEventListener("mouseenter", load);
-            item.addEventListener("focusin", load);
+        // Re-run after every ClientRouter navigation: the restored home DOM is
+        // cloned without its event listeners, and its iframe document is gone.
+        function initHomePreviews() {
+            for (const item of document.querySelectorAll(".home-item")) {
+                const frame = item.querySelector("iframe[data-src]");
+                if (!(frame instanceof HTMLIFrameElement)) continue;
+
+                frame.removeAttribute("src");
+
+                const load = () => {
+                    if (!frame.hasAttribute("src")) {
+                        frame.setAttribute("src", frame.dataset.src ?? "");
+                    }
+                };
+                item.addEventListener("mouseenter", load);
+                item.addEventListener("focusin", load);
+            }
         }
+
+        document.addEventListener("astro:page-load", initHomePreviews);
     </script>
 </MainLayout>
