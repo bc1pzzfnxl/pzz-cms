@@ -202,8 +202,11 @@ For a visible caption and a credit, use `Figure`:
 images.
 
 `optimizeBodyImages` adds intrinsic `width`/`height` from the media table,
-`loading="lazy"`, and `decoding="async"`. Body images are never preloaded; only
-the cover is. Alt text is required for accessibility and image SEO.
+`loading="lazy"`, and `decoding="async"`. A Markdown image that stands alone in
+its paragraph is promoted to a `<figure>` and its **alt text is shown as the
+visible caption**; images inside prose or inside `<Figure>` keep their markup.
+Body images are never preloaded; only the cover is. Alt text is required for
+accessibility and image SEO.
 
 ## 4. Static rendering and animation
 

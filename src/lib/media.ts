@@ -68,12 +68,29 @@ function mediaKeyFromSrc(src: string): string | null {
 }
 
 /**
+ * Wrap a standalone body image (the only child of its paragraph) in a figure
+ * whose visible caption is its alt text. Images that already live in a figure
+ * (the `Figure` component) and inline images inside prose are left alone.
+ */
+function addImageCaptions(html: string): string {
+  return html.replace(
+    /<p>(\s*)(<img\b[^>]*>)(\s*)<\/p>/gi,
+    (match, before: string, img: string) => {
+      const alt = img.match(/\balt="([^"]*)"/i)?.[1]?.trim();
+      if (!alt) return match;
+      return `<figure class="article-figure">${before}${img}<figcaption class="article-caption">${alt}</figcaption></figure>`;
+    },
+  );
+}
+
+/**
  * Add intrinsic dimensions, `srcset`/`sizes`, and lazy loading to body images,
- * so article pages have no layout shift and download the right size.
+ * so article pages have no layout shift and download the right size. Standalone
+ * images also get a visible caption built from their alt text.
  * Idempotent: existing attributes are kept.
  */
 export function optimizeBodyImages(html: string, dimensions: Map<string, ImageDimensions>): string {
-  return html.replace(/<img\b[^>]*>/gi, (tag) => {
+  const optimized = html.replace(/<img\b[^>]*>/gi, (tag) => {
     const src = tag.match(/\bsrc="([^"]+)"/i)?.[1];
     const key = src ? mediaKeyFromSrc(src) : null;
     const dims = key ? dimensions.get(key) : undefined;
@@ -91,4 +108,6 @@ export function optimizeBodyImages(html: string, dimensions: Map<string, ImageDi
     if (!/\bdecoding=/i.test(out)) out = out.replace(/<img\b/i, '<img decoding="async"');
     return out;
   });
+
+  return addImageCaptions(optimized);
 }

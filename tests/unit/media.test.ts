@@ -75,4 +75,31 @@ describe("optimizeBodyImages", () => {
     expect(html).toContain('loading="eager"');
     expect(html).not.toContain("width=");
   });
+
+  it("turns a standalone image into a figure with its alt as caption", () => {
+    const html = optimizeBodyImages(
+      '<p><img src="/media/images/a.webp/" alt="Une légende"/></p>',
+      new Map(),
+    );
+    expect(html).toContain('<figure class="article-figure">');
+    expect(html).toContain('<figcaption class="article-caption">Une légende</figcaption>');
+  });
+
+  it("does not caption an image with an empty alt", () => {
+    const html = optimizeBodyImages('<p><img src="/media/images/a.webp/" alt=""/></p>', new Map());
+    expect(html).not.toContain("figcaption");
+  });
+
+  it("does not wrap inline images or images already in a figure", () => {
+    const inline = optimizeBodyImages(
+      '<p>Texte <img src="/media/images/a.webp/" alt="a"/> suite</p>',
+      new Map(),
+    );
+    const inFigure = optimizeBodyImages(
+      '<figure data-figure><img src="/media/images/a.webp/" alt="a"/></figure>',
+      new Map(),
+    );
+    expect(inline).not.toContain("article-figure");
+    expect(inFigure).not.toContain("article-figure");
+  });
 });
