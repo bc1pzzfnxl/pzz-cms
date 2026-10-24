@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  deleteMediaObjects,
   mediaKeysInHtml,
+  mediaKeysInMarkdown,
   mediaObjectKey,
+  mediaObjectKeys,
   mediaPublicPath,
   mediaSrcSet,
   mediaVariantKey,
@@ -101,5 +104,37 @@ describe("optimizeBodyImages", () => {
     );
     expect(inline).not.toContain("article-figure");
     expect(inFigure).not.toContain("article-figure");
+  });
+});
+
+describe("mediaKeysInMarkdown", () => {
+  it("collects keys from MDX image links", () => {
+    const md = "![a](/media/images/a.webp/) and ![b](/media/images/b@800.webp/)";
+    expect(mediaKeysInMarkdown(md)).toEqual(["images/a.webp", "images/b@800.webp"]);
+  });
+});
+
+describe("mediaObjectKeys", () => {
+  it("includes the original and every variant", () => {
+    expect(mediaObjectKeys("images/a.webp")).toEqual([
+      "images/a.webp",
+      "images/a@480.webp",
+      "images/a@800.webp",
+      "images/a@1200.webp",
+    ]);
+  });
+
+  it("deletes every object and ignores missing ones", async () => {
+    const deleted: string[] = [];
+    await deleteMediaObjects(
+      {
+        async delete(key: string) {
+          deleted.push(key);
+        },
+      },
+      "images/a.webp",
+    );
+    expect(deleted).toHaveLength(4);
+    expect(deleted).toContain("images/a@800.webp");
   });
 });

@@ -74,6 +74,9 @@ export interface Content {
   createMedia(input: CreateMediaInput): Promise<Media>;
   getMediaByKey(r2Key: string): Promise<Media | null>;
   updateMediaAlt(r2Key: string, alt: string | null): Promise<Media | null>;
+  isMediaReferenced(r2Key: string): Promise<boolean>;
+  deleteMedia(r2Key: string): Promise<void>;
+  listMedia(): Promise<Media[]>;
 
   // Categories
   listCategories(): Promise<Category[]>;
@@ -422,6 +425,32 @@ export function createContent(db: Database): Content {
     async updateMediaAlt(r2Key, alt) {
       await db.prepare("UPDATE media SET alt = ? WHERE r2_key = ?").bind(alt, r2Key).run();
       return getMediaByKey(r2Key);
+    },
+
+    async isMediaReferenced(r2Key) {
+      const pattern = `%${r2Key}%`;
+      const row = await db
+        .prepare(
+          `SELECT 1 AS used FROM articles
+           WHERE og_image_key = ? OR body_mdx LIKE ? OR body_html LIKE ?
+           UNION ALL
+           SELECT 1 AS used FROM documents WHERE body_json LIKE ?
+           LIMIT 1`,
+        )
+        .bind(r2Key, pattern, pattern, pattern)
+        .first<{ used: number }>();
+      return Boolean(row);
+    },
+
+    async deleteMedia(r2Key) {
+      await db.prepare("DELETE FROM media WHERE r2_key = ?").bind(r2Key).run();
+    },
+
+    async listMedia() {
+      const { results } = await db
+        .prepare("SELECT id, r2_key, width, height, alt, created_at FROM media ORDER BY created_at ASC")
+        .all<MediaRow>();
+      return results.map(toMedia);
     },
 
     getMediaByKey,

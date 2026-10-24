@@ -17,4 +17,5 @@ export interface R2BucketLike {
     options?: { httpMetadata?: { contentType?: string } },
   ): Promise<unknown>;
   get(key: string): Promise<R2ObjectLike | null>;
+  delete(key: string): Promise<void>;
 }

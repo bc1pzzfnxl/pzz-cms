@@ -122,6 +122,21 @@ Compare the old blog and the CMS, URL by URL:
 bun run parity https://example.com https://your-worker.workers.dev /sitemap-index.xml
 ```
 
+## Content mirror
+
+Keep a Git history of the text content, without storing images:
+
+```bash
+bun run content:sync -- --config=wrangler.deploy.jsonc
+bun run content:import -- --config=wrangler.deploy.jsonc
+bun run media:gc -- --bucket=<r2-bucket> --config=wrangler.deploy.jsonc
+```
+
+`content:sync` mirrors published articles by default; `--all` includes drafts
+and requires a private repository. `content:import` restores text and media
+metadata into D1; R2 objects are not backed up. See
+[`docs/template-vs-blog.md`](./docs/template-vs-blog.md).
+
 ## Data policy
 
 This repository holds code only. Articles, images, database contents and

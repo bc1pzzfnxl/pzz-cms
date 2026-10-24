@@ -51,7 +51,7 @@ export function mediaKeyFromImageUrl(url: string | undefined): string | null {
   } catch {
     return null;
   }
-  const match = pathname.match(/\/images\/(.+)$/);
+  const match = pathname.match(/\/(?:media\/)?images\/(.+?)\/?$/);
   return match ? `images/${match[1]}` : null;
 }
 

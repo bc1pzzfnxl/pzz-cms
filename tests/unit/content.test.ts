@@ -233,6 +233,21 @@ describe("content module — admin write path", () => {
     expect((await content.getMediaByKey("images/a-x.webp"))?.alt).toBe("Mosaïque de Ravenne");
   });
 
+  it("detects media references and deletes an unused row", async () => {
+    await content.createMedia({ r2Key: "images/a-x.webp", width: 800, height: 600, alt: null });
+    expect(await content.isMediaReferenced("images/a-x.webp")).toBe(false);
+
+    await content.updateArticle("1", {
+      bodyMdx: "![x](/media/images/a-x.webp/)",
+      bodyHtml: '<img src="/media/images/a-x.webp/">',
+    });
+    expect(await content.isMediaReferenced("images/a-x.webp")).toBe(true);
+
+    await content.deleteMedia("images/a-x.webp");
+    expect(await content.getMediaByKey("images/a-x.webp")).toBeNull();
+    expect(await content.listMedia()).toEqual([]);
+  });
+
   it("returns the category of a published article", async () => {
     const posts = await content.listPublished();
 

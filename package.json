@@ -23,6 +23,9 @@
     "migrate": "bun scripts/migrate.ts",
     "parity": "bun scripts/parity.ts",
     "images:optimize": "bun scripts/optimize-images.ts",
+    "content:sync": "bun scripts/content-sync.ts",
+    "content:import": "bun scripts/content-import.ts",
+    "media:gc": "bun scripts/media-gc.ts",
     "auth:reset": "bun scripts/auth-reset.ts",
     "check": "biome check . && astro check && vitest run",
     "prepare": "husky"

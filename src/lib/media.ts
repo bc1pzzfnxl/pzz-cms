@@ -62,6 +62,28 @@ export function mediaKeysInHtml(html: string): string[] {
   return [...keys];
 }
 
+/** Media keys referenced by Markdown/MDX (`/media/images/...`). */
+export function mediaKeysInMarkdown(markdown: string): string[] {
+  const keys = new Set<string>();
+  for (const match of markdown.matchAll(/\/media\/(images\/[^"')\s]+?)\/?(?=["')\s>]|$)/g)) {
+    keys.add(match[1]);
+  }
+  return [...keys];
+}
+
+/** Every R2 object belonging to a media original: the file and its variants. */
+export function mediaObjectKeys(r2Key: string): string[] {
+  return [r2Key, ...MEDIA_VARIANT_WIDTHS.map((width) => mediaVariantKey(r2Key, width))];
+}
+
+/** Delete a media original and all its variants from R2. Missing objects are ignored. */
+export async function deleteMediaObjects(
+  bucket: { delete(key: string): Promise<void> },
+  r2Key: string,
+): Promise<void> {
+  await Promise.all(mediaObjectKeys(r2Key).map((key) => bucket.delete(key)));
+}
+
 function mediaKeyFromSrc(src: string): string | null {
   const match = src.match(/\/media\/(images\/[^"'\s>]+?)\/?$/);
   return match ? match[1] : null;

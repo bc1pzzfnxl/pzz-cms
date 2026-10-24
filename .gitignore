@@ -30,3 +30,9 @@ playwright-report/
 
 # Migration output (private content, never committed)
 migration-output/
+
+# Content mirror (deployment repositories commit this, the template does not)
+content/
+
+# Dry-run SQL from content:import
+content-import.sql
