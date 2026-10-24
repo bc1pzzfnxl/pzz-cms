@@ -72,7 +72,7 @@ describe("deriveDescription", () => {
 
 describe("parseArticleFile", () => {
   it("maps frontmatter to a published article", () => {
-    const { article, images } = parseArticleFile("le-mystere-de-barabbas.md", RAW);
+    const { article, images, coverAlt } = parseArticleFile("le-mystere-de-barabbas.md", RAW);
 
     expect(article.slug).toBe("le-mystere-de-barabbas");
     expect(article.id).toBe("le-mystere-de-barabbas");
@@ -83,6 +83,7 @@ describe("parseArticleFile", () => {
     expect(article.updatedAt).toBe("2026-09-06T00:00:00.000Z");
     expect(article.bodyMdx).toContain("/media/images/barabbas.webp/");
     expect(images).toContain("images/barabbas.webp");
+    expect(coverAlt).toBe("Ecce Homo");
   });
 });
 

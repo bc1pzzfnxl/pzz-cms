@@ -299,6 +299,8 @@ Notes from the build:
 
 - `src/lib/migration.ts` (unit tested): frontmatter parsing, slug, description,
   image-key extraction, `/images/*` → `/media/images/*/` rewriting, SQL export.
+  It keeps the frontmatter `imageAlt` as the cover media row's `alt`, so the
+  published cover caption is the real description, not the article title.
 - `scripts/migrate.ts` reads a content directory, compiles each body to HTML and
   writes `migration-output/articles.sql` + `r2-upload.sh`. Output is gitignored;
   the articles stay private.

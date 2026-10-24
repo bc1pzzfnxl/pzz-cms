@@ -37,10 +37,14 @@ const alts = new Map<string, string>();
 
 for (const file of files) {
   const raw = await readFile(join(contentDir, file), "utf8");
-  const { article, images } = parseArticleFile(basename(file), raw);
+  const { article, images, coverAlt } = parseArticleFile(basename(file), raw);
   article.bodyHtml = await renderMdxToHtml(article.bodyMdx, {});
   articles.push(article);
   for (const key of images) imageKeys.add(key);
+
+  // The old blog kept the cover description in `imageAlt`; it must survive the
+  // migration, otherwise the cover has no usable alt.
+  if (article.ogImageKey && coverAlt) alts.set(article.ogImageKey, coverAlt);
 
   for (const match of raw.matchAll(/!\[([^\]]*)\]\(\/images\/([^)\s]+)\)/g)) {
     if (match[1]) alts.set(`images/${match[2]}`, match[1]);

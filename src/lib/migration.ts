@@ -82,6 +82,8 @@ export function deriveDescription(markdown: string, max = 160): string {
 export interface ParsedFile {
   article: MigratedArticle;
   images: string[];
+  /** `imageAlt` from the frontmatter, for the cover media row. */
+  coverAlt: string | null;
 }
 
 export function parseArticleFile(filename: string, raw: string, locale = "fr"): ParsedFile {
@@ -108,7 +110,11 @@ export function parseArticleFile(filename: string, raw: string, locale = "fr"): 
     updatedAt: toIso(data.dateModified) ?? toIso(data.date),
   };
 
-  return { article, images: [...new Set(images)] };
+  return {
+    article,
+    images: [...new Set(images)],
+    coverAlt: coverKey ? (data.imageAlt?.trim() ?? null) : null,
+  };
 }
 
 function sqlValue(value: string | null): string {
