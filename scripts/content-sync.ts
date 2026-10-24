@@ -48,6 +48,7 @@ interface MediaRow {
 interface CategoryRow {
   slug: string;
   name: string;
+  description: string | null;
   position: number;
 }
 
@@ -90,7 +91,7 @@ const articles = query<ArticleRow>(
 ).filter((article) => all || article.status === "published");
 
 const categories = query<CategoryRow>(
-  "SELECT slug, name, position FROM categories ORDER BY position ASC, name ASC",
+  "SELECT slug, name, description, position FROM categories ORDER BY position ASC, name ASC",
 );
 
 const selectedMedia = new Set<string>();

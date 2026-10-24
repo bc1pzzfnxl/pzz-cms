@@ -5,6 +5,7 @@ import { createContent } from "@/content";
 interface UpdateBody {
   name?: string;
   slug?: string;
+  description?: string | null;
   position?: number;
 }
 
@@ -28,6 +29,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
   const category = await content.updateCategory(id, {
     name: body.name?.trim() || undefined,
     slug: body.slug,
+    description: body.description,
     position: body.position,
   });
 

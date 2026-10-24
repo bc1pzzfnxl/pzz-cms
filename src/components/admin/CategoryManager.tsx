@@ -1,6 +1,12 @@
 import { useState } from "react";
 
-type Category = { id: string; slug: string; name: string; position: number };
+type Category = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  position: number;
+};
 
 interface Props {
   initial: Category[];
@@ -11,6 +17,7 @@ const inputClass = "w-full rounded-md border px-3 py-2 text-sm";
 export default function CategoryManager({ initial }: Props) {
   const [categories, setCategories] = useState(initial);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -28,7 +35,7 @@ export default function CategoryManager({ initial }: Props) {
       const res = await fetch("/admin/api/categories/", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), description: description.trim() || null }),
       });
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
@@ -36,13 +43,17 @@ export default function CategoryManager({ initial }: Props) {
         return;
       }
       setName("");
+      setDescription("");
       await refresh();
     } finally {
       setBusy(false);
     }
   }
 
-  async function update(id: string, payload: { name?: string; position?: number }) {
+  async function update(
+    id: string,
+    payload: { name?: string; description?: string | null; position?: number },
+  ) {
     const res = await fetch(`/admin/api/categories/${id}/`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
@@ -94,6 +105,13 @@ export default function CategoryManager({ initial }: Props) {
             placeholder="Théologie"
             onChange={(event) => setName(event.target.value)}
           />
+          <input
+            aria-label="Description de la nouvelle catégorie"
+            className={`${inputClass} mt-2`}
+            value={description}
+            placeholder="Description affichée sur la page de la catégorie (optionnel)"
+            onChange={(event) => setDescription(event.target.value)}
+          />
         </div>
         <button
           type="submit"
@@ -141,6 +159,18 @@ export default function CategoryManager({ initial }: Props) {
                   }}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">{category.slug}</p>
+                <input
+                  aria-label={`Description de ${category.name}`}
+                  className={`${inputClass} mt-2`}
+                  defaultValue={category.description ?? ""}
+                  placeholder="Description affichée sur /categorie/…"
+                  onBlur={(event) => {
+                    const value = event.target.value.trim();
+                    if (value !== (category.description ?? "")) {
+                      void update(category.id, { description: value || null });
+                    }
+                  }}
+                />
               </div>
               <button
                 type="button"

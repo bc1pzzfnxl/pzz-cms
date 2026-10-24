@@ -60,14 +60,12 @@ bun run media:gc -- --bucket=<r2-bucket> --config=wrangler.deploy.jsonc
 - `content:sync` writes one `.mdx` per article plus `categories.json`,
   `media.json` and `manifest.json`. It mirrors **published** articles by
   default; `--all` includes drafts and must only be used with a private
-  repository.
+  repository. Run it manually when you want a new Git checkpoint.
 - `content:import` recompiles MDX and upserts the mirror into D1. It restores
   text and media metadata, not the R2 objects: images must still exist.
 - `media:gc` deletes media rows and R2 objects that no current article or
   document references, after 7 days by default.
-- The GitHub Action that runs `content:sync` is deployment-specific: it needs
-  that deployment's Cloudflare secrets, so it lives in the deployment
-  repository, not in the template.
+- The template never commits `content/`; only the deployment does.
 - Images are never mirrored. Deleting a replaced image also breaks the old Git
   versions that referenced it; that is the accepted cost of staying inside the
   R2 free tier.
@@ -79,7 +77,5 @@ bun run media:gc -- --bucket=<r2-bucket> --config=wrangler.deploy.jsonc
 
 - The deployment repository visibility is still under review; ADR 0004 expects
   a private blog repository.
-- `src/lib/imageMeta.ts` and `src/components/ArticleImage.astro` are legacy from
-  the Astro Markdown pipeline and are candidates for removal.
 - The `shadcn` CLI is a dev dependency because the admin CSS imports
   `shadcn/tailwind.css`.

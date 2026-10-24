@@ -49,9 +49,10 @@ the article title is the fallback.
 
 ## Category
 
-A named group of articles, with a slug and an ordered position. One category per
-article, nullable. The home groups articles by category; deleting a category
-leaves its articles uncategorised.
+A named group of articles, with a slug, an optional description and an ordered
+position. One category per article, nullable. The home groups articles by
+category and links to its public page at `/categorie/<slug>/`; deleting a
+category leaves its articles uncategorised.
 
 ## Document
 

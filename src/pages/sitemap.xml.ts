@@ -11,6 +11,18 @@ function escapeXml(value: string): string {
 export const GET: APIRoute = async () => {
   const content = createContent(env.DB);
   const posts = await content.listPublished();
+  const categories = await content.listCategories();
+
+  const categoryEntries = categories
+    .map((category) => {
+      const categoryPosts = posts.filter((post) => post.category?.id === category.id);
+      if (categoryPosts.length === 0) return null;
+      return {
+        loc: absoluteUrl(site.url, `/categorie/${category.slug}/`),
+        lastmod: categoryPosts[0]?.publishedAt ?? null,
+      };
+    })
+    .filter((entry): entry is { loc: string; lastmod: string | null } => entry !== null);
 
   const entries = [
     { loc: absoluteUrl(site.url, "/"), lastmod: null as string | null },
@@ -19,6 +31,7 @@ export const GET: APIRoute = async () => {
       loc: absoluteUrl(site.url, `/${post.slug}/`),
       lastmod: post.publishedAt,
     })),
+    ...categoryEntries,
   ];
 
   const body = [

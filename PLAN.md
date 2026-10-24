@@ -45,7 +45,7 @@ The CMS repo is public, so the following rules apply from P0:
 - `package.json` has an `editor` script pointing to a missing `editor/` folder. Removed in P7, as confirmed.
 - `trailingSlash: "always"` and a redirect for `/le-mystère-de-barabbas/`.
 - `checklist.md` lists open SEO items: `BreadcrumbList`, RSS, custom 404, author page, internal linking.
-- Dependencies (keep the same major versions to avoid a mismatch at the swap): `astro` 7.1.3, `@astrojs/cloudflare` 14.1.4, `@astrojs/mdx` 7.0.3, `@astrojs/sitemap` 3.7.3, `@astrojs/react` 6.x, Tailwind 4.x, React 19, `motion`.
+- Dependencies: `astro` 7.4.2, `@astrojs/cloudflare` 14.4.2, `@astrojs/react` 6.x, Tailwind 4.x, React 19, `motion`.
 
 ## 4. Tools check
 
@@ -63,7 +63,7 @@ Tools to add (all through Bun):
 
 | Tool | Phase | Purpose |
 |---|---|---|
-| `astro`, `@astrojs/cloudflare`, `@astrojs/mdx`, `@astrojs/react`, `@astrojs/sitemap`, `@astrojs/rss` | P0, P4 | Same versions as the blog where they exist |
+| `astro`, `@astrojs/cloudflare`, `@astrojs/react`, `@astrojs/rss` | P0, P4 | Same versions as the blog where they exist |
 | `tailwindcss`, `@tailwindcss/vite` | P0 | Blog design |
 | `wrangler` (dev dependency) | P0 | D1, R2, local dev, deploy |
 | shadcn CLI (`bunx shadcn@latest init`) | P0 | Admin UI components (AGENTS.md requires shadcn/ui) |

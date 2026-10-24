@@ -81,6 +81,8 @@ export interface Content {
   // Categories
   listCategories(): Promise<Category[]>;
   getCategoryById(id: string): Promise<Category | null>;
+  getCategoryBySlug(slug: string): Promise<Category | null>;
+  listPublishedByCategory(categoryId: string): Promise<ArticleSummary[]>;
   createCategory(input: CreateCategoryInput): Promise<Category>;
   updateCategory(id: string, input: UpdateCategoryInput): Promise<Category>;
   deleteCategory(id: string): Promise<void>;
@@ -137,6 +139,7 @@ export function createContent(db: Database): Content {
       id: row.id,
       slug: row.slug,
       name: row.name,
+      description: row.description,
       position: row.position,
       createdAt: row.created_at,
     };
@@ -144,8 +147,20 @@ export function createContent(db: Database): Content {
 
   async function getCategoryById(id: string): Promise<Category | null> {
     const row = await db
-      .prepare("SELECT id, slug, name, position, created_at FROM categories WHERE id = ?")
+      .prepare(
+        "SELECT id, slug, name, description, position, created_at FROM categories WHERE id = ?",
+      )
       .bind(id)
+      .first<CategoryRow>();
+    return row ? toCategory(row) : null;
+  }
+
+  async function getCategoryBySlug(slug: string): Promise<Category | null> {
+    const row = await db
+      .prepare(
+        "SELECT id, slug, name, description, position, created_at FROM categories WHERE slug = ?",
+      )
+      .bind(slug)
       .first<CategoryRow>();
     return row ? toCategory(row) : null;
   }
@@ -248,6 +263,38 @@ export function createContent(db: Database): Content {
             row.category_id && row.category_slug && row.category_name
               ? { id: row.category_id, slug: row.category_slug, name: row.category_name }
               : null,
+        }),
+      );
+    },
+
+    async listPublishedByCategory(categoryId) {
+      const { results } = await db
+        .prepare(
+          `SELECT a.slug, a.title, a.description, a.published_at, a.category_id,
+                  c.slug AS category_slug, c.name AS category_name
+           FROM articles a
+           JOIN categories c ON c.id = a.category_id
+           WHERE a.status = 'published' AND a.category_id = ?
+           ORDER BY a.published_at DESC`,
+        )
+        .bind(categoryId)
+        .all<{
+          slug: string;
+          title: string;
+          description: string;
+          published_at: string | null;
+          category_id: string;
+          category_slug: string;
+          category_name: string;
+        }>();
+
+      return results.map(
+        (row): ArticleSummary => ({
+          slug: row.slug,
+          title: row.title,
+          description: row.description,
+          publishedAt: row.published_at,
+          category: { id: row.category_id, slug: row.category_slug, name: row.category_name },
         }),
       );
     },
@@ -459,13 +506,14 @@ export function createContent(db: Database): Content {
     async listCategories() {
       const { results } = await db
         .prepare(
-          "SELECT id, slug, name, position, created_at FROM categories ORDER BY position ASC, name ASC",
+          "SELECT id, slug, name, description, position, created_at FROM categories ORDER BY position ASC, name ASC",
         )
         .all<CategoryRow>();
       return results.map(toCategory);
     },
 
     getCategoryById,
+    getCategoryBySlug,
 
     async createCategory(input) {
       const id = crypto.randomUUID();
@@ -475,8 +523,16 @@ export function createContent(db: Database): Content {
         .all<{ next: number }>();
 
       await db
-        .prepare("INSERT INTO categories (id, slug, name, position) VALUES (?, ?, ?, ?)")
-        .bind(id, slug, input.name, input.position ?? results[0]?.next ?? 0)
+        .prepare(
+          "INSERT INTO categories (id, slug, name, description, position) VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind(
+          id,
+          slug,
+          input.name,
+          input.description?.trim() || null,
+          input.position ?? results[0]?.next ?? 0,
+        )
         .run();
 
       const category = await getCategoryById(id);
@@ -497,6 +553,10 @@ export function createContent(db: Database): Content {
         const taken = (await categorySlugs()).filter((slug) => slug !== input.slug);
         sets.push("slug = ?");
         values.push(uniqueSlug(base, taken));
+      }
+      if (input.description !== undefined) {
+        sets.push("description = ?");
+        values.push(input.description?.trim() || null);
       }
       if (input.position !== undefined) {
         sets.push("position = ?");

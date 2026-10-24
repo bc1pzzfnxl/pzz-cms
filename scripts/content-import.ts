@@ -30,6 +30,7 @@ const local = args.has("local");
 interface CategoryFile {
   slug: string;
   name: string;
+  description: string | null;
   position: number;
 }
 
@@ -85,10 +86,12 @@ for (const category of categories) {
   const id = categoryIds.get(category.slug) ?? crypto.randomUUID();
   categoryIds.set(category.slug, id);
   statements.push(
-    `INSERT INTO categories (id, slug, name, position) VALUES (${sqlValue(id)}, ${sqlValue(
-      category.slug,
-    )}, ${sqlValue(category.name)}, ${category.position})
-     ON CONFLICT(slug) DO UPDATE SET name = excluded.name, position = excluded.position;`,
+    `INSERT INTO categories (id, slug, name, description, position) VALUES (${sqlValue(
+      id,
+    )}, ${sqlValue(category.slug)}, ${sqlValue(category.name)}, ${sqlValue(
+      category.description ?? null,
+    )}, ${category.position})
+     ON CONFLICT(slug) DO UPDATE SET name = excluded.name, description = excluded.description, position = excluded.position;`,
   );
 }
 

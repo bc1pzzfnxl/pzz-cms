@@ -38,7 +38,7 @@ installed; always call it as `bunx wrangler`.
 
 ## Architecture
 
-- `src/lib/` holds pure helpers (slug, SEO, image meta). Small interfaces, easy
+- `src/lib/` holds pure helpers (slug, SEO, media). Small interfaces, easy
   to test.
 - `src/content/` holds the content module: the only place that talks to D1.
 - `src/pages/` holds routes, public and admin.

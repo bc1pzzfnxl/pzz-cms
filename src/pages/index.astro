@@ -12,9 +12,10 @@ const categories = await content.listCategories();
 const sections = [
   ...categories.map((category) => ({
     title: category.name,
+    slug: category.slug,
     posts: posts.filter((post) => post.category?.id === category.id),
   })),
-  { title: "Sans catégorie", posts: posts.filter((post) => !post.category) },
+  { title: "Sans catégorie", slug: null, posts: posts.filter((post) => !post.category) },
 ].filter((section) => section.posts.length > 0);
 
 const siteSchema = websiteSchema(site);
@@ -35,7 +36,13 @@ const formatDate = (dateStr?: string | null) => {
             posts.length > 0 ? (
                 sections.map((section) => (
                     <section class="home-group">
-                        <h2 class="home-title">{section.title}</h2>
+                        <h2 class="home-title">
+                            {section.slug ? (
+                                <a href={`/categorie/${section.slug}/`}>{section.title}</a>
+                            ) : (
+                                section.title
+                            )}
+                        </h2>
                         <ul class="home-list">
                             {section.posts.map((post) => (
                                 <li class="home-item">
@@ -75,6 +82,13 @@ const formatDate = (dateStr?: string | null) => {
             text-transform: uppercase;
             color: #666;
             margin-bottom: 12px;
+        }
+        .home-title a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .home-title a:hover {
+            text-decoration: underline;
         }
         .home-list {
             list-style: none;

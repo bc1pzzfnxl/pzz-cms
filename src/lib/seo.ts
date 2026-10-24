@@ -63,7 +63,7 @@ export function blogPostingSchema(input: BlogPostingInput) {
   };
 }
 
-/** Schema.org BreadcrumbList: home, then the article. */
+/** Schema.org BreadcrumbList: home, then the current page. */
 export function breadcrumbSchema(site: SiteConfig, title: string, url: string) {
   return {
     "@context": "https://schema.org",
@@ -82,6 +82,35 @@ export function breadcrumbSchema(site: SiteConfig, title: string, url: string) {
         item: url,
       },
     ],
+  };
+}
+
+export interface CollectionPageInput {
+  name: string;
+  description: string;
+  url: string;
+  locale: string;
+  articles: { title: string; url: string }[];
+}
+
+/** Schema.org CollectionPage with an ItemList, for a category page. */
+export function collectionPageSchema(input: CollectionPageInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: input.name,
+    description: input.description,
+    url: input.url,
+    inLanguage: input.locale,
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: input.articles.map((article, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: article.title,
+        url: article.url,
+      })),
+    },
   };
 }
 

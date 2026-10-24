@@ -1,0 +1,163 @@
+---
+import { env } from "cloudflare:workers";
+import { createContent } from "../../content";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { absoluteUrl, breadcrumbSchema, collectionPageSchema } from "../../lib/seo";
+import { site } from "../../lib/site";
+
+const content = createContent(env.DB);
+const slug = Astro.params.slug ?? "";
+const category = await content.getCategoryBySlug(slug);
+
+if (!category) {
+  Astro.response.status = 404;
+}
+
+const posts = category ? await content.listPublishedByCategory(category.id) : [];
+const description =
+  category?.description?.trim() ||
+  (category ? `Articles de la catégorie ${category.name}.` : "Catégorie introuvable.");
+const url = absoluteUrl(site.url, `/categorie/${slug}/`);
+
+const schemas = category
+  ? [
+      breadcrumbSchema(site, category.name, url),
+      collectionPageSchema({
+        name: category.name,
+        description,
+        url,
+        locale: site.locale,
+        articles: posts.map((post) => ({
+          title: post.title,
+          url: absoluteUrl(site.url, `/${post.slug}/`),
+        })),
+      }),
+    ]
+  : [];
+
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime())
+    ? dateStr
+    : new Intl.DateTimeFormat(site.locale, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+};
+---
+
+<MainLayout
+    title={category?.name ?? "Catégorie introuvable"}
+    description={description}
+>
+    {schemas.map((schema) => (
+        <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />
+    ))}
+    <article class="category-page">
+        <nav class="category-breadcrumb" aria-label="Fil d'Ariane">
+            <a href="/">Accueil</a>
+            <span aria-hidden="true">/</span>
+            <span>{category?.name ?? "Catégorie"}</span>
+        </nav>
+
+        {
+            category ? (
+                <>
+                    <h1>{category.name}</h1>
+                    <p class="category-description">{description}</p>
+                    {posts.length > 0 ? (
+                        <ul class="category-list">
+                            {posts.map((post) => (
+                                <li class="category-item">
+                                    <a class="category-link" href={`/${post.slug}/`}>
+                                        <span class="category-title">{post.title}</span>
+                                        <time datetime={post.publishedAt ?? undefined}>
+                                            {formatDate(post.publishedAt)}
+                                        </time>
+                                    </a>
+                                    {post.description && (
+                                        <p class="category-excerpt">{post.description}</p>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p class="category-empty">Aucun article publié dans cette catégorie.</p>
+                    )}
+                </>
+            ) : (
+                <>
+                    <h1>Catégorie introuvable</h1>
+                    <p>Cette catégorie n'existe pas ou a été supprimée.</p>
+                    <a href="/" class="back-link">← Retour à l'accueil</a>
+                </>
+            )
+        }
+    </article>
+
+    <style>
+        .category-breadcrumb {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 0.45rem;
+            align-items: center;
+        }
+        .category-breadcrumb a {
+            color: inherit;
+        }
+        .category-description {
+            color: #4b5563;
+            margin-top: 0.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .category-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .category-item {
+            padding: 1.25rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .category-link {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+            text-decoration: none;
+        }
+        .category-title {
+            font-size: 1.05rem;
+            color: #111827;
+        }
+        .category-link time {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            white-space: nowrap;
+        }
+        .category-excerpt {
+            margin: 0.4rem 0 0;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        .category-empty {
+            color: #6b7280;
+        }
+        html.dark-mode .category-breadcrumb,
+        html.dark-mode .category-description,
+        html.dark-mode .category-excerpt,
+        html.dark-mode .category-empty {
+            color: #9ca3af;
+        }
+        html.dark-mode .category-title {
+            color: #f9fafb;
+        }
+        html.dark-mode .category-item {
+            border-bottom-color: #27272a;
+        }
+    </style>
+</MainLayout>

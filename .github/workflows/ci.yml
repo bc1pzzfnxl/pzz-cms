@@ -77,6 +77,8 @@ jobs:
           }
           check "/" 200
           check "/premier-article/" 200
+          check "/categorie/theologie/" 200
+          check "/categorie/inconnue/" 404
           check "/brouillon/" 404
           check "/ancien-slug/" 301
           check "/auteur/" 200
@@ -88,6 +90,7 @@ jobs:
 
           sitemap=$(curl -s --max-time 5 http://127.0.0.1:8787/sitemap.xml)
           echo "$sitemap" | grep -q "/premier-article/" || fail "sitemap missing a published article"
+          echo "$sitemap" | grep -q "/categorie/theologie/" || fail "sitemap missing a category"
           if echo "$sitemap" | grep -q "/brouillon/"; then fail "sitemap leaked a draft"; fi
 
           feed=$(curl -s --max-time 5 http://127.0.0.1:8787/rss.xml)

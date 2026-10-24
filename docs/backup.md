@@ -22,18 +22,13 @@ only; on a private repository it mirrors every status (`--all`).
 - `content/media.json`: media key, dimensions, alt text.
 - `content/manifest.json`: generation time, mode, counts.
 
-The GitHub Action is opt-in. In the deployment repository, set:
-
-- secret `CLOUDFLARE_API_TOKEN`
-- secret `CLOUDFLARE_ACCOUNT_ID`
-- secret `WRANGLER_DEPLOY_CONFIG` (the full `wrangler.deploy.jsonc`)
-- variable `CONTENT_SYNC=true` to enable the schedule
-
-Then run it by hand once:
+The mirror is updated manually:
 
 ```bash
-gh workflow run content-sync.yml
+bun run content:sync -- --config=wrangler.deploy.jsonc
 ```
+
+There is no scheduled sync: run it when you want a new Git checkpoint.
 
 ## Undo one article
 

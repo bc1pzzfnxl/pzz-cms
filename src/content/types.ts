@@ -48,6 +48,7 @@ export interface Category {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
   position: number;
   createdAt: string;
 }
@@ -56,6 +57,7 @@ export interface CategoryRow {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
   position: number;
   created_at: string;
 }
@@ -63,12 +65,14 @@ export interface CategoryRow {
 export interface CreateCategoryInput {
   name: string;
   slug?: string;
+  description?: string | null;
   position?: number;
 }
 
 export interface UpdateCategoryInput {
   name?: string;
   slug?: string;
+  description?: string | null;
   position?: number;
 }
 

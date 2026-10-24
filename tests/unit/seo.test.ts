@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { blogPostingSchema, breadcrumbSchema, personSchema, websiteSchema } from "@/lib/seo";
+import {
+  blogPostingSchema,
+  breadcrumbSchema,
+  collectionPageSchema,
+  personSchema,
+  websiteSchema,
+} from "@/lib/seo";
 import { site } from "@/lib/site";
 
 describe("seo schemas", () => {
@@ -56,6 +62,24 @@ describe("seo schemas", () => {
       item: site.url,
     });
     expect(schema.itemListElement[1]).toMatchObject({ position: 2, name: "Titre" });
+  });
+
+  it("builds a CollectionPage with an ItemList", () => {
+    const schema = collectionPageSchema({
+      name: "Bible",
+      description: "Études bibliques.",
+      url: "https://example.com/categorie/bible/",
+      locale: "fr",
+      articles: [
+        { title: "Premier", url: "https://example.com/premier/" },
+        { title: "Second", url: "https://example.com/second/" },
+      ],
+    });
+
+    expect(schema["@type"]).toBe("CollectionPage");
+    expect(schema.mainEntity["@type"]).toBe("ItemList");
+    expect(schema.mainEntity.itemListElement).toHaveLength(2);
+    expect(schema.mainEntity.itemListElement[1]).toMatchObject({ position: 2, name: "Second" });
   });
 
   it("builds a Person schema for the author", () => {

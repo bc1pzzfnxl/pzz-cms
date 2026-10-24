@@ -9,6 +9,7 @@ const MIGRATIONS = [
   "../../migrations/0001_init.sql",
   "../../migrations/0002_documents.sql",
   "../../migrations/0003_categories.sql",
+  "../../migrations/0004_category_description.sql",
 ].map((path) => readFileSync(new URL(path, import.meta.url), "utf8"));
 
 function applyMigration(sqlite: Sqlite, sql: string) {
@@ -259,13 +260,30 @@ describe("content module — admin write path", () => {
     expect(posts.find((post) => post.slug === "second-article")?.category).toBeNull();
   });
 
+  it("reads a category by slug and lists its published articles", async () => {
+    const category = await content.getCategoryBySlug("theologie");
+    expect(category).toMatchObject({ id: "c1", name: "Théologie" });
+    expect(await content.getCategoryBySlug("absent")).toBeNull();
+
+    const posts = await content.listPublishedByCategory("c1");
+    expect(posts.map((post) => post.slug)).toEqual(["premier-article"]);
+  });
+
   it("creates, renames and deletes categories", async () => {
-    const created = await content.createCategory({ name: "Histoire" });
+    const created = await content.createCategory({
+      name: "Histoire",
+      description: "Histoire des religions.",
+    });
     expect(created.slug).toBe("histoire");
     expect(created.position).toBe(1);
+    expect(created.description).toBe("Histoire des religions.");
 
-    const renamed = await content.updateCategory(created.id, { name: "Histoire ancienne" });
+    const renamed = await content.updateCategory(created.id, {
+      name: "Histoire ancienne",
+      description: "Antiquité tardive.",
+    });
     expect(renamed.name).toBe("Histoire ancienne");
+    expect(renamed.description).toBe("Antiquité tardive.");
 
     await content.deleteCategory("c1");
     expect((await content.listCategories()).map((category) => category.slug)).toEqual(["histoire"]);

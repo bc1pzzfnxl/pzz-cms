@@ -5,6 +5,7 @@ import { createContent } from "@/content";
 interface CreateBody {
   name?: string;
   slug?: string;
+  description?: string | null;
   position?: number;
 }
 
@@ -31,6 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
   const category = await content.createCategory({
     name: body.name.trim(),
     slug: body.slug,
+    description: body.description ?? null,
     position: body.position,
   });
 
