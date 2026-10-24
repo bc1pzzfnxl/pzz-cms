@@ -26,3 +26,14 @@ html.dark-mode {
 .mdx-stat-suffix {
   margin-left: 0.15em;
 }
+
+/* Self-hosted Geist, latin subset. `optional` removes the layout shift of a
+   late swap; the preload in MainLayout usually wins the race anyway. */
+@font-face {
+  font-family: "Geist Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: optional;
+  src: url("@fontsource-variable/geist/files/geist-latin-wght-normal.woff2")
+    format("woff2-variations");
+}
