@@ -8,6 +8,7 @@ interface CreateBody {
   bodyMdx?: string;
   bodyHtml?: string;
   ogImageKey?: string | null;
+  categoryId?: string | null;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -31,6 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
     bodyMdx: body.bodyMdx,
     bodyHtml: body.bodyHtml,
     ogImageKey: body.ogImageKey,
+    categoryId: body.categoryId,
   });
 
   return json({ id: article.id, slug: article.slug }, 201);

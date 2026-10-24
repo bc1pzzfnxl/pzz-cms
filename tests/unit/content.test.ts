@@ -5,9 +5,11 @@ import type { Content } from "@/content";
 import { createContent } from "@/content";
 import { createBunDatabase } from "../helpers/bun-d1";
 
-const MIGRATIONS = ["../../migrations/0001_init.sql", "../../migrations/0002_documents.sql"].map(
-  (path) => readFileSync(new URL(path, import.meta.url), "utf8"),
-);
+const MIGRATIONS = [
+  "../../migrations/0001_init.sql",
+  "../../migrations/0002_documents.sql",
+  "../../migrations/0003_categories.sql",
+].map((path) => readFileSync(new URL(path, import.meta.url), "utf8"));
 
 function applyMigration(sqlite: Sqlite, sql: string) {
   const cleaned = sql
@@ -56,6 +58,10 @@ function seed(sqlite: Sqlite) {
   sqlite
     .query("INSERT INTO redirects (from_path, to_path) VALUES (?, ?)")
     .run("/ancien-slug/", "/premier-article/");
+  sqlite
+    .query("INSERT INTO categories (id, slug, name, position) VALUES (?, ?, ?, ?)")
+    .run("c1", "theologie", "Théologie", 0);
+  sqlite.query("UPDATE articles SET category_id = ? WHERE id = ?").run("c1", "1");
 }
 
 describe("content module", () => {
@@ -216,5 +222,31 @@ describe("content module — admin write path", () => {
     });
     expect(await content.getMediaByKey("images/a-x.webp")).toEqual(media);
     expect(await content.getMediaByKey("images/absent.webp")).toBeNull();
+  });
+
+  it("returns the category of a published article", async () => {
+    const posts = await content.listPublished();
+
+    expect(posts.find((post) => post.slug === "premier-article")?.category).toEqual({
+      id: "c1",
+      slug: "theologie",
+      name: "Théologie",
+    });
+    expect(posts.find((post) => post.slug === "second-article")?.category).toBeNull();
+  });
+
+  it("creates, renames and deletes categories", async () => {
+    const created = await content.createCategory({ name: "Histoire" });
+    expect(created.slug).toBe("histoire");
+    expect(created.position).toBe(1);
+
+    const renamed = await content.updateCategory(created.id, { name: "Histoire ancienne" });
+    expect(renamed.name).toBe("Histoire ancienne");
+
+    await content.deleteCategory("c1");
+    expect((await content.listCategories()).map((category) => category.slug)).toEqual(["histoire"]);
+
+    const posts = await content.listPublished();
+    expect(posts.find((post) => post.slug === "premier-article")?.category).toBeNull();
   });
 });

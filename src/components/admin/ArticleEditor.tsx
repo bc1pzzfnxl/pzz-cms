@@ -40,10 +40,12 @@ interface InitialArticle {
   bodyMdx: string;
   status: Status;
   ogImageKey: string | null;
+  categoryId: string | null;
 }
 
 interface Props {
   initial: InitialArticle | null;
+  categories: { id: string; name: string }[];
 }
 
 const inputClass = "mt-1 w-full rounded-md border px-3 py-2 text-sm";
@@ -225,7 +227,7 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
 const componentNames = Object.keys(mdxComponents);
 const jsxPastePattern = new RegExp(`<\\s*(?:${componentNames.join("|")})\\b`);
 
-export default function ArticleEditor({ initial }: Props) {
+export default function ArticleEditor({ initial, categories }: Props) {
   const articleId = initial?.id ?? null;
   const editorRef = useRef<MDXEditorMethods>(null);
 
@@ -235,6 +237,7 @@ export default function ArticleEditor({ initial }: Props) {
   const [bodyMdx, setBodyMdx] = useState(initial?.bodyMdx ?? "");
   const [status, setStatus] = useState<Status>(initial?.status ?? "draft");
   const [ogImageKey, setOgImageKey] = useState<string | null>(initial?.ogImageKey ?? null);
+  const [categoryId, setCategoryId] = useState<string | null>(initial?.categoryId ?? null);
   const [coverUrl, setCoverUrl] = useState<string | null>(
     initial?.ogImageKey ? `/media/${initial.ogImageKey}` : null,
   );
@@ -314,6 +317,7 @@ export default function ArticleEditor({ initial }: Props) {
         bodyMdx: source,
         bodyHtml,
         ogImageKey,
+        categoryId,
       };
 
       const res = await fetch(
@@ -420,6 +424,26 @@ export default function ArticleEditor({ initial }: Props) {
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium" htmlFor="category">
+          Catégorie
+        </label>
+        <select
+          id="category"
+          data-testid="category"
+          className={inputClass}
+          value={categoryId ?? ""}
+          onChange={(event) => setCategoryId(event.target.value || null)}
+        >
+          <option value="">Sans catégorie</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

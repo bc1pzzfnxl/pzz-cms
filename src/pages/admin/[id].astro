@@ -8,6 +8,7 @@ const content = createContent(env.DB);
 const id = Astro.params.id ?? "new";
 
 const article = id === "new" ? null : await content.getArticleById(id);
+const categories = await content.listCategories();
 
 if (id !== "new" && !article) {
   Astro.response.status = 404;
@@ -22,6 +23,7 @@ const initial = article
       bodyMdx: article.bodyMdx,
       status: article.status,
       ogImageKey: article.ogImageKey,
+      categoryId: article.categoryId,
     }
   : null;
 ---
@@ -36,7 +38,11 @@ const initial = article
                 </a>
             </div>
         ) : (
-            <ArticleEditor client:only="react" initial={initial} />
+            <ArticleEditor
+                client:only="react"
+                initial={initial}
+                categories={categories.map((category) => ({ id: category.id, name: category.name }))}
+            />
         )
     }
 </AdminLayout>

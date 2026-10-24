@@ -1,0 +1,20 @@
+---
+import { env } from "cloudflare:workers";
+import CategoryManager from "../../../components/admin/CategoryManager";
+import { createContent } from "../../../content";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const categories = await content.listCategories();
+---
+
+<AdminLayout title="Catégories">
+    <div class="mb-8">
+        <h1 class="text-2xl font-semibold">Catégories</h1>
+        <p class="mt-1 text-sm text-muted-foreground">
+            Regroupent les articles sur la page d'accueil.
+        </p>
+    </div>
+
+    <CategoryManager client:load initial={categories} />
+</AdminLayout>

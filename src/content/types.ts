@@ -29,6 +29,7 @@ export interface Article {
   lang: string;
   ogImageKey: string | null;
   author: string | null;
+  categoryId: string | null;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -40,6 +41,35 @@ export interface ArticleSummary {
   title: string;
   description: string;
   publishedAt: string | null;
+  category: { id: string; slug: string; name: string } | null;
+}
+
+export interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  position: number;
+  createdAt: string;
+}
+
+export interface CategoryRow {
+  id: string;
+  slug: string;
+  name: string;
+  position: number;
+  created_at: string;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+  slug?: string;
+  position?: number;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
+  slug?: string;
+  position?: number;
 }
 
 /** Admin listing row: includes drafts and status. */
@@ -60,6 +90,7 @@ export interface CreateArticleInput {
   bodyHtml?: string;
   status?: ArticleStatus;
   ogImageKey?: string | null;
+  categoryId?: string | null;
 }
 
 export interface UpdateArticleInput {
@@ -69,6 +100,7 @@ export interface UpdateArticleInput {
   bodyMdx?: string;
   bodyHtml?: string;
   ogImageKey?: string | null;
+  categoryId?: string | null;
 }
 
 export interface Redirect {
@@ -162,6 +194,7 @@ export interface ArticleRow {
   lang: string;
   og_image_key: string | null;
   author: string | null;
+  category_id: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string;

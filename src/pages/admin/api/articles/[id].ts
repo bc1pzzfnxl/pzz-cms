@@ -8,6 +8,7 @@ interface UpdateBody {
   description?: string;
   bodyMdx?: string;
   bodyHtml?: string;
+  categoryId?: string | null;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -33,6 +34,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
     description: body.description,
     bodyMdx: body.bodyMdx,
     bodyHtml: body.bodyHtml,
+    categoryId: body.categoryId,
   });
 
   return json({ id: article.id, slug: article.slug, status: article.status });

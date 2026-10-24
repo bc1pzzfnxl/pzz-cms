@@ -7,28 +7,171 @@ import { site } from "../lib/site";
 
 const content = createContent(env.DB);
 const posts = await content.listPublished();
+const categories = await content.listCategories();
+
+const sections = [
+  ...categories.map((category) => ({
+    title: category.name,
+    posts: posts.filter((post) => post.category?.id === category.id),
+  })),
+  { title: "Sans catégorie", posts: posts.filter((post) => !post.category) },
+].filter((section) => section.posts.length > 0);
 
 const siteSchema = websiteSchema(site);
+
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime())
+    ? dateStr
+    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(date);
+};
 ---
 
 <MainLayout title="Home">
     <script type="application/ld+json" is:inline set:html={JSON.stringify(siteSchema)} />
-    <section>
-        <h2 style="font-size: 0.9rem; text-transform: uppercase; color: #666; margin-bottom: 20px;">
-            Articles
-        </h2>
+    <section class="home">
         {
             posts.length > 0 ? (
-                <ul>
-                    {posts.map((post) => (
-                        <li>
-                            <a href={`/${post.slug}/`}>{post.title}</a>
-                        </li>
-                    ))}
-                </ul>
+                sections.map((section) => (
+                    <section class="home-group">
+                        <h2 class="home-title">{section.title}</h2>
+                        <ul class="home-list">
+                            {section.posts.map((post) => (
+                                <li class="home-item">
+                                    <a class="home-link" href={`/${post.slug}/`} title={post.title}>
+                                        <span class="home-slug">{post.slug}</span>
+                                        <time class="home-date" datetime={post.publishedAt ?? undefined}>
+                                            {formatDate(post.publishedAt)}
+                                        </time>
+                                    </a>
+                                    <span class="home-preview" aria-hidden="true">
+                                        <span class="home-frame-bar">{post.slug}</span>
+                                        <iframe
+                                            data-src={`/${post.slug}/`}
+                                            tabindex="-1"
+                                            title={`Aperçu de ${post.title}`}
+                                        />
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                ))
             ) : (
                 <p>Aucun article pour le moment.</p>
             )
         }
     </section>
+    <style is:global>
+        .home-group {
+            margin-bottom: 40px;
+        }
+        .home-group:last-child {
+            margin-bottom: 0;
+        }
+        .home-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .home-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .home-item {
+            position: relative;
+        }
+        .home-link {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+            text-decoration: none;
+        }
+        .home-slug {
+            font-family: var(--mono-font);
+            font-size: 0.95rem;
+        }
+        .home-date {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            white-space: nowrap;
+        }
+        .home-preview {
+            position: absolute;
+            z-index: 20;
+            top: calc(100% + 8px);
+            left: 0;
+            width: min(380px, 90vw);
+            height: 258px;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(4px);
+            transition:
+                opacity 0.15s ease,
+                transform 0.15s ease,
+                visibility 0.15s;
+            pointer-events: none;
+        }
+        .home-item:hover .home-preview,
+        .home-item:focus-within .home-preview {
+            opacity: 1;
+            visibility: visible;
+            transform: none;
+        }
+        .home-frame-bar {
+            display: block;
+            padding: 6px 10px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            font-family: var(--mono-font);
+            font-size: 0.7rem;
+            color: #9ca3af;
+        }
+        .home-preview iframe {
+            display: block;
+            width: 760px;
+            height: 460px;
+            border: 0;
+            transform: scale(0.5);
+            transform-origin: top left;
+            pointer-events: none;
+        }
+        html.dark-mode .home-preview {
+            background: #18181b;
+            border-color: #27272a;
+        }
+        html.dark-mode .home-frame-bar {
+            background: #141416;
+            border-color: #27272a;
+        }
+        html.dark-mode .home-link {
+            border-bottom-color: #27272a;
+        }
+    </style>
+    <script>
+        // Load the preview frame only on hover or keyboard focus: the home page
+        // makes no article request until the reader asks for a preview.
+        for (const item of document.querySelectorAll(".home-item")) {
+            const frame = item.querySelector("iframe[data-src]");
+            if (!(frame instanceof HTMLIFrameElement)) continue;
+            const load = () => {
+                if (!frame.hasAttribute("src")) {
+                    frame.setAttribute("src", frame.dataset.src ?? "");
+                }
+            };
+            item.addEventListener("mouseenter", load);
+            item.addEventListener("focusin", load);
+        }
+    </script>
 </MainLayout>

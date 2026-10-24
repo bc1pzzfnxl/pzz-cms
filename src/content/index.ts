@@ -6,7 +6,10 @@ import type {
   ArticleRow,
   ArticleStatus,
   ArticleSummary,
+  Category,
+  CategoryRow,
   CreateArticleInput,
+  CreateCategoryInput,
   CreateDocumentInput,
   CreateMediaInput,
   Database,
@@ -16,11 +19,12 @@ import type {
   MediaRow,
   Redirect,
   UpdateArticleInput,
+  UpdateCategoryInput,
   UpdateDocumentInput,
 } from "./types";
 
 const ARTICLE_COLUMNS =
-  "id, slug, title, description, body_mdx, body_html, status, lang, og_image_key, author, published_at, created_at, updated_at";
+  "id, slug, title, description, body_mdx, body_html, status, lang, og_image_key, author, category_id, published_at, created_at, updated_at";
 
 function now(): string {
   return new Date().toISOString();
@@ -38,6 +42,7 @@ function toArticle(row: ArticleRow): Article {
     lang: row.lang,
     ogImageKey: row.og_image_key,
     author: row.author,
+    categoryId: row.category_id,
     publishedAt: row.published_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -68,6 +73,13 @@ export interface Content {
   // Media
   createMedia(input: CreateMediaInput): Promise<Media>;
   getMediaByKey(r2Key: string): Promise<Media | null>;
+
+  // Categories
+  listCategories(): Promise<Category[]>;
+  getCategoryById(id: string): Promise<Category | null>;
+  createCategory(input: CreateCategoryInput): Promise<Category>;
+  updateCategory(id: string, input: UpdateCategoryInput): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
 
   // JSON documents
   listDocuments(): Promise<AdminDocumentSummary[]>;
@@ -114,6 +126,29 @@ export function createContent(db: Database): Content {
       .prepare("UPDATE redirects SET to_path = ? WHERE to_path = ?")
       .bind(toPath, fromPath)
       .run();
+  }
+
+  function toCategory(row: CategoryRow): Category {
+    return {
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      position: row.position,
+      createdAt: row.created_at,
+    };
+  }
+
+  async function getCategoryById(id: string): Promise<Category | null> {
+    const row = await db
+      .prepare("SELECT id, slug, name, position, created_at FROM categories WHERE id = ?")
+      .bind(id)
+      .first<CategoryRow>();
+    return row ? toCategory(row) : null;
+  }
+
+  async function categorySlugs(): Promise<string[]> {
+    const { results } = await db.prepare("SELECT slug FROM categories").all<{ slug: string }>();
+    return results.map((row) => row.slug);
   }
 
   function toMedia(row: MediaRow): Media {
@@ -182,9 +217,22 @@ export function createContent(db: Database): Content {
     async listPublished() {
       const { results } = await db
         .prepare(
-          "SELECT slug, title, description, published_at FROM articles WHERE status = 'published' ORDER BY published_at DESC",
+          `SELECT a.slug, a.title, a.description, a.published_at, a.category_id,
+                  c.slug AS category_slug, c.name AS category_name
+           FROM articles a
+           LEFT JOIN categories c ON c.id = a.category_id
+           WHERE a.status = 'published'
+           ORDER BY a.published_at DESC`,
         )
-        .all<Pick<ArticleRow, "slug" | "title" | "description" | "published_at">>();
+        .all<{
+          slug: string;
+          title: string;
+          description: string;
+          published_at: string | null;
+          category_id: string | null;
+          category_slug: string | null;
+          category_name: string | null;
+        }>();
 
       return results.map(
         (row): ArticleSummary => ({
@@ -192,6 +240,10 @@ export function createContent(db: Database): Content {
           title: row.title,
           description: row.description,
           publishedAt: row.published_at,
+          category:
+            row.category_id && row.category_slug && row.category_name
+              ? { id: row.category_id, slug: row.category_slug, name: row.category_name }
+              : null,
         }),
       );
     },
@@ -262,7 +314,7 @@ export function createContent(db: Database): Content {
 
       await db
         .prepare(
-          "INSERT INTO articles (id, slug, title, description, body_mdx, body_html, status, og_image_key, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO articles (id, slug, title, description, body_mdx, body_html, status, og_image_key, category_id, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(
           id,
@@ -273,6 +325,7 @@ export function createContent(db: Database): Content {
           input.bodyHtml ?? "",
           status,
           input.ogImageKey ?? null,
+          input.categoryId ?? null,
           publishedAt,
         )
         .run();
@@ -316,6 +369,10 @@ export function createContent(db: Database): Content {
       if (input.ogImageKey !== undefined) {
         sets.push("og_image_key = ?");
         values.push(input.ogImageKey);
+      }
+      if (input.categoryId !== undefined) {
+        sets.push("category_id = ?");
+        values.push(input.categoryId);
       }
 
       sets.push("updated_at = ?");
@@ -362,6 +419,75 @@ export function createContent(db: Database): Content {
     },
 
     getMediaByKey,
+
+    // ── Categories ────────────────────────────────────────────────────────
+    async listCategories() {
+      const { results } = await db
+        .prepare(
+          "SELECT id, slug, name, position, created_at FROM categories ORDER BY position ASC, name ASC",
+        )
+        .all<CategoryRow>();
+      return results.map(toCategory);
+    },
+
+    getCategoryById,
+
+    async createCategory(input) {
+      const id = crypto.randomUUID();
+      const slug = uniqueSlug(slugify(input.slug ?? input.name), await categorySlugs());
+      const { results } = await db
+        .prepare("SELECT COALESCE(MAX(position), -1) + 1 AS next FROM categories")
+        .all<{ next: number }>();
+
+      await db
+        .prepare("INSERT INTO categories (id, slug, name, position) VALUES (?, ?, ?, ?)")
+        .bind(id, slug, input.name, input.position ?? results[0]?.next ?? 0)
+        .run();
+
+      const category = await getCategoryById(id);
+      if (!category) throw new Error(`Category not found after insert: ${id}`);
+      return category;
+    },
+
+    async updateCategory(id, input) {
+      const sets: string[] = [];
+      const values: unknown[] = [];
+
+      if (input.name !== undefined) {
+        sets.push("name = ?");
+        values.push(input.name);
+      }
+      if (input.slug !== undefined) {
+        const base = slugify(input.slug);
+        const taken = (await categorySlugs()).filter((slug) => slug !== input.slug);
+        sets.push("slug = ?");
+        values.push(uniqueSlug(base, taken));
+      }
+      if (input.position !== undefined) {
+        sets.push("position = ?");
+        values.push(input.position);
+      }
+
+      if (sets.length > 0) {
+        values.push(id);
+        await db
+          .prepare(`UPDATE categories SET ${sets.join(", ")} WHERE id = ?`)
+          .bind(...values)
+          .run();
+      }
+
+      const category = await getCategoryById(id);
+      if (!category) throw new Error(`Category not found: ${id}`);
+      return category;
+    },
+
+    async deleteCategory(id) {
+      await db
+        .prepare("UPDATE articles SET category_id = NULL WHERE category_id = ?")
+        .bind(id)
+        .run();
+      await db.prepare("DELETE FROM categories WHERE id = ?").bind(id).run();
+    },
 
     // ── JSON documents ────────────────────────────────────────────────────
     async listDocuments() {
