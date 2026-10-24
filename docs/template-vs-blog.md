@@ -71,6 +71,9 @@ bun run media:gc -- --bucket=<r2-bucket> --config=wrangler.deploy.jsonc
 - Images are never mirrored. Deleting a replaced image also breaks the old Git
   versions that referenced it; that is the accepted cost of staying inside the
   R2 free tier.
+- Restore and Time Travel procedures live in
+  [`docs/backup.md`](./backup.md). Run the local restore drill after changing
+  the mirror format.
 
 ## Current gaps
 

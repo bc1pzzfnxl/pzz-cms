@@ -135,7 +135,8 @@ bun run media:gc -- --bucket=<r2-bucket> --config=wrangler.deploy.jsonc
 `content:sync` mirrors published articles by default; `--all` includes drafts
 and requires a private repository. `content:import` restores text and media
 metadata into D1; R2 objects are not backed up. See
-[`docs/template-vs-blog.md`](./docs/template-vs-blog.md).
+[`docs/template-vs-blog.md`](./docs/template-vs-blog.md) and
+[`docs/backup.md`](./docs/backup.md).
 
 ## Data policy
 
