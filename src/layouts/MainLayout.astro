@@ -400,9 +400,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
             <slot />
         </main>
         <script>
-            import "../lib/enhance-articles";
-        </script>
-        <script>
             document.addEventListener('click', (event) => {
                 if (event.target instanceof Element) {
                     const themeToggle = event.target.closest('#theme-toggle');

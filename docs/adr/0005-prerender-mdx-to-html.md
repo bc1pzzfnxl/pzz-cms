@@ -26,6 +26,7 @@ and store the result in `body_html` next to `body_mdx`. The public route renders
   SEO-friendly.
 - Component output is frozen in `body_html`. Changing a component requires
   re-rendering the affected articles (a batch job).
-- Animated components (`numbers`, `kugiri`) need a hydration step to be
-  interactive; planned in P8.
+- Components that animate need a hydration step to stay interactive; the public
+  pages deliberately skip that, so MDX components must render a meaningful
+  static state.
 - The admin (P2) owns the MDX → HTML compilation.

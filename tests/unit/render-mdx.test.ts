@@ -92,7 +92,7 @@ Réponse.
     );
 
     expect(html).not.toContain("opacity:0");
-    expect(html).toContain("data-mdx-reveal");
+    expect(html).not.toContain("data-mdx-reveal");
     expect(html).toContain("Un appel.");
     expect(html).toContain("Une citation.");
   });
@@ -103,21 +103,21 @@ Réponse.
     expect(html).not.toContain("preload");
   });
 
-  it("renders the Stat component with its value in the markup", async () => {
+  it("renders the Stat component with its final value in the markup", async () => {
     const { mdxComponents } = await import("@/lib/mdx-components");
     const html = await renderMdxToHtml(
       '<Stat value={1204} format="compact" locale="en-US" />',
       mdxComponents,
     );
-    expect(html).toContain("data-stat");
-    expect(html).toContain('data-value="1204"');
+    expect(html).toContain("mdx-stat");
+    expect(html).not.toContain("data-stat");
     expect(html).toContain("1.2K");
   });
 
-  it("renders the Reveal component with its text in the markup", async () => {
+  it("renders the Reveal component as static text", async () => {
     const { mdxComponents } = await import("@/lib/mdx-components");
     const html = await renderMdxToHtml("<Reveal>Un texte révélé</Reveal>", mdxComponents);
-    expect(html).toContain("data-reveal");
+    expect(html).not.toContain("data-reveal");
     expect(html).toContain("Un texte révélé");
   });
 

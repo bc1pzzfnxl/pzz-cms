@@ -70,7 +70,6 @@ function Verse({
           ) : null}
           <p
             className="m-0 font-mono text-[1.05rem] leading-relaxed text-foreground/80"
-            data-no-reveal
             dir="auto"
           >
             {original}

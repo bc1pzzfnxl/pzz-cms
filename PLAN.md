@@ -11,7 +11,7 @@ A light, MDX-first CMS built on Astro and Cloudflare Workers. It is developed as
 | Blog repository | `your-blog`, **private**. Holds the Markdown articles. Receives the CMS code in phase P7 via a `feat/cms` branch and a PR. |
 | License | MIT (proposed, see section 6). |
 | Content storage | Cloudflare D1. Code and articles are separated: code goes through Git, articles go through the admin. |
-| Content format | Pure MDX. Components from mdxcn, plus optional `numbers` and `kugiri`, are available inside articles. Pre-rendered to HTML at save time (ADR 0005). |
+| Content format | Pure MDX. Components from mdxcn, plus `Stat`, are available inside articles. Pre-rendered to HTML at save time (ADR 0005). |
 | Editor | MDXEditor with custom components. |
 | Rendering | Astro SSR on Cloudflare Workers. Publication is immediate. |
 | Deployment | Cloudflare Workers (Astro adapter + `wrangler.jsonc`). Cloudflare Pages is not used. HTTPS is mandatory. |
@@ -75,7 +75,7 @@ Tools to add (all through Bun):
 | `typescript` | P0 | `strict: true` |
 | `husky`, `lint-staged` | P0 | Pre-commit: Biome on staged files, typecheck, unit tests |
 | `sharp` | P6 only | Migration script for existing images, run with Bun (not in Workers) |
-| `numbers`, `kugiri` (optional) | P8 | Animated counters and scroll text as MDX components |
+| `numbers`, `kugiri` (optional) | P8 | Static counters; scroll text was dropped |
 
 Not needed for the MVP: `pnpm`, `npx` (replaced by `bunx`), the openSEO stack, a Raspberry Pi runtime.
 
@@ -112,7 +112,7 @@ Runtime verification therefore happens in CI, not locally. On a normal machine,
 | `pr` | PR body for `feat/cms` | P7 |
 | `wizard` | Steps only you can do: Cloudflare Access setup, Search Console ownership, DNS switch | P2, P7 |
 | `numbers` | Animated counters as MDX components (stats in articles) | P8 (optional) |
-| `kugiri` | Word-by-word or typewriter text reveal, scroll text as MDX components | P8 (optional) |
+| `kugiri` | Word-by-word or typewriter text reveal, scroll text as MDX components | Dropped |
 | `env-style` | Favicon for local dev environments | P0 (optional) |
 | `vercel-react-best-practices` | Optional React performance review for the admin | P2 (optional) |
 | `diagnosing-bugs` | Any bug that resists a first fix | All |
@@ -342,20 +342,20 @@ Done:
 
 ### P8 — Optional enhancements — PARTIAL
 
-- `numbers` and `kugiri` as MDX components for article content (counters, scroll and typewriter text).
+- `numbers` as an MDX component for article content. Scroll and typewriter text
+  (`kugiri`) were dropped: public pages ship no animation script.
 - Design improvements to the blog (after the switch).
 - **Exit:** each component has a unit test and renders in MDXEditor and on the public page.
 
 Done:
 
-- `Stat` (numbers): a number that counts up on view. Uses Intl formatting
-  (`src/lib/format-number.ts`); the final value is in the markup for SEO and
-  no-JS.
-- `Reveal` (kugiri): text that reveals word by word. The text is in the markup;
-  `src/lib/enhance-articles.ts` splits it with kugiri and reveals it on view.
-- Both are wired into the MDX component map; the enhancer is loaded by
-  `MainLayout`, respects `prefers-reduced-motion`, and keeps text visible
-  without JS. Unit tests cover formatting and the SSR output.
+- `Stat` (numbers): renders the final formatted value. Uses Intl formatting
+  (`src/lib/format-number.ts`); there is no counter animation.
+- `Reveal` (kugiri): kept as a legacy plain span so existing articles keep
+  compiling. It renders static text; the scroll reveal and the kugiri enhancer
+  were removed.
+- Both are wired into the MDX component map. Public pages load no animation
+  script and no React island; unit tests cover formatting and the static output.
 
 Not done:
 
@@ -395,7 +395,7 @@ pzz-cms/
 ├── .github/workflows/     # CI
 ├── src/
 │   ├── content/           # content module (deep module)
-│   ├── components/        # shadcn, mdxcn, numbers, kugiri
+│   ├── components/        # shadcn, mdxcn, numbers
 │   ├── layouts/           # MainLayout (blog design)
 │   ├── lib/               # SEO helpers, slugs, redirects, WebP conversion
 │   └── pages/             # public pages and /admin

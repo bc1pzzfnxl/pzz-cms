@@ -4,8 +4,8 @@ How an article becomes a page at `/{slug}/`: what runs on the server, what runs
 in the browser, how to write the MDX, and what a new component must respect.
 
 The short version: **the admin compiles MDX to static HTML and stores it; the
-Worker only serves that HTML; the browser adds motion.** Nothing compiles MDX at
-request time.
+Worker only serves that HTML.** Nothing compiles MDX at request time, and the
+public page adds no client-side animation.
 
 ## 1. The pipeline
 
@@ -22,13 +22,8 @@ admin (browser)                         Cloudflare
 │   prepareMdxHtml         │            │       ▼                  │
 │      │                   │            │   HTML response          │
 │      ▼                   │            └──────────────────────────┘
-│   body_html              │                        │
-└──────────────────────────┘                        ▼
-                                         ┌──────────────────────────┐
-                                         │ browser                  │
-                                         │ enhance-articles.ts      │
-                                         │   stats, reveals, motion │
-                                         └──────────────────────────┘
+│   body_html              │
+└──────────────────────────┘
 ```
 
 `body_mdx` is the source of truth for editing; `body_html` is the compiled
@@ -47,11 +42,11 @@ Why not compile at request time: Cloudflare Workers block `new Function`, which
 | Storage | D1 | `body_mdx`, `body_html` |
 | Page rendering | Worker | `src/pages/[slug].astro`, `set:html` |
 | Cover/body images | R2 via `/media/<key>/` | `optimizeBodyImages` adds dimensions + lazy |
-| Motion | browser | `src/lib/enhance-articles.ts` |
+| Animation | none | the article is static HTML; no client enhancer |
 | Admin preview | admin browser | same compiler and component map as saving |
 
-There is no React hydration of the article body. Everything that must animate is
-driven by the small client script, not by the React components.
+There is no React hydration of the article body and no client-side animation
+script. What the compiler produces is what the browser paints.
 
 ## 3. Writing the article
 
@@ -114,8 +109,8 @@ paste the clean tag.
 | `GraphStat` | two to four large numbers |
 | `GraphTable` | tabular data |
 | `GraphTimeline` | dated events, one marked current |
-| `Stat` | one inline number, with an optional counter |
-| `Reveal` | opt in to the word reveal for a block |
+| `Stat` | one inline number, rendered at its final value |
+| `Reveal` | legacy wrapper; renders its children as a plain inline span |
 
 Grammar rules (shared by mdxcn components):
 
@@ -210,14 +205,14 @@ images.
 `loading="lazy"`, and `decoding="async"`. Body images are never preloaded; only
 the cover is. Alt text is required for accessibility and image SEO.
 
-## 4. Motion and static rendering
+## 4. Static rendering and animation
 
-The design rule: **the text is always in the HTML; motion is added by the
-browser.** The project deliberately ignores `prefers-reduced-motion` (the
-effects are lightweight), so motion is always on.
+The design rule: **the article is complete static HTML.** The public page has no
+React hydration and no client animation script; text appears as soon as the HTML
+is painted.
 
-mdxcn components use `motion` with `initial="hidden"`. A static render would
-otherwise write:
+mdxcn components still use `motion` with `initial="hidden"` at compile time. A
+static render would otherwise write:
 
 ```html
 style="opacity:0;transform:translateY(8px)"
@@ -229,37 +224,25 @@ and the content would stay invisible, because nothing hydrates the article.
 1. after compiling, in `renderMdxToHtml` (new rows);
 2. when rendering an article, in `[slug].astro` (rows compiled before the fix).
 
-It removes the hidden pair and adds `data-mdx-reveal`:
+It removes the hidden pair and leaves no animation marker:
 
 ```html
-<div data-mdx-reveal="">…</div>
+<div>…</div>
 ```
 
-`enhance-articles.ts` observes those markers and adds `data-revealed` when they
-enter the viewport. `global.css` scopes the hidden state to
-`[data-enhance="on"]`, which the script sets, so **without JS the content is
-visible**. The animation is always on; there is no reduced-motion check.
-
-The enhancer runs on Astro's `astro:page-load`, not only on the first
-`DOMContentLoaded`: the ClientRouter swaps the body without reloading scripts,
-so a page reached by clicking a link would otherwise never be split until a full
-refresh. Each target carries a guard, so a double event does not split twice.
-
-kugiri wraps the gap between words in an inline-block box; some browsers drop
-that space from a text selection, so copying a split heading produced
-`motmot`. `global.css` sets `white-space: pre` on those boxes to keep the gap
-copyable.
+The published page therefore shows the final state immediately. There is no
+scroll reveal, no per-word split, and no counter animation. Components may still
+use motion internally to lay out their static markup, but the compiled output
+must be visible without JS.
 
 Consequences for a new component:
 
 - Never rely on React state or effects for the initial content: the public page
   has no hydration.
-- Never leave content hidden in the static output. If you animate, use motion's
-  `fadeUp` convention (`opacity:0;transform:translateY(8px)`) so
-  `prepareMdxHtml` can convert it, or render the final state and let the client
-  enhancer add motion.
-- Do not use `useReducedMotion` to decide the static output: that bakes the
-  author's OS setting into the published HTML.
+- Never leave content hidden in the static output. If the component uses motion
+  for its static layout, keep the `fadeUp` initial pair so `prepareMdxHtml` can
+  strip it, and render meaningful text at the same time.
+- Do not add a client script that animates article text on scroll.
 
 ## 5. Adding a component
 
@@ -273,8 +256,7 @@ Consequences for a new component:
 4. **Style it** with Tailwind classes and the mdxcn tokens
    (`src/styles/mdxcn.css`). Support `html.dark-mode`.
 5. **Test it** in `tests/unit/render-mdx.test.ts`: compile a fixture, assert the
-   text is present, assert the output has no `opacity:0`, and assert
-   `data-mdx-reveal` when it animates.
+   text is present, and assert the output has no `opacity:0` or animation marker.
 6. **Sync the blog.** The CMS is the upstream template; copy the component, the
    map, the styles, and the tests to the blog repo, then deploy.
 7. **Recompile the articles that use it.** `body_html` is frozen at save time; a
@@ -293,7 +275,7 @@ Consequences for a new component:
   emitted by `[slug].astro`.
 - A slug change creates a 301; the sitemap is generated from published rows.
 - The Worker never compiles MDX: TTFB stays low.
-- Motion is a client-only enhancement; it never blocks first paint.
+- No animation script runs on the article: nothing to hydrate, no scroll work.
 
 ## 7. Debugging
 
@@ -303,8 +285,6 @@ Consequences for a new component:
 | The admin preview differs from the public page | The preview uses the same compiler; check that the component is in `mdx-components.ts` and the CSS is imported. |
 | An image has no dimensions | Upload it through the admin so the `media` row has `width`/`height`. |
 | A new component is missing in the preview | It is not registered in `src/lib/mdx-components.ts`. |
-| The animation does not run | The component has no `data-mdx-reveal`, or `enhance-articles` did not load. After a client-side navigation, the enhancer must re-run on `astro:page-load`. |
-| Copying a heading yields `motmot` | The kugiri gap boxes lost their space in the selection; `white-space: pre` on those boxes fixes it. |
 | A pasted component tag has no spaces | `<Callouttype="tip">` is not `Callout`; the MDX compiler sees a different component. Paste the snippet as a code block, or use the editor's source mode. |
 | A pasted component appears escaped as text | The paste interceptor handles known tags; if it still happens, use Source mode. Preview and save unescape known tags. |
 | An old slug returns 404 | Check the `redirects` table; the 301 is created when the slug changes in the admin. |
@@ -315,10 +295,9 @@ Consequences for a new component:
 | --- | --- |
 | `src/pages/[slug].astro` | serves articles, JSON documents, and 301s |
 | `src/lib/render-mdx.ts` | MDX → static HTML, in the admin |
-| `src/lib/mdx-html.ts` | converts motion's hidden state into a reveal marker |
+| `src/lib/mdx-html.ts` | strips motion's hidden state from the static HTML |
 | `src/lib/mdx-components.ts` | the global component map |
-| `src/lib/enhance-articles.ts` | stats, article reveal, component reveal |
-| `src/styles/global.css` | article and reveal styles |
+| `src/styles/global.css` | article and data-component styles |
 | `src/styles/mdxcn.css` | mdxcn tokens and frame utilities |
 | `src/components/admin/ArticleEditor.tsx` | editor, live preview, save |
 | `tests/unit/render-mdx.test.ts` | compile and static-safety tests |

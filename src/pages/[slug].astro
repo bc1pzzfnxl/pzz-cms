@@ -159,7 +159,7 @@ if (document && jsonData) {
                             </figure>
                         )
                     }
-                    <div class="article-body" data-reveal-article set:html={optimizeBodyImages(articleHtml, dimensions)} />
+                    <div class="article-body" set:html={optimizeBodyImages(articleHtml, dimensions)} />
                 </>
             ) : document && jsonData ? (
                 <>

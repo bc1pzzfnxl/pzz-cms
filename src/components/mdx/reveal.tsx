@@ -5,14 +5,9 @@ export interface RevealProps {
 }
 
 /**
- * Text that reveals word by word when it scrolls into view. The text is in the
- * markup (SEO, no JS); `enhance-articles` splits it with kugiri and reveals it.
- * See PLAN.md, P8.
+ * Kept for existing articles that use `<Reveal>`: it renders plain static
+ * markup, with no per-word animation. Public pages add no motion.
  */
 export function Reveal({ children }: RevealProps) {
-  return (
-    <span className="mdx-reveal" data-reveal>
-      {children}
-    </span>
-  );
+  return <span className="mdx-reveal">{children}</span>;
 }

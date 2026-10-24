@@ -6,9 +6,8 @@
  * written into the HTML as `opacity:0;transform:translateY(8px)`. The public
  * page has no React hydration, so the content would stay invisible forever.
  *
- * We strip that hidden state, mark the element, and let `enhance-articles`
- * reveal it on scroll. Without JS the content stays visible: motion is
- * progressive enhancement, never a requirement to read the article.
+ * We strip that hidden state. The public page adds no animation: the article is
+ * fully readable from the first paint, with or without JS.
  */
 const HIDDEN_OPACITY = /(?:^|;)\s*opacity:\s*0\s*(?=;|$)/;
 const HIDDEN_TRANSFORM = /(?:^|;)\s*transform:\s*translateY\(8px\)\s*(?=;|$)/;
@@ -28,15 +27,14 @@ function stripHiddenStyle(style: string): string | null {
 }
 
 /**
- * Turn motion's precompiled hidden state into a `data-mdx-reveal` marker.
- * Idempotent: HTML that already carries the marker is returned unchanged.
+ * Remove motion's precompiled hidden state so the article is visible without
+ * JS. Idempotent: cleaned HTML is returned unchanged.
  */
 export function prepareMdxHtml(html: string): string {
   return html.replace(/\sstyle="([^"]*)"/g, (match, style: string) => {
     const cleaned = stripHiddenStyle(style);
     if (cleaned === null) return match;
 
-    const styleAttr = cleaned ? ` style="${cleaned}"` : "";
-    return `${styleAttr} data-mdx-reveal=""`;
+    return cleaned ? ` style="${cleaned}"` : "";
   });
 }

@@ -23,8 +23,7 @@ A phase is done only when its checks pass (typecheck, lint, tests).
 ## Authoring a slug page
 
 See [`docs/slug.md`](./docs/slug.md) for the render pipeline (admin compile,
-Worker SSR, client motion), the MDX rules, and the checklist for adding a
-component.
+Worker SSR), the MDX rules, and the checklist for adding a component.
 
 ## Commits
 

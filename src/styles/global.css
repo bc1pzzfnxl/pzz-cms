@@ -16,8 +16,8 @@ html.dark-mode {
 }
 
 /*
- * Article motion components (P8). The value and the text stay in the markup for
- * SEO and no-JS; `enhance-articles` adds the motion.
+ * Article data components (P8). The value and the text stay in the markup for
+ * SEO; the public page adds no motion.
  */
 .mdx-stat {
   font-variant-numeric: tabular-nums;
@@ -25,47 +25,4 @@ html.dark-mode {
 }
 .mdx-stat-suffix {
   margin-left: 0.15em;
-}
-
-[data-enhance="on"] [data-word] {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(0.6em);
-}
-[data-enhance="on"] [data-revealed] [data-word] {
-  animation: mdx-rise 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-  animation-delay: calc(var(--word, 0) * 22ms);
-}
-@keyframes mdx-rise {
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/*
- * kugiri wraps each gap between words in an inline-block box. Some browsers
- * drop that space from a text selection, so copying a heading yields
- * "motmot". `white-space: pre` keeps the gap in the paint and in the copy.
- */
-[data-split] span[style*="inline-size"]:not([data-word]):not([data-mask]) {
-  white-space: pre;
-}
-
-/*
- * Precompiled mdxcn components. `prepareMdxHtml` removes motion's hidden
- * initial style and adds `data-mdx-reveal`; `enhance-articles` adds
- * `data-revealed` when the block enters the viewport. Scoped to `data-enhance`
- * so the content is fully visible without JS.
- */
-[data-enhance="on"] [data-mdx-reveal] {
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 220ms cubic-bezier(0.215, 0.61, 0.355, 1),
-    transform 220ms cubic-bezier(0.215, 0.61, 0.355, 1);
-}
-[data-enhance="on"] [data-mdx-reveal][data-revealed] {
-  opacity: 1;
-  transform: none;
 }
