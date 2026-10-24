@@ -47,6 +47,11 @@ The image attached to an article (`og_image_key`). Its alt text is stored on the
 media row, shown under the image and used as the image `alt`. When it is empty,
 the article title is the fallback.
 
+## Home
+
+The public index at `/`: a short introduction, categories with their articles
+as a bare slug plus date, and a hover preview loaded only when requested.
+
 ## Category
 
 A named group of articles, with a slug, an optional description and an ordered

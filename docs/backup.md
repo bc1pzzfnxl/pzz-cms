@@ -14,8 +14,8 @@ deleted image will show a broken image.
 ## Git mirror
 
 `content/` is written by `bun run content:sync` and committed by the deployment
-repository. On a public repository the action mirrors **published** articles
-only; on a private repository it mirrors every status (`--all`).
+repository. The deployment repository is private, so the mirror can include
+every status (`--all`); a public repository must stay published-only.
 
 - `content/articles/<slug>.mdx`: frontmatter + MDX body.
 - `content/categories.json`: category names, slugs, positions.
@@ -25,7 +25,7 @@ only; on a private repository it mirrors every status (`--all`).
 The mirror is updated manually:
 
 ```bash
-bun run content:sync -- --config=wrangler.deploy.jsonc
+bun run content:sync -- --config=wrangler.deploy.jsonc --all
 ```
 
 There is no scheduled sync: run it when you want a new Git checkpoint.

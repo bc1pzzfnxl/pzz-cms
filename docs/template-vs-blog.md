@@ -58,9 +58,8 @@ bun run media:gc -- --bucket=<r2-bucket> --config=wrangler.deploy.jsonc
 ```
 
 - `content:sync` writes one `.mdx` per article plus `categories.json`,
-  `media.json` and `manifest.json`. It mirrors **published** articles by
-  default; `--all` includes drafts and must only be used with a private
-  repository. Run it manually when you want a new Git checkpoint.
+  `media.json` and `manifest.json`. The deployment repository is private, so
+  use `--all` to include drafts; the default mirrors published articles only.
 - `content:import` recompiles MDX and upserts the mirror into D1. It restores
   text and media metadata, not the R2 objects: images must still exist.
 - `media:gc` deletes media rows and R2 objects that no current article or
@@ -75,7 +74,5 @@ bun run media:gc -- --bucket=<r2-bucket> --config=wrangler.deploy.jsonc
 
 ## Current gaps
 
-- The deployment repository visibility is still under review; ADR 0004 expects
-  a private blog repository.
 - The `shadcn` CLI is a dev dependency because the admin CSS imports
   `shadcn/tailwind.css`.

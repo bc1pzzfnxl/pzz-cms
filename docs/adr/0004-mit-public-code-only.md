@@ -2,9 +2,8 @@
 
 ## Status
 
-Accepted for the template. The deployment repository visibility is under
-review: `bc1pzzfnxl-blog` is currently public, while this ADR calls for a private
-blog repository.
+Accepted. The template repository (`pzz-cms`) is public; the deployment
+repository (`bc1pzzfnxl-blog`) is private.
 
 ## Context
 
