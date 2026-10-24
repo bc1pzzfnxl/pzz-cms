@@ -275,6 +275,7 @@ Consequences for a new component:
   emitted by `[slug].astro`.
 - A slug change creates a 301; the sitemap is generated from published rows.
 - The Worker never compiles MDX: TTFB stays low.
+- Fonts are preloaded (one variable file where possible) so the swap never moves the layout after first paint.
 - No animation script runs on the article: nothing to hydrate, no scroll work.
 
 ## 7. Debugging
