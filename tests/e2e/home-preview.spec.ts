@@ -17,7 +17,6 @@ test("the hover preview reloads after returning from an article", async ({ page 
 
   await item.hover();
   await expect(iframe).toHaveAttribute("src", /\/premier-article\//);
-  await expect(page.frameLocator(".home-item iframe").first().locator("h1")).toContainText(
-    "Premier article",
-  );
+  const preview = page.locator(".home-item iframe").first().contentFrame();
+  await expect(preview.locator("h1")).toContainText("Premier article");
 });
