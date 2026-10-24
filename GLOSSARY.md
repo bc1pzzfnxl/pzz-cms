@@ -33,17 +33,52 @@ Created automatically when a published article's slug changes.
 ## Media
 
 An uploaded image: the R2 object key, its pixel dimensions (for zero layout
-shift) and its alt text. Stored in the `media` table.
+shift) and its alt text. Stored in the `media` table. The original WebP is kept
+untouched; smaller variants (`@480`, `@800`, `@1200`) are derived copies.
+
+## Media variant
+
+A resized WebP generated from a media original, stored next to it in R2 and
+served through `srcset`/`sizes`. The original is the largest candidate.
+
+## Cover
+
+The image attached to an article (`og_image_key`). Its alt text is stored on the
+media row, shown under the image and used as the image `alt`. When it is empty,
+the article title is the fallback.
+
+## Category
+
+A named group of articles, with a slug and an ordered position. One category per
+article, nullable. The home groups articles by category; deleting a category
+leaves its articles uncategorised.
+
+## Document
+
+A JSON document rendered as a page at `/<slug>/`, separate from articles. Stored
+in the `documents` table. The author page can be a document or a static route.
 
 ## Content module
 
-The single module that reads and writes articles, redirects and media. It hides
-D1 behind a small interface (`getArticle`, `listPublished`, `saveDraft`,
-`publish`). No other module talks to the database directly.
+The single module that reads and writes articles, categories, media, documents
+and redirects. It hides D1 behind the `Content` interface. No other module talks
+to the database directly.
 
 ## Admin
 
-The `/admin` area, protected by Cloudflare Access. Single user.
+The `/admin` area, protected in-app by a single owner password (Better Auth).
+Cloudflare Access is available as an optional adapter. Single user.
+
+## Template
+
+`pzz-cms`, the public, generic upstream. It ships code, docs and example
+configuration only: no article, image, real Cloudflare id or secret.
+
+## Deployment
+
+A site built from the template (for example `bc1pzzfnxl-blog`). It owns its
+`src/lib/site.ts`, its Cloudflare resources and its content. See
+`docs/template-vs-blog.md`.
 
 ## Public site
 
@@ -64,7 +99,7 @@ Selected by `AUTH_PROVIDER`. See ADR 0007.
 ## Session
 
 An authenticated visit: a cookie mapped to a row in the auth store. Created on
-password sign-in, lasting 30 days.
+password sign-in, lasting 7 days with a 1-day rolling refresh.
 
 ## Owner
 

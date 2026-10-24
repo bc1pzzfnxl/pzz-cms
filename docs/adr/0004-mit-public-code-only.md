@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted.
+Accepted for the template. The deployment repository visibility is under
+review: `bc1pzzfnxl-blog` is currently public, while this ADR calls for a private
+blog repository.
 
 ## Context
 

@@ -15,10 +15,10 @@ A light, MDX-first CMS built on Astro and Cloudflare Workers. It is developed as
 | Editor | MDXEditor with custom components. |
 | Rendering | Astro SSR on Cloudflare Workers. Publication is immediate. |
 | Deployment | Cloudflare Workers (Astro adapter + `wrangler.jsonc`). Cloudflare Pages is not used. HTTPS is mandatory. |
-| Admin access | Cloudflare Access, single user (the owner). |
+| Admin access | Password auth (Better Auth) behind a provider seam; single owner. Cloudflare Access is an optional adapter (ADR 0007). |
 | Slugs | ASCII kebab-case generated from the title. Editable before publication. A change creates a 301 in the `redirects` table and updates the sitemap. |
 | Titles | `title` in frontmatter, with accents. It feeds `<h1>`, `<title>` and JSON-LD. File names are ASCII slugs. |
-| URLs | Domain `example.com` unchanged. `trailingSlash: "always"` kept. Sitemap at the same address. |
+| URLs | Page URLs are canonical with a trailing slash. `trailingSlash: "ignore"` plus middleware keeps the Better Auth routes working. Sitemap at the same address. |
 | Language | French UI and content. Code and docs in English. Multilingual support is v2. |
 | Media | Cloudflare R2. WebP conversion in the browser (canvas) before upload. Dimensions stored in D1. |
 | SEO | Modules from `skill-seo-astro` are added one by one. The blog layout is not overwritten. |
@@ -178,8 +178,8 @@ Notes from the build:
 
 ### P2 — Admin — DONE
 
-- `/admin` protected by Cloudflare Access. **Done:** a self-hosted (Public DNS) app on `example.com` path `admin`, with an allow-policy on the owner's email. Verified: `/` stays 200, `/admin/` redirects to the Cloudflare login.
-- The staging Worker (`your-worker.workers.dev`) stays **open** on purpose: CI runs Playwright against it, and a login gate would break the E2E run. Protecting it would need an Access service token.
+- `/admin` protected: Cloudflare Access at P2, replaced by in-app password auth in P2b. **Done:** a self-hosted app on the deployment domain, with the owner account created at `/admin/setup`.
+- The staging Worker (`your-worker.workers.dev`) stays **open** on purpose: CI runs Playwright against it. Protect it with an Access service token if needed.
 - MDXEditor with mdxcn components. Draft and published states.
 - **Exit:** create, edit and publish an article end to end (Playwright).
 
@@ -215,7 +215,7 @@ Notes from the build:
 - No signup; `/admin/setup` (guarded by `SETUP_TOKEN`) lets the owner choose a
   password; a hook refuses a second account. The password changes at
   `/admin/password` (current + new, keeps the session).
-- Sessions live in D1, 30 days. Recovery: `bun run auth:reset`.
+- Sessions live in D1, 7 days with a 1-day rolling refresh. Recovery: `bun run auth:reset`.
 - Passkeys were evaluated and removed: many machines have no usable
   authenticator, which would lock the owner out.
 - Two Astro traps, both load-bearing:
@@ -276,8 +276,9 @@ Notes from the build:
   well inside the free tier; uploads are capped at 1 MB. A dashboard spending
   limit is the hard stop (README, "R2 cost control").
 - Two Astro gotchas, both load-bearing:
-  - `trailingSlash: "always"` means endpoint URLs must be called **with** a
-    trailing slash, and the media route only matches `/media/<key>/`.
+  - Page URLs are canonical with a trailing slash; `trailingSlash` is
+    `"ignore"` so the auth API is not redirected, and middleware 301s page URLs.
+    The media route accepts `/media/<key>/` and strips the trailing slash.
   - Astro's CSRF guard rejects cross-origin form POSTs; callers must send a
     same-origin `Origin` header (the browser does).
 - The article cover and `og:image` use the media key, with intrinsic dimensions
@@ -333,8 +334,9 @@ Done:
 - Deployed manually to the existing blog Worker. **No DNS change**: the domain
   already pointed there, so nothing was lost.
 - Verified on production: the 5 original URLs return 200 with JSON-LD;
-  `/admin/` still redirects to Cloudflare Access; `/sitemap.xml` and `/rss.xml`
-  return 200; parity between staging and production is OK.
+  `/admin/` now redirects to the in-app login (Cloudflare Access at the time);
+  `/sitemap.xml` and `/rss.xml` return 200; parity between staging and
+  production is OK.
 - **Follow-up resolved:** the Cloudflare "Workers Builds" integration on the blog
   repo now succeeds. It needed the `BUN_VERSION` build variable (`1.4.3`): the
   build image ships Bun 1.2, which cannot read the `bun.lock` lockfile
@@ -361,24 +363,22 @@ Done:
 
 Not done:
 
-- The MDXEditor preview does not render custom JSX components (it needs a
-  `jsxPlugin` config). Authors write `<Stat>` / `<Reveal>` as raw JSX; the
-  published page renders them. A preview is a later refinement.
 - `@sfinterface/numbers` was not adopted: it animates on value change
   (interactive dashboards), not on view, and would need React hydration on the
   public page. `Stat` is self-contained and SEO-safe.
 - Design improvements to the blog: still open.
-- The blog repository has not been synced with P8 yet; it needs another small PR.
+
+The editor preview now renders the same compiled HTML as the published page
+(`renderMdxToHtml` + `optimizeBodyImages`), and the blog repository is synced.
 
 ## 7. Open points
 
 1. **License.** MIT is in place.
 2. **Repo creation.** Done: `bc1pzzfnxl/pzz-cms` is public.
-3. **Cloudflare Access (P2).** Done: app on `example.com` path `admin`.
+3. **Authentication (P2b).** Done: in-app password auth (ADR 0007); Cloudflare Access remains an optional adapter.
 4. **Hosting on Raspberry Pi.** Not part of this plan. Revisit after P7.
-5. **Blog transition (P7).** Timing, to decide when P6 parity is green.
-6. **App-level auth — DONE (ADR 0007).** Passkeys (Better Auth) behind a
-   provider seam; `access` kept as an option. See "P2b — Authentication".
+5. **Blog transition (P7).** Done.
+6. **App-level auth — DONE (ADR 0007).** Password auth behind a provider seam; `access` kept as an option. See "P2b — Authentication".
 
 ## 8. Repository layout (target)
 
