@@ -272,7 +272,7 @@ Consequences for a new component:
 - `description` is written for search results; the body's first paragraph is
   not a substitute.
 - The HTML is complete: no content depends on JS to exist or be readable.
-- Cover image: WebP, `width`/`height`, eager + `fetchpriority="high"`.
+- Cover image: WebP, `width`/`height`, eager + `fetchpriority="high"`, with its alt shown as a caption under the image (falls back to the title when the media row has no alt).
 - Body images: WebP, `width`/`height`, lazy, no preload.
 - Canonical URL is `/{slug}/`; `BlogPosting` + `BreadcrumbList` JSON-LD are
   emitted by `[slug].astro`.

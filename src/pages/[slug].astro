@@ -155,7 +155,9 @@ if (document && jsonData) {
                                     fetchpriority="high"
                                     decoding="async"
                                 />
-                                {cover?.alt && <figcaption class="article-cover-caption">{cover.alt}</figcaption>}
+                                <figcaption class="article-cover-caption">
+                                    {cover?.alt ?? article.title}
+                                </figcaption>
                             </figure>
                         )
                     }
