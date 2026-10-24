@@ -103,7 +103,11 @@ First install (there is no signup):
 Change the password at `/admin/password` (current + new; keeps the session).
 Recovery: `bun run auth:reset`, then open the setup URL again.
 
-Cloudflare Access stays available as the `access` adapter.
+Cloudflare Access stays available as the `access` adapter. Set
+`AUTH_PROVIDER=access`, `ACCESS_TEAM_DOMAIN` (the team domain, e.g.
+`team.cloudflareaccess.com`) and `ACCESS_AUD` (the application audience tag);
+the Worker verifies the `Cf-Access-Jwt-Assertion` signature, issuer and
+audience against the team JWKS.
 
 ## Migration
 

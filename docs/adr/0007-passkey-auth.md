@@ -25,8 +25,9 @@ Authenticate at the application level, behind a small **auth seam**
 
 - `passkey` is gone; the default is `password` (Better Auth email/password),
   sessions in D1, 7 days with a 1-day rolling refresh.
-- `access`: reads Cloudflare Access headers, kept as an option for Cloudflare
-  deployments.
+- `access`: verifies the `Cf-Access-Jwt-Assertion` signature, issuer and
+  audience against the team JWKS. Requires `ACCESS_TEAM_DOMAIN` and
+  `ACCESS_AUD`; fails closed without them.
 - `none`: local development only.
 
 There is no signup. The owner chooses their password once at `/admin/setup`,

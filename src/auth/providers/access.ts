@@ -1,20 +1,26 @@
-import type { AuthProvider } from "../types";
+import { env } from "cloudflare:workers";
+import { type AccessConfig, createAccessProvider } from "./access-jwt";
 
 /**
- * Cloudflare Access adapter. Access enforces authentication at the edge; the
- * Worker only reads the headers Access injects. Kept as an option for
- * Cloudflare deployments (the portable default is the passkey provider).
+ * Cloudflare Access configuration. Access authenticates at the edge, but the
+ * Worker still verifies the signed JWT: trusting the header alone lets anyone
+ * who can reach the Worker (or a misconfigured route) mint an admin session.
  */
-export function createAccessProvider(): AuthProvider {
+export function accessConfig(): AccessConfig | null {
+  const domain = env.ACCESS_TEAM_DOMAIN?.trim();
+  const audience = env.ACCESS_AUD?.trim();
+  if (!domain || !audience) return null;
+
+  const team = domain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   return {
-    async getSession(request) {
-      const email = request.headers.get("cf-access-authenticated-user-email");
-      const jwt = request.headers.get("cf-access-jwt-assertion");
-      if (!jwt) return null;
-      return { userId: email ?? "access-user", email: email ?? "access-user" };
-    },
-    async handle() {
-      return null;
-    },
+    issuer: `https://${team}`,
+    audience,
+    certsUrl: env.ACCESS_CERTS_URL?.trim() || `https://${team}/cdn-cgi/access/certs`,
   };
 }
+
+export function createAccessProviderFromEnv() {
+  return createAccessProvider(accessConfig());
+}
+
+export type { AccessClaims, AccessConfig } from "./access-jwt";

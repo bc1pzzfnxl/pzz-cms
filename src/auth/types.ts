@@ -1,6 +1,7 @@
 /**
  * The auth seam. A provider resolves the current session and may own HTTP
- * routes (the passkey ceremony). The rest of the app only knows this interface.
+ * routes (the Better Auth handler). The rest of the app only knows this
+ * interface.
  */
 export interface AuthSession {
   userId: string;

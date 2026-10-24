@@ -48,7 +48,7 @@ jobs:
         run: |
           nohup bunx wrangler dev --config dist/server/wrangler.json \
             --persist-to "$PWD/.wrangler/state" --port 8787 --ip 127.0.0.1 \
-            --var AUTH_PROVIDER:passkey \
+            --var AUTH_PROVIDER:password \
             --var BETTER_AUTH_SECRET:ci-secret-0123456789abcdef0123456789abcdef \
             --var BETTER_AUTH_URL:http://localhost:8787 \
             --var SETUP_TOKEN:ci-setup-token \

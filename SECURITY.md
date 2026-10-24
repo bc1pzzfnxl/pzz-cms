@@ -40,11 +40,10 @@ No authentication is infallible. Known limits:
   Content-Security-Policy yet.
 - **No audit log.** Admin actions are not recorded.
 - **`AUTH_PROVIDER=none` opens the admin.** It is for local development only;
-  never set it in production.
-- **The `access` adapter trusts Cloudflare headers.** It checks that
-  `cf-access-jwt-assertion` is present but does not verify its signature. Only
-  select it when Cloudflare Access actually fronts the Worker and strips
-  client-supplied copies of those headers.
+  selecting it in a production build throws instead of starting.
+- **The `access` adapter verifies the JWT.** It requires `ACCESS_TEAM_DOMAIN`
+  and `ACCESS_AUD`, checks the signature against the team JWKS, and validates
+  the issuer and audience. Without both variables it fails closed.
 - **Stored article HTML.** Article bodies are rendered with `set:html`. The
   author controls them, but an attacker who reaches the editor already owns
   the site.
