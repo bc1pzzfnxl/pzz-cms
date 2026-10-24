@@ -24,7 +24,7 @@ Authenticate at the application level, behind a small **auth seam**
 (`AuthProvider`: `getSession`, `handle`) with three adapters:
 
 - `passkey` is gone; the default is `password` (Better Auth email/password),
-  sessions in D1, 30 days.
+  sessions in D1, 7 days with a 1-day rolling refresh.
 - `access`: reads Cloudflare Access headers, kept as an option for Cloudflare
   deployments.
 - `none`: local development only.

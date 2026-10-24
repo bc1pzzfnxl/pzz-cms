@@ -27,7 +27,10 @@ installed; always call it as `bunx wrangler`.
 - The repository is public. Never commit an article, image, database dump or
   secret. Test fixtures are synthetic.
 - Site branding and the canonical URL live in `src/lib/site.ts`, not inline in
-  components.
+  components. `astro.config.mjs`, `robots.txt` and `llms.txt` read it.
+- `pzz-cms` is the upstream template; the blog is a deployment. Never copy a
+  deployment's `site.ts`, Wrangler config, secrets, content or generated assets
+  into the template. See `docs/template-vs-blog.md`.
 - Keep the blog design in `src/layouts/MainLayout.astro`. Do not run
   `skill-seo-astro init` on this repo: it overwrites `index.astro` and
   `[slug].astro`.
@@ -37,15 +40,16 @@ installed; always call it as `bunx wrangler`.
 
 - `src/lib/` holds pure helpers (slug, SEO, image meta). Small interfaces, easy
   to test.
-- `src/content/` will hold the content module: the only place that talks to D1.
+- `src/content/` holds the content module: the only place that talks to D1.
 - `src/pages/` holds routes, public and admin.
 - `migrations/` holds D1 migrations. Number them in order.
 
 ## Astro gotchas
 
-- `trailingSlash: "always"` is on. Endpoint URLs must be called **with** a
-  trailing slash (`/admin/api/articles/`), and dynamic rest routes only match
-  with one (`/media/<key>/`).
+- Page URLs are canonical with a trailing slash. `trailingSlash` is `"ignore"`
+  so the Better Auth routes under `/api/auth` are not redirected; a middleware
+  canonicalization step 301s page URLs that lack the slash. Call endpoints with
+  the trailing slash (`/admin/api/articles/`); the media route strips it.
 - Astro's CSRF guard rejects cross-origin form POSTs: callers must send a
   same-origin `Origin` header.
 - Do not run `skill-seo-astro init` here: it overwrites `index.astro` and

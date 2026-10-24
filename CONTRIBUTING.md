@@ -20,6 +20,13 @@ bun run check
 
 A phase is done only when its checks pass (typecheck, lint, tests).
 
+## Template vs deployment
+
+`pzz-cms` is the upstream template; each site is a deployment. Read
+[`docs/template-vs-blog.md`](./docs/template-vs-blog.md) before syncing code:
+never copy `src/lib/site.ts`, Wrangler config, secrets, content or generated
+assets between the two.
+
 ## Authoring a slug page
 
 See [`docs/slug.md`](./docs/slug.md) for the render pipeline (admin compile,

@@ -39,6 +39,12 @@ No authentication is infallible. Known limits:
 - **No CSP.** The admin sets framing and sniffing headers but not a
   Content-Security-Policy yet.
 - **No audit log.** Admin actions are not recorded.
+- **`AUTH_PROVIDER=none` opens the admin.** It is for local development only;
+  never set it in production.
+- **The `access` adapter trusts Cloudflare headers.** It checks that
+  `cf-access-jwt-assertion` is present but does not verify its signature. Only
+  select it when Cloudflare Access actually fronts the Worker and strips
+  client-supplied copies of those headers.
 - **Stored article HTML.** Article bodies are rendered with `set:html`. The
   author controls them, but an attacker who reaches the editor already owns
   the site.

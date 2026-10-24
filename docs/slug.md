@@ -64,7 +64,9 @@ script. What the compiler produces is what the browser paints.
 - The slug is generated from the title (ASCII kebab-case); you can override it.
 - Changing a published slug creates a 301 in the `redirects` table and updates
   the sitemap. Never reuse an old slug for a different article.
-- All URLs use a trailing slash (`trailingSlash: "always"`).
+- All page URLs are canonical with a trailing slash. `trailingSlash` is
+  `"ignore"` so the auth API is not redirected; middleware 301s page URLs
+  without the slash.
 
 ### Markdown first
 

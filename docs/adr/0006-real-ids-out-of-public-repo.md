@@ -20,6 +20,11 @@ bun run build
 bunx wrangler deploy --config wrangler.deploy.jsonc
 ```
 
+Both repositories must list `wrangler.deploy.jsonc` in `.gitignore`. The
+deployment's history still contains an older committed copy with the real D1 id;
+it is not a secret, but rotating it would require a D1 migration and a new
+config.
+
 Remote D1 operations (migrations, article import) use the same `--config`.
 
 ## Consequences

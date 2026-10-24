@@ -4,13 +4,16 @@ A light, MDX-first CMS built on [Astro](https://astro.build/) and Cloudflare
 Workers. It stores articles in D1, edits them in an MDX editor, and renders an
 SEO-focused blog with server-side rendering.
 
-This project is developed in the open. It is generic: branding and the canonical
-URL live in `src/lib/site.ts`, so it can drive any blog.
+This project is developed in the open. It is generic: branding, the canonical
+URL and the default metadata live in `src/lib/site.ts`, so the same code can
+drive any blog. See [`docs/template-vs-blog.md`](./docs/template-vs-blog.md) for
+the boundary between the template and a deployment.
 
 ## Status
 
-Early. Phase P0 (foundation) is complete. See [`PLAN.md`](./PLAN.md) for the
-full roadmap.
+The reference blog runs on this engine in production. Phases P0–P7 are done;
+P8 (optional editorial components) is partial. See [`PLAN.md`](./PLAN.md) for the
+history and the open points.
 
 ## Stack
 
@@ -23,7 +26,8 @@ full roadmap.
 ## Requirements
 
 - [Bun](https://bun.sh/)
-- A Cloudflare account (for D1, R2, Access and deployment)
+- A Cloudflare account for D1, R2 and deployment (Cloudflare Access is optional;
+  the default admin auth is a password)
 
 Node and npm are not required. Wrangler runs through Bun.
 
@@ -45,6 +49,7 @@ bun run check        # Biome + Astro typecheck + Vitest
 bun run lint         # Biome only
 bun run typecheck    # Astro check
 bun run test         # Vitest
+bun audit            # dependency audit; must stay clean
 ```
 
 ## Deployment
