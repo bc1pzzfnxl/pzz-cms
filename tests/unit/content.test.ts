@@ -229,7 +229,7 @@ describe("content module — admin write path", () => {
 
     const media = await content.updateMediaAlt("images/a-x.webp", "Mosaïque de Ravenne");
 
-    expect(media.alt).toBe("Mosaïque de Ravenne");
+    expect(media?.alt).toBe("Mosaïque de Ravenne");
     expect((await content.getMediaByKey("images/a-x.webp"))?.alt).toBe("Mosaïque de Ravenne");
   });
 

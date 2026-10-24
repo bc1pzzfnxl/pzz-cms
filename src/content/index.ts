@@ -73,7 +73,7 @@ export interface Content {
   // Media
   createMedia(input: CreateMediaInput): Promise<Media>;
   getMediaByKey(r2Key: string): Promise<Media | null>;
-  updateMediaAlt(r2Key: string, alt: string | null): Promise<Media>;
+  updateMediaAlt(r2Key: string, alt: string | null): Promise<Media | null>;
 
   // Categories
   listCategories(): Promise<Category[]>;
@@ -421,10 +421,7 @@ export function createContent(db: Database): Content {
 
     async updateMediaAlt(r2Key, alt) {
       await db.prepare("UPDATE media SET alt = ? WHERE r2_key = ?").bind(alt, r2Key).run();
-
-      const media = await getMediaByKey(r2Key);
-      if (!media) throw new Error(`Media not found after update: ${r2Key}`);
-      return media;
+      return getMediaByKey(r2Key);
     },
 
     getMediaByKey,
