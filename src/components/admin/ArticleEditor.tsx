@@ -279,7 +279,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
       const variants = await convertToWebpVariants(
         file,
         MEDIA_VARIANT_WIDTHS.filter((variantWidth) => variantWidth < width),
-        0.9,
+        0.85,
       );
       const form = new FormData();
       const name = `${file.name.replace(/\.[^.]+$/, "") || "image"}.webp`;

@@ -22,7 +22,7 @@ const args = new Map(
 const origin = (args.get("origin") ?? "http://localhost:4321").replace(/\/$/, "");
 const bucket = args.get("bucket");
 const config = args.get("config") ?? "wrangler.jsonc";
-const quality = Number(args.get("quality") ?? 90);
+const quality = Number(args.get("quality") ?? 85);
 const widths = [480, 800, 1200];
 
 if (!bucket) {
@@ -88,6 +88,7 @@ for (const row of rows) {
         `${bucket}/${key}`,
         `--file=${tmp}`,
         "--content-type=image/webp",
+        "--remote",
         "--config",
         config,
       ],

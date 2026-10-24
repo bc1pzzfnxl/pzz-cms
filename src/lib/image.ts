@@ -45,7 +45,7 @@ export async function convertToWebp(
 export async function convertToWebpVariants(
   file: File,
   widths: readonly number[],
-  quality = 0.9,
+  quality = 0.85,
 ): Promise<WebpVariant[]> {
   if (widths.length === 0) return [];
 

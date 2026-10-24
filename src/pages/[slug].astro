@@ -146,6 +146,11 @@ if (document && jsonData) {
                                     class="article-cover"
                                     width={cover?.width ?? undefined}
                                     height={cover?.height ?? undefined}
+                                    style={
+                                        cover?.width && cover?.height
+                                            ? `aspect-ratio: ${cover.width} / ${cover.height};`
+                                            : undefined
+                                    }
                                     loading="eager"
                                     fetchpriority="high"
                                     decoding="async"
