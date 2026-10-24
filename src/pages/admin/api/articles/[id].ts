@@ -8,6 +8,8 @@ interface UpdateBody {
   description?: string;
   bodyMdx?: string;
   bodyHtml?: string;
+  ogImageKey?: string | null;
+  coverAlt?: string | null;
   categoryId?: string | null;
 }
 
@@ -34,8 +36,13 @@ export const PUT: APIRoute = async ({ params, request }) => {
     description: body.description,
     bodyMdx: body.bodyMdx,
     bodyHtml: body.bodyHtml,
+    ogImageKey: body.ogImageKey,
     categoryId: body.categoryId,
   });
+
+  if (article.ogImageKey && body.coverAlt !== undefined) {
+    await content.updateMediaAlt(article.ogImageKey, body.coverAlt?.trim() || null);
+  }
 
   return json({ id: article.id, slug: article.slug, status: article.status });
 };

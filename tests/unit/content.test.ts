@@ -224,6 +224,15 @@ describe("content module — admin write path", () => {
     expect(await content.getMediaByKey("images/absent.webp")).toBeNull();
   });
 
+  it("updates a media alt", async () => {
+    await content.createMedia({ r2Key: "images/a-x.webp", width: 800, height: 600, alt: null });
+
+    const media = await content.updateMediaAlt("images/a-x.webp", "Mosaïque de Ravenne");
+
+    expect(media.alt).toBe("Mosaïque de Ravenne");
+    expect((await content.getMediaByKey("images/a-x.webp"))?.alt).toBe("Mosaïque de Ravenne");
+  });
+
   it("returns the category of a published article", async () => {
     const posts = await content.listPublished();
 

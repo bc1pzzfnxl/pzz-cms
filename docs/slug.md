@@ -201,6 +201,11 @@ For a visible caption and a credit, use `Figure`:
 `href` (link around the image) and explicit `width`/`height` for external
 images.
 
+The cover alt is edited in the admin ("Texte alternatif de la couverture") and
+stored in the `media` row. It is used for the image `alt` and shown as the
+caption under the cover; when it is empty, the article title is used as a
+fallback.
+
 `optimizeBodyImages` adds intrinsic `width`/`height` from the media table,
 `loading="lazy"`, and `decoding="async"`. A Markdown image that stands alone in
 its paragraph is promoted to a `<figure>` and its **alt text is shown as the

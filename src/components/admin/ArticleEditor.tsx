@@ -41,6 +41,7 @@ interface InitialArticle {
   bodyMdx: string;
   status: Status;
   ogImageKey: string | null;
+  coverAlt: string | null;
   categoryId: string | null;
 }
 
@@ -238,6 +239,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
   const [bodyMdx, setBodyMdx] = useState(initial?.bodyMdx ?? "");
   const [status, setStatus] = useState<Status>(initial?.status ?? "draft");
   const [ogImageKey, setOgImageKey] = useState<string | null>(initial?.ogImageKey ?? null);
+  const [coverAlt, setCoverAlt] = useState(initial?.coverAlt ?? "");
   const [categoryId, setCategoryId] = useState<string | null>(initial?.categoryId ?? null);
   const [coverUrl, setCoverUrl] = useState<string | null>(
     initial?.ogImageKey ? `/media/${initial.ogImageKey}` : null,
@@ -294,7 +296,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
       }
       form.append("width", String(width));
       form.append("height", String(height));
-      form.append("alt", title);
+      form.append("alt", coverAlt.trim());
 
       const res = await fetch("/admin/api/media/", { method: "POST", body: form });
       if (!res.ok) {
@@ -331,6 +333,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
         bodyMdx: source,
         bodyHtml,
         ogImageKey,
+        coverAlt: coverAlt.trim() || null,
         categoryId,
       };
 
@@ -465,6 +468,20 @@ export default function ArticleEditor({ initial, categories }: Props) {
         {coverUrl && (
           <img src={coverUrl} alt="" className="mt-2 h-32 rounded-md border object-cover" />
         )}
+        <label className="mt-3 block text-sm">
+          <span className="font-medium">Texte alternatif de la couverture</span>
+          <input
+            className={inputClass}
+            value={coverAlt}
+            onChange={(event) => setCoverAlt(event.target.value)}
+            placeholder="Décrivez l'image : sujet, source, date"
+            data-testid="cover-alt"
+          />
+        </label>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Affiché sous l'image et lu par les lecteurs d'écran. Vide : le titre de l'article sert de
+          repli.
+        </p>
         <input
           type="file"
           accept="image/*"

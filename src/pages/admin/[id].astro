@@ -9,6 +9,7 @@ const id = Astro.params.id ?? "new";
 
 const article = id === "new" ? null : await content.getArticleById(id);
 const categories = await content.listCategories();
+const cover = article?.ogImageKey ? await content.getMediaByKey(article.ogImageKey) : null;
 
 if (id !== "new" && !article) {
   Astro.response.status = 404;
@@ -23,6 +24,7 @@ const initial = article
       bodyMdx: article.bodyMdx,
       status: article.status,
       ogImageKey: article.ogImageKey,
+      coverAlt: cover?.alt ?? null,
       categoryId: article.categoryId,
     }
   : null;
