@@ -7,9 +7,10 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import icon from "astro-icon";
 import { rehypeOptimizedImages } from "./src/lib/rehype-optimized-images.ts";
+import { site } from "./src/lib/site.ts";
 
 export default defineConfig({
-  site: "https://bc1pzzfnxl.com",
+  site: site.url,
   output: "server",
   adapter: cloudflare(),
   trailingSlash: "ignore",
