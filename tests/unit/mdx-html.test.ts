@@ -32,4 +32,10 @@ describe("prepareMdxHtml", () => {
   it("does not add a reveal marker", () => {
     expect(prepareMdxHtml(`<div ${HIDDEN}>Texte</div>`)).not.toContain("data-mdx-reveal");
   });
+
+  it("drops reveal markers stored by older article revisions", () => {
+    const html =
+      '<div data-mdx-reveal="">A</div><span data-reveal="">B</span><p data-no-reveal>C</p>';
+    expect(prepareMdxHtml(html)).toBe("<div>A</div><span>B</span><p>C</p>");
+  });
 });

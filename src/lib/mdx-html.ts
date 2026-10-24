@@ -28,13 +28,18 @@ function stripHiddenStyle(style: string): string | null {
 
 /**
  * Remove motion's precompiled hidden state so the article is visible without
- * JS. Idempotent: cleaned HTML is returned unchanged.
+ * JS, and drop the reveal markers stored by older article revisions. Idempotent:
+ * cleaned HTML is returned unchanged.
  */
 export function prepareMdxHtml(html: string): string {
-  return html.replace(/\sstyle="([^"]*)"/g, (match, style: string) => {
-    const cleaned = stripHiddenStyle(style);
-    if (cleaned === null) return match;
+  return html
+    .replace(/\sstyle="([^"]*)"/g, (match, style: string) => {
+      const cleaned = stripHiddenStyle(style);
+      if (cleaned === null) return match;
 
-    return cleaned ? ` style="${cleaned}"` : "";
-  });
+      return cleaned ? ` style="${cleaned}"` : "";
+    })
+    .replace(/\sdata-mdx-reveal(?:="[^"]*")?(?=[\s>])/g, "")
+    .replace(/\sdata-reveal(?:="[^"]*")?(?=[\s>])/g, "")
+    .replace(/\sdata-no-reveal(?:="[^"]*")?(?=[\s>])/g, "");
 }
