@@ -2,13 +2,9 @@
 import { ClientRouter } from "astro:transitions";
 // src/layouts/MainLayout.astro
 import { Icon } from "astro-icon/components";
-import "@fontsource/geist-sans/400.css";
-import "@fontsource/geist-sans/500.css";
-import "@fontsource/geist-sans/700.css";
+import "@fontsource-variable/geist/wght.css";
 import "@fontsource/geist-mono/400.css";
-import geistSans400 from "@fontsource/geist-sans/files/geist-sans-latin-400-normal.woff2?url";
-import geistSans500 from "@fontsource/geist-sans/files/geist-sans-latin-500-normal.woff2?url";
-import geistSans700 from "@fontsource/geist-sans/files/geist-sans-latin-700-normal.woff2?url";
+import geistVariable from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
 import "../styles/global.css";
 import { site } from "../lib/site";
 
@@ -50,10 +46,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-        <!-- Preload the above-the-fold fonts so the swap happens before paint -->
-        <link rel="preload" href={geistSans400} as="font" type="font/woff2" crossorigin="anonymous" />
-        <link rel="preload" href={geistSans500} as="font" type="font/woff2" crossorigin="anonymous" />
-        <link rel="preload" href={geistSans700} as="font" type="font/woff2" crossorigin="anonymous" />
+        <!-- Preload the above-the-fold font so the swap happens before paint -->
+        <link rel="preload" href={geistVariable} as="font" type="font/woff2" crossorigin="anonymous" />
 
         <!-- Preload LCP Image -->
         {image && (
@@ -102,7 +96,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         </script>
         <style is:global>
             :root {
-                --body-font: 'Geist Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+                --body-font: 'Geist Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
                 --mono-font: 'Geist Mono', monospace;
             }
 
