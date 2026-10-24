@@ -148,7 +148,7 @@ if (document && jsonData) {
                                     height={cover?.height ?? undefined}
                                     style={
                                         cover?.width && cover?.height
-                                            ? `aspect-ratio: ${cover.width} / ${cover.height};`
+                                            ? `aspect-ratio: ${cover.width} / ${cover.height}; max-width: 100%; height: auto;`
                                             : undefined
                                     }
                                     loading="eager"
