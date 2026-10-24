@@ -147,6 +147,19 @@
   height: auto;
   border-radius: 8px;
 }
+.mdx-preview .article-figure {
+  margin: 1.5rem 0;
+}
+.mdx-preview .article-figure img {
+  margin: 0;
+}
+.mdx-preview .article-caption {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
 .mdx-preview h2 {
   font-size: 1.5rem;
   font-weight: 600;

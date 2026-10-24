@@ -28,7 +28,7 @@ import { useEffect, useRef, useState } from "react";
 import { convertToWebp, convertToWebpVariants } from "../../lib/image";
 import { mdxComponents } from "../../lib/mdx-components";
 import { normalizeMdxJsx } from "../../lib/mdx-normalize";
-import { MEDIA_VARIANT_WIDTHS } from "../../lib/media";
+import { MEDIA_VARIANT_WIDTHS, optimizeBodyImages } from "../../lib/media";
 import { renderMdxToHtml } from "../../lib/render-mdx";
 
 type Status = "draft" | "published";
@@ -256,7 +256,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
       try {
         const html = await renderMdxToHtml(normalizeMdxJsx(bodyMdx, componentNames), mdxComponents);
         if (!cancelled) {
-          setPreview(html);
+          setPreview(optimizeBodyImages(html, new Map()));
           setPreviewError(null);
         }
       } catch (error) {
