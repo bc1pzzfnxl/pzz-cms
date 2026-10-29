@@ -1,6 +1,6 @@
 # T1 — Monorepo skeleton
 
-## Status: in progress
+## Status: done
 
 ## Blocking edges: none (root ticket)
 

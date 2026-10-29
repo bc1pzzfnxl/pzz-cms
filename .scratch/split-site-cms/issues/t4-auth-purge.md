@@ -1,6 +1,6 @@
 # T4 — Auth purge
 
-## Status: todo
+## Status: done
 
 ## Blocking edges: T2, T3
 

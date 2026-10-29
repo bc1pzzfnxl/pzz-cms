@@ -25,7 +25,7 @@ every status (`--all`); a public repository must stay published-only.
 The mirror is updated manually:
 
 ```bash
-bun run content:sync -- --config=wrangler.deploy.jsonc --all
+bun run content:sync -- --config=apps/site/wrangler.jsonc --all
 ```
 
 There is no scheduled sync: run it when you want a new Git checkpoint.
@@ -47,8 +47,8 @@ The editor has no revision table: history lives in Git.
 To re-import the whole mirror into D1:
 
 ```bash
-bun run content:import -- --config=wrangler.deploy.jsonc --dry-run
-bun run content:import -- --config=wrangler.deploy.jsonc
+bun run content:import -- --config=apps/site/wrangler.jsonc --dry-run
+bun run content:import -- --config=apps/site/wrangler.jsonc
 ```
 
 The import upserts by slug, recompiles MDX with the current component set, and
@@ -61,8 +61,8 @@ Run this against a throwaway local D1, never against production:
 
 ```bash
 rm -rf .wrangler/state
-bunx wrangler d1 migrations apply DB --local --persist-to "$PWD/.wrangler/state"
-bun run content:import -- --local --dir=content --config=wrangler.jsonc
+bunx wrangler d1 migrations apply DB --local --persist-to "$PWD/.wrangler/state" --config apps/site/wrangler.jsonc
+bun run content:import -- --local --dir=content --config=apps/site/wrangler.jsonc
 bunx wrangler d1 execute DB --local --persist-to "$PWD/.wrangler/state" \
   --command "SELECT COUNT(*) FROM articles"
 ```
@@ -77,15 +77,15 @@ database**, cancels in-flight queries, and overwrites the current state.
 
 ```bash
 # 1. Check the database and the current bookmark
-bunx wrangler d1 info DB --config wrangler.deploy.jsonc
-bunx wrangler d1 time-travel info DB --config wrangler.deploy.jsonc
+bunx wrangler d1 info DB --config apps/site/wrangler.jsonc
+bunx wrangler d1 time-travel info DB --config apps/site/wrangler.jsonc
 
 # 2. Note a bookmark for a known-good timestamp
-bunx wrangler d1 time-travel info DB --config wrangler.deploy.jsonc \
+bunx wrangler d1 time-travel info DB --config apps/site/wrangler.jsonc \
   --timestamp="2026-10-24T12:00:00Z"
 
 # 3. Restore (interactive confirmation; note the undo bookmark it prints)
-bunx wrangler d1 time-travel restore DB --config wrangler.deploy.jsonc \
+bunx wrangler d1 time-travel restore DB --config apps/site/wrangler.jsonc \
   --timestamp="2026-10-24T12:00:00Z"
 ```
 
@@ -101,7 +101,7 @@ Before a risky migration, take an export (not a backup system, just a restore
 point):
 
 ```bash
-bunx wrangler d1 export DB --remote --config wrangler.deploy.jsonc \
+bunx wrangler d1 export DB --remote --config apps/site/wrangler.jsonc \
   --output=/tmp/pre-migration.sql
 ```
 
@@ -112,8 +112,33 @@ are deleted from R2 (original and `@480`/`@800`/`@1200` variants) **when no
 current article or document references them**. Orphan uploads are removed by:
 
 ```bash
-bun run media:gc -- --bucket=pzz-cms-media --config=wrangler.deploy.jsonc --dry-run
-bun run media:gc -- --bucket=pzz-cms-media --config=wrangler.deploy.jsonc
+bun run media:gc -- --bucket=pzz-cms-media --config=apps/site/wrangler.jsonc --dry-run
+bun run media:gc -- --bucket=pzz-cms-media --config=apps/site/wrangler.jsonc
 ```
 
 This is deliberate: images are not versioned and not backed up.
+
+
+## Auth drop (post-split cleanup)
+
+Since ADR 0008 the admin is local-only and Better Auth is gone. If an older
+deployment still carries its tables and secrets, remove them once the new site
+is deployed:
+
+```bash
+# 1. Drop the auth tables (Better Auth created them at runtime, not in
+#    migrations/). Time Travel covers the next 7 days if anything is wrong.
+bunx wrangler d1 execute DB --remote --config apps/site/wrangler.jsonc \
+  --command "DROP TABLE IF EXISTS user; DROP TABLE IF EXISTS session; \
+             DROP TABLE IF EXISTS account; DROP TABLE IF EXISTS verification;"
+
+# 2. Remove the auth secrets from the Worker.
+bunx wrangler secret delete BETTER_AUTH_SECRET --config apps/site/wrangler.jsonc
+bunx wrangler secret delete BETTER_AUTH_URL --config apps/site/wrangler.jsonc
+bunx wrangler secret delete SETUP_TOKEN --config apps/site/wrangler.jsonc
+bunx wrangler secret delete OWNER_EMAIL --config apps/site/wrangler.jsonc
+bunx wrangler secret delete ACCESS_TEAM_DOMAIN --config apps/site/wrangler.jsonc
+bunx wrangler secret delete ACCESS_AUD --config apps/site/wrangler.jsonc
+```
+
+The site Worker itself needs no secrets: only the `DB` and `MEDIA` bindings.

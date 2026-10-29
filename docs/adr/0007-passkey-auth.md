@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted. Supersedes [ADR 0003](./0003-cloudflare-access-for-admin.md).
+Superseded by [ADR 0008](./0008-split-site-cms.md): the admin runs locally
+only, so no auth exists anymore.
 
 ## Context
 

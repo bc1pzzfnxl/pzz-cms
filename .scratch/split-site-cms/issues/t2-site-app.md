@@ -1,6 +1,6 @@
 # T2 — Site app
 
-## Status: todo
+## Status: done
 
 ## Blocking edges: T1
 

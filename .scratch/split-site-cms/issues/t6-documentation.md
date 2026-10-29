@@ -1,6 +1,6 @@
 # T6 — Documentation
 
-## Status: todo
+## Status: done
 
 ## Blocking edges: T1..T5 (describes the final state)
 

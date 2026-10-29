@@ -1,6 +1,6 @@
 # T5 — Tests + CI orchestration
 
-## Status: todo
+## Status: done
 
 ## Blocking edges: T2, T3, T4
 
