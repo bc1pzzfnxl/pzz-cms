@@ -1,0 +1,27 @@
+{
+  "name": "@pzz-cms/core",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Shared content module, helpers and MDX components for pzz-cms.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles/mdxcn.css": "./styles/mdxcn.css",
+    "./styles/documents.css": "./styles/documents.css",
+    "./styles/verse.css": "./styles/verse.css"
+  },
+  "dependencies": {
+    "@mdx-js/mdx": "^3.1.1",
+    "clsx": "^2.1.1",
+    "motion": "^12.43.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "6"
+  }
+}

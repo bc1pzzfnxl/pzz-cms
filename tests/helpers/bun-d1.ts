@@ -1,5 +1,5 @@
 import type { Database as Sqlite } from "bun:sqlite";
-import type { Database, PreparedStatement } from "@/content/types";
+import type { Database, PreparedStatement } from "@pzz-cms/core";
 
 /**
  * Adapt a Bun SQLite database to the `Database` interface the content module

@@ -1,0 +1,24 @@
+{
+  // Site Worker configuration. The Cloudflare adapter generates the
+  // entrypoint, the assets directory and the runtime bindings at build time.
+  // Replace the placeholder ids with your own before deploying.
+  "name": "pzz-cms-site",
+  "compatibility_date": "2026-03-17",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pzz-cms",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "pzz-cms-media"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

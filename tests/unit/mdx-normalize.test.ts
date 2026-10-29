@@ -1,5 +1,5 @@
+import { normalizeMdxJsx } from "@pzz-cms/core";
 import { describe, expect, it } from "vitest";
-import { normalizeMdxJsx } from "@/lib/mdx-normalize";
 
 const names = ["Verse", "Callout"];
 

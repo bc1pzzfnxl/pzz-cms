@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   deriveDescription,
   mediaKeyFromImageUrl,
@@ -7,7 +6,8 @@ import {
   rewriteImageUrls,
   slugFromFilename,
   toInsertSql,
-} from "@/lib/migration";
+} from "@pzz-cms/core";
+import { describe, expect, it } from "vitest";
 
 const RAW = `---
 title: Le Mystère de Barabbas

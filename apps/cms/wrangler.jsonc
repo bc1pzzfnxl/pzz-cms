@@ -1,0 +1,25 @@
+{
+  // Local CMS Worker configuration. Never deployed: it runs locally with
+  // `wrangler dev --remote`, using the production D1/R2. Replace the
+  // placeholder ids with your own (the deployment repository carries its own
+  // copy with real ids).
+  "name": "pzz-cms-local",
+  "compatibility_date": "2026-03-17",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pzz-cms",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "pzz-cms-media"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

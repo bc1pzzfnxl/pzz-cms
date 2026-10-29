@@ -1,0 +1,39 @@
+@import "tailwindcss";
+@import "@pzz-cms/core/styles/mdxcn.css";
+@import "@pzz-cms/core/styles/documents.css";
+@import "@pzz-cms/core/styles/verse.css";
+
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #111827;
+  --color-border: #e5e7eb;
+}
+
+html.dark-mode {
+  --color-background: #111111;
+  --color-foreground: #ffffff;
+  --color-border: #27272a;
+}
+
+/*
+ * Article data components (P8). The value and the text stay in the markup for
+ * SEO; the public page adds no motion.
+ */
+.mdx-stat {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.mdx-stat-suffix {
+  margin-left: 0.15em;
+}
+
+/* Self-hosted Geist, latin subset. `optional` removes the layout shift of a
+   late swap; the preload in MainLayout usually wins the race anyway. */
+@font-face {
+  font-family: "Geist Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: optional;
+  src: url("@fontsource-variable/geist/files/geist-latin-wght-normal.woff2")
+    format("woff2-variations");
+}

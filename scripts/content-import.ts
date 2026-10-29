@@ -11,9 +11,7 @@
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parseArticleMirror } from "../src/lib/content-mirror";
-import { mdxComponents } from "../src/lib/mdx-components";
-import { renderMdxToHtml } from "../src/lib/render-mdx";
+import { mdxComponents, parseArticleMirror, renderMdxToHtml } from "@pzz-cms/core";
 
 const args = new Map(
   process.argv.slice(2).map((arg) => {

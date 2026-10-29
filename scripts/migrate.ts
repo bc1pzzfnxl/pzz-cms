@@ -11,15 +11,15 @@
  */
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
-import sharp from "sharp";
 import {
   type MigratedArticle,
   type MigratedMedia,
   parseArticleFile,
+  renderMdxToHtml,
   toInsertSql,
   toMediaInsertSql,
-} from "../src/lib/migration";
-import { renderMdxToHtml } from "../src/lib/render-mdx";
+} from "@pzz-cms/core";
+import sharp from "sharp";
 
 const contentDir = resolve(
   process.argv[2] ?? process.env.BLOG_CONTENT_DIR ?? "../your-blog/src/content",

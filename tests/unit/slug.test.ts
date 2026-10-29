@@ -1,5 +1,5 @@
+import { slugify, uniqueSlug } from "@pzz-cms/core";
 import { describe, expect, it } from "vitest";
-import { slugify, uniqueSlug } from "@/lib/slug";
 
 describe("slugify", () => {
   it("removes accents and lowercases", () => {

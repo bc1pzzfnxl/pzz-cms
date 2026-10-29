@@ -1,0 +1,193 @@
+---
+import { env } from "cloudflare:workers";
+import { JsonDocumentView } from "@pzz-cms/core";
+import { createContent } from "@pzz-cms/core";
+import MainLayout from "../layouts/MainLayout.astro";
+import { mediaKeysInHtml, mediaPublicPath, MEDIA_SIZES, mediaSrcSet, optimizeBodyImages } from "@pzz-cms/core";
+import { prepareMdxHtml } from "@pzz-cms/core";
+import { absoluteUrl, blogPostingSchema, breadcrumbSchema, creativeWorkSchema } from "@pzz-cms/core";
+import { site } from "@pzz-cms/core";
+
+const content = createContent(env.DB);
+const slug = Astro.params.slug ?? "";
+
+const article = await content.getPublishedBySlug(slug);
+
+let document = null;
+if (!article) {
+  const redirect = await content.getRedirect(Astro.url.pathname);
+  if (redirect) {
+    return Astro.redirect(redirect.toPath, 301);
+  }
+  document = await content.getPublishedDocumentBySlug(slug);
+}
+
+if (!article && !document) {
+  Astro.response.status = 404;
+}
+
+const cover = article?.ogImageKey ? await content.getMediaByKey(article.ogImageKey) : null;
+const coverSrcSet =
+  article?.ogImageKey && cover?.width ? mediaSrcSet(article.ogImageKey, cover.width) : null;
+
+// Older rows were compiled before the static-render fix and still carry
+// motion's inline `opacity:0`; normalize at render time so they do not need a
+// re-save. New rows already carry the marker and are left unchanged.
+const articleHtml = article ? prepareMdxHtml(article.bodyHtml) : "";
+
+const dimensions = new Map<string, { width: number; height: number }>();
+if (article) {
+  for (const key of mediaKeysInHtml(article.bodyHtml)) {
+    const media = await content.getMediaByKey(key);
+    if (media?.width && media?.height) dimensions.set(key, { width: media.width, height: media.height });
+  }
+}
+
+const title = article?.title ?? document?.title ?? "Page introuvable";
+const description =
+  article?.description ??
+  document?.description ??
+  "La page demandée n'existe pas ou a été déplacée.";
+const url = absoluteUrl(site.url, `/${slug}/`);
+const image = article?.ogImageKey
+  ? absoluteUrl(site.url, mediaPublicPath(article.ogImageKey))
+  : site.defaultCover;
+
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime())
+    ? dateStr
+    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(date);
+};
+
+const publishDate = formatDate(article?.publishedAt ?? document?.publishedAt);
+const modifiedDate = formatDate(article?.updatedAt ?? document?.updatedAt);
+
+let jsonData: unknown = null;
+let jsonInvalid = false;
+if (document) {
+  try {
+    jsonData = JSON.parse(document.bodyJson);
+  } catch {
+    jsonInvalid = true;
+  }
+}
+
+// The JSON meta often carries its own date; avoid showing it twice.
+const jsonMetaDate =
+  jsonData && typeof jsonData === "object" && "meta" in jsonData
+    ? (jsonData as { meta?: { date?: unknown } }).meta?.date
+    : undefined;
+const showPublishDate = typeof jsonMetaDate !== "string";
+
+const schemas = [];
+if (article) {
+  schemas.push(
+    blogPostingSchema({
+      title: article.title,
+      description: article.description,
+      url,
+      image,
+      locale: site.locale,
+      publishedAt: article.publishedAt,
+      modifiedAt: article.updatedAt,
+      author: { name: site.author.name, url: site.author.url },
+      publisher: { name: site.name, url: site.url, logo: site.logo },
+    }),
+    breadcrumbSchema(site, article.title, url),
+  );
+}
+if (document && jsonData) {
+  schemas.push(
+    creativeWorkSchema({
+      title: document.title,
+      description: document.description,
+      url,
+      locale: site.locale,
+      publishedAt: document.publishedAt,
+      modifiedAt: document.updatedAt,
+      author: { name: site.author.name, url: site.author.url },
+    }),
+    breadcrumbSchema(site, document.title, url),
+  );
+}
+---
+
+<MainLayout
+    title={title}
+    description={description}
+    ogType={article || document ? "article" : "website"}
+    image={image}
+    imageSrcSet={coverSrcSet ?? undefined}
+    imageSizes={coverSrcSet ? MEDIA_SIZES : undefined}
+    publishedTime={article?.publishedAt ?? document?.publishedAt ?? undefined}
+    modifiedTime={article?.updatedAt ?? document?.updatedAt ?? undefined}
+>
+    {schemas.map((schema) => <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />)}
+    <article>
+        {
+            article ? (
+                <>
+                    <h1>{article.title}</h1>
+                    {publishDate && (
+                        <div class="article-meta">
+                            <time datetime={article.publishedAt ?? undefined}>{publishDate}</time>
+                        </div>
+                    )}
+                    {
+                        article.ogImageKey && (
+                            <figure class="article-cover-wrapper">
+                                <img
+                                    src={mediaPublicPath(article.ogImageKey)}
+                                    srcset={coverSrcSet ?? undefined}
+                                    sizes={coverSrcSet ? MEDIA_SIZES : undefined}
+                                    alt={cover?.alt ?? article.title}
+                                    class="article-cover"
+                                    width={cover?.width ?? undefined}
+                                    height={cover?.height ?? undefined}
+                                    style={
+                                        cover?.width && cover?.height
+                                            ? `aspect-ratio: ${cover.width} / ${cover.height}; max-width: 100%; height: auto;`
+                                            : undefined
+                                    }
+                                    loading="eager"
+                                    fetchpriority="high"
+                                    decoding="async"
+                                />
+                                <figcaption class="article-cover-caption">
+                                    {cover?.alt ?? article.title}
+                                </figcaption>
+                            </figure>
+                        )
+                    }
+                    <div class="article-body" set:html={optimizeBodyImages(articleHtml, dimensions)} />
+                </>
+            ) : document && jsonData ? (
+                <>
+                    <h1>{document.title}</h1>
+                    {publishDate && showPublishDate && (
+                        <div class="article-meta">
+                            <time datetime={document.publishedAt ?? undefined}>{publishDate}</time>
+                        </div>
+                    )}
+                    <JsonDocumentView data={jsonData} />
+                </>
+            ) : document && jsonInvalid ? (
+                <>
+                    <h1>{document.title}</h1>
+                    <p>Le contenu de ce document est invalide.</p>
+                </>
+            ) : (
+                <>
+                    <h1>Page introuvable</h1>
+                    <p>La page demandée n'existe pas ou a été déplacée.</p>
+                </>
+            )
+        }
+    </article>
+    <div class="article-footer">
+        <a href="/" class="back-link">← Retour</a>
+        {modifiedDate && <span class="modified-date">Modifié le {modifiedDate}</span>}
+    </div>
+</MainLayout>

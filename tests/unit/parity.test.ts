@@ -1,5 +1,5 @@
+import { compareFacts, extractPageFacts } from "@pzz-cms/core";
 import { describe, expect, it } from "vitest";
-import { compareFacts, extractPageFacts } from "@/lib/parity";
 
 const OLD = `<!doctype html><html><head>
 <title>Le Mystère | example</title>

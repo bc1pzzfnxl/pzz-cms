@@ -35,9 +35,9 @@
   "overrides": [
     {
       "includes": [
-        "src/components/*.tsx",
-        "src/components/ui/graph-frame.tsx",
-        "src/lib/graph-*.ts"
+        "packages/core/src/components/*.tsx",
+        "packages/core/src/components/ui/graph-frame.tsx",
+        "packages/core/src/lib/graph-*.ts"
       ],
       "linter": {
         "enabled": false

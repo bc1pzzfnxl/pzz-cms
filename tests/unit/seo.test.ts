@@ -1,12 +1,12 @@
-import { describe, expect, it } from "vitest";
 import {
   blogPostingSchema,
   breadcrumbSchema,
   collectionPageSchema,
   personSchema,
+  site,
   websiteSchema,
-} from "@/lib/seo";
-import { site } from "@/lib/site";
+} from "@pzz-cms/core";
+import { describe, expect, it } from "vitest";
 
 describe("seo schemas", () => {
   it("builds a WebSite schema", () => {
