@@ -82,8 +82,10 @@ bun run media:gc -- --bucket=<r2-bucket> --config=apps/site/wrangler.jsonc
 
 ## Current gaps
 
-- The `shadcn` CLI is a dev dependency of `apps/cms` because the admin CSS
-  imports `shadcn/tailwind.css`.
+- The admin CSS vendors `shadcn/tailwind.css` as
+  `apps/cms/src/styles/shadcn.css`; the shadcn CLI is not a dependency (it was
+  removed to keep `bun audit` at zero after CVE-2026-93753, which has no
+  patched release yet).
 - The admin (`apps/cms`) does not exist in the deployment repository; local
   edits require cloning the template too, or keeping the deployment's copy of
   the CMS config alongside.
