@@ -1,10 +1,10 @@
 # T7 — Deployment repo + cutover
 
-## Status: todo
+## Status: in progress
 
 ## Blocking edges: T1..T6
 
-## Needs user: Cloudflare auth for `wrangler dev --remote` and the deploy.
+## Needs user: Cloudflare auth (`bunx wrangler login`) for `wrangler dev --remote` and the deploy.
 
 ## Work
 1. Clone `bc1pzzfnxl/bc1pzzfnxl-blog` fresh; sync `apps/site` +
