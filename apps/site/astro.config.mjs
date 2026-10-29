@@ -8,6 +8,8 @@ import icon from "astro-icon";
 export default defineConfig({
   site: site.url,
   output: "server",
+  // Astro sessions are unused (see apps/cms/astro.config.mjs).
+  session: false,
   adapter: cloudflare(),
   trailingSlash: "ignore",
   integrations: [icon()],
