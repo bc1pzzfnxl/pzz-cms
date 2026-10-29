@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signInWithPassword } from "./helpers";
+import { gotoPublic } from "../helpers";
 
 const SAMPLE = {
   meta: { titre: "Programme test", auteur: "LaJota", principes_directeurs: ["Principe A"] },
@@ -15,8 +15,6 @@ const SAMPLE = {
 };
 
 test("upload a JSON document and render its page", async ({ page }) => {
-  await signInWithPassword(page);
-
   await page.goto("/admin/documents/");
   await page.getByTestId("document-upload").setInputFiles({
     name: "mon-programme-politique.json",
@@ -25,7 +23,7 @@ test("upload a JSON document and render its page", async ({ page }) => {
   });
   await page.waitForURL(/\/admin\/documents\/[0-9a-f-]{36}\/?$/);
 
-  await page.goto("/mon-programme-politique/");
+  await gotoPublic(page, "/mon-programme-politique/");
   await expect(page.getByRole("heading", { level: 1, name: "Programme test" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Themes" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Souveraineté" })).toBeVisible();

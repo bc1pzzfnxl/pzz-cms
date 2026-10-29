@@ -5,14 +5,13 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  PLAYWRIGHT_SITE_BASE_URL: http://127.0.0.1:8787
+  PLAYWRIGHT_CMS_BASE_URL: http://127.0.0.1:8788
+
 jobs:
-  check:
+  site:
     runs-on: ubuntu-latest
-    env:
-      PLAYWRIGHT_BASE_URL: http://localhost:8787
-      SETUP_TOKEN: ci-setup-token
-      ADMIN_PASSWORD: ci-admin-password-0123456789
-      OWNER_EMAIL: owner@example.com
     steps:
       - uses: actions/checkout@v4
 
@@ -32,43 +31,37 @@ jobs:
       - name: Unit tests
         run: bun run test
 
-      - name: Build
-        run: bun run build
+      - name: Build site
+        run: bun run build:site
 
       - name: Prepare local D1
         run: |
           PERSIST="$PWD/.wrangler/state"
-          bunx wrangler d1 migrations apply DB --local --persist-to "$PERSIST"
-          bunx wrangler d1 execute DB --local --persist-to "$PERSIST" --file=./scripts/seed.sql
+          bunx wrangler d1 migrations apply DB --local --persist-to "$PERSIST" --config apps/site/wrangler.jsonc
+          bunx wrangler d1 execute DB --local --persist-to "$PERSIST" --config apps/site/wrangler.jsonc --file=./scripts/seed.sql
 
-      # Boots the built Worker on the real workerd runtime. This is the
+      # Boots the built site Worker on the real workerd runtime. This is the
       # execution gate the local sandbox cannot provide. See PLAN.md,
       # "Environment note".
-      - name: Start preview server (workerd)
+      - name: Start site worker (workerd)
         run: |
-          nohup bunx wrangler dev --config dist/server/wrangler.json \
+          nohup bunx wrangler dev --config apps/site/dist/server/wrangler.json \
             --persist-to "$PWD/.wrangler/state" --port 8787 --ip 127.0.0.1 \
-            --var AUTH_PROVIDER:password \
-            --var BETTER_AUTH_SECRET:ci-secret-0123456789abcdef0123456789abcdef \
-            --var BETTER_AUTH_URL:http://localhost:8787 \
-            --var SETUP_TOKEN:ci-setup-token \
-            --var OWNER_EMAIL:owner@example.com \
-            --var AUTH_SIGNIN_MAX:100 \
-            > /tmp/wrangler.log 2>&1 &
-          echo $! > /tmp/server.pid
+            > /tmp/wrangler-site.log 2>&1 &
+          echo $! > /tmp/site.pid
           for _ in $(seq 1 60); do
             code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8787/ || true)
             [ "$code" = "200" ] && exit 0
             sleep 1
           done
-          cat /tmp/wrangler.log
-          echo "::error::Worker did not answer on / within 60s"
+          cat /tmp/wrangler-site.log
+          echo "::error::Site worker did not answer on / within 60s"
           exit 1
 
-      - name: Runtime smoke test (workerd)
+      - name: Runtime smoke test (site)
         run: |
           set -euo pipefail
-          fail() { echo "::error::$1"; cat /tmp/wrangler.log; exit 1; }
+          fail() { echo "::error::$1"; cat /tmp/wrangler-site.log; exit 1; }
           check() {
             local path="$1" want="$2" got
             got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8787$path" || true)
@@ -87,6 +80,7 @@ jobs:
           check "/rss.xml" 200
           check "/robots.txt" 200
           check "/llms.txt" 200
+          check "/admin/" 404
 
           sitemap=$(curl -s --max-time 5 http://127.0.0.1:8787/sitemap.xml)
           echo "$sitemap" | grep -q "/premier-article/" || fail "sitemap missing a published article"
@@ -97,18 +91,90 @@ jobs:
           echo "$feed" | grep -q "premier-article" || fail "rss missing a published article"
           if echo "$feed" | grep -q "brouillon"; then fail "rss leaked a draft"; fi
 
-          echo "Runtime smoke test passed."
+          echo "Site runtime smoke test passed."
 
       - name: Install Playwright browser
         run: bunx playwright install --with-deps chromium
 
-      - name: E2E (Playwright)
-        run: bun run e2e
+      - name: E2E (site)
+        run: bun run e2e -- --project site
 
-      - name: Server log (on failure)
+      - name: Worker log (on failure)
         if: failure()
-        run: tail -n 100 /tmp/wrangler.log
+        run: tail -n 100 /tmp/wrangler-site.log
 
-      - name: Stop preview server
+      - name: Stop site worker
         if: always()
-        run: kill "$(cat /tmp/server.pid)" 2>/dev/null || true
+        run: kill "$(cat /tmp/site.pid)" 2>/dev/null || true
+
+  cms:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build CMS
+        run: bun run build:cms
+
+      - name: Prepare local D1
+        run: |
+          PERSIST="$PWD/.wrangler/state"
+          bunx wrangler d1 migrations apply DB --local --persist-to "$PERSIST" --config apps/cms/wrangler.jsonc
+          bunx wrangler d1 execute DB --local --persist-to "$PERSIST" --config apps/cms/wrangler.jsonc --file=./scripts/seed.sql
+
+      # The CMS specs read their results back from the public site, so both
+      # workers boot against the same local D1 state directory. The CMS worker
+      # itself is never exposed beyond 127.0.0.1 and is never deployed.
+      - name: Start site worker (read-back)
+        run: |
+          nohup bunx wrangler dev --config apps/site/dist/server/wrangler.json \
+            --persist-to "$PWD/.wrangler/state" --port 8787 --ip 127.0.0.1 \
+            > /tmp/wrangler-site.log 2>&1 &
+          echo $! > /tmp/site.pid
+          for _ in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8787/ || true)
+            [ "$code" = "200" ] && exit 0
+            sleep 1
+          done
+          cat /tmp/wrangler-site.log
+          echo "::error::Site worker did not answer on / within 60s"
+          exit 1
+
+      - name: Start CMS worker (workerd)
+        run: |
+          nohup bunx wrangler dev --config apps/cms/dist/server/wrangler.json \
+            --persist-to "$PWD/.wrangler/state" --port 8788 --ip 127.0.0.1 \
+            > /tmp/wrangler-cms.log 2>&1 &
+          echo $! > /tmp/cms.pid
+          for _ in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8788/admin/ || true)
+            [ "$code" = "200" ] && exit 0
+            sleep 1
+          done
+          cat /tmp/wrangler-cms.log
+          echo "::error::CMS worker did not answer on /admin/ within 60s"
+          exit 1
+
+      - name: Install Playwright browser
+        run: bunx playwright install --with-deps chromium
+
+      - name: E2E (cms)
+        run: bun run e2e -- --project cms
+
+      - name: Worker logs (on failure)
+        if: failure()
+        run: |
+          tail -n 100 /tmp/wrangler-site.log
+          tail -n 100 /tmp/wrangler-cms.log
+
+      - name: Stop workers
+        if: always()
+        run: |
+          kill "$(cat /tmp/site.pid)" 2>/dev/null || true
+          kill "$(cat /tmp/cms.pid)" 2>/dev/null || true
