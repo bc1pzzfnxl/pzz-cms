@@ -1,6 +1,8 @@
 ---
 import { env } from "cloudflare:workers";
 import { JsonDocumentView } from "@pzz-cms/core";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { createContent } from "@pzz-cms/core";
 import MainLayout from "../layouts/MainLayout.astro";
 import { mediaKeysInHtml, mediaPublicPath, MEDIA_SIZES, mediaSrcSet, optimizeBodyImages } from "@pzz-cms/core";
@@ -80,6 +82,11 @@ const jsonMetaDate =
     ? (jsonData as { meta?: { date?: unknown } }).meta?.date
     : undefined;
 const showPublishDate = typeof jsonMetaDate !== "string";
+
+// Render the document to static HTML, like articles: the site has no React
+// integration, and this keeps the React runtime out of the response stream.
+const documentHtml =
+  document && jsonData ? renderToStaticMarkup(createElement(JsonDocumentView, { data: jsonData })) : "";
 
 const schemas = [];
 if (article) {
@@ -171,7 +178,7 @@ if (document && jsonData) {
                             <time datetime={document.publishedAt ?? undefined}>{publishDate}</time>
                         </div>
                     )}
-                    <JsonDocumentView data={jsonData} />
+                    <div class="article-body" set:html={documentHtml} />
                 </>
             ) : document && jsonInvalid ? (
                 <>

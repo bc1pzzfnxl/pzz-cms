@@ -62,11 +62,15 @@
         "@tailwindcss/vite": "^4.3.3",
         "astro": "7.4.2",
         "astro-icon": "^1.1.5",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
         "tailwindcss": "^4.3.3",
       },
       "devDependencies": {
         "@astrojs/check": "^0.9.10",
         "@types/bun": "^1.4.2",
+        "@types/react": "^19.2.17",
+        "@types/react-dom": "^19.2.3",
       },
     },
     "packages/core": {
