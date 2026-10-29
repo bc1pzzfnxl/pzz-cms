@@ -1,6 +1,6 @@
+import { renderMdxToHtml } from "@pzz-cms/core";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { renderMdxToHtml } from "@/lib/render-mdx";
 
 describe("renderMdxToHtml", () => {
   it("renders headings and paragraphs", async () => {
@@ -31,7 +31,7 @@ describe("renderMdxToHtml", () => {
   });
 
   it("renders a curated mdxcn component", async () => {
-    const { mdxComponents } = await import("@/lib/mdx-components");
+    const { mdxComponents } = await import("@pzz-cms/core");
     const html = await renderMdxToHtml(
       '<Callout type="tip">\n\nUn conseil utile.\n\n</Callout>',
       mdxComponents,
@@ -41,7 +41,7 @@ describe("renderMdxToHtml", () => {
   });
 
   it("never leaves motion's hidden state in precompiled HTML", async () => {
-    const { mdxComponents } = await import("@/lib/mdx-components");
+    const { mdxComponents } = await import("@pzz-cms/core");
     const html = await renderMdxToHtml(
       `
 <Callout type="note" title="NOTE">Un appel.</Callout>
@@ -104,7 +104,7 @@ Réponse.
   });
 
   it("renders the Stat component with its final value in the markup", async () => {
-    const { mdxComponents } = await import("@/lib/mdx-components");
+    const { mdxComponents } = await import("@pzz-cms/core");
     const html = await renderMdxToHtml(
       '<Stat value={1204} format="compact" locale="en-US" />',
       mdxComponents,
@@ -115,14 +115,14 @@ Réponse.
   });
 
   it("renders the Reveal component as static text", async () => {
-    const { mdxComponents } = await import("@/lib/mdx-components");
+    const { mdxComponents } = await import("@pzz-cms/core");
     const html = await renderMdxToHtml("<Reveal>Un texte révélé</Reveal>", mdxComponents);
     expect(html).not.toContain("data-reveal");
     expect(html).toContain("Un texte révélé");
   });
 
   it("renders a Verse with its reference, version and text", async () => {
-    const { mdxComponents } = await import("@/lib/mdx-components");
+    const { mdxComponents } = await import("@pzz-cms/core");
     const html = await renderMdxToHtml(
       '<Verse reference="Jean 3:16" version="LSG">\n\nCar Dieu a tant aimé le monde.\n\n</Verse>',
       mdxComponents,
@@ -136,7 +136,7 @@ Réponse.
   });
 
   it("renders a Verse original text and its label", async () => {
-    const { mdxComponents } = await import("@/lib/mdx-components");
+    const { mdxComponents } = await import("@pzz-cms/core");
     const html = await renderMdxToHtml(
       '<Verse reference="Psaume 12:2" original="הוֹשִׁיעָה יְהוָה" originalLabel="Hébreu">\n\nSauve, Éternel !\n\n</Verse>',
       mdxComponents,
@@ -149,7 +149,7 @@ Réponse.
   });
 
   it("renders a Figure with a caption and a credit", async () => {
-    const { mdxComponents } = await import("@/lib/mdx-components");
+    const { mdxComponents } = await import("@pzz-cms/core");
     const html = await renderMdxToHtml(
       '<Figure src="/media/images/test.webp/" alt="Une image" caption="Une légende" credit="Source" />',
       mdxComponents,
@@ -164,7 +164,7 @@ Réponse.
   });
 
   it("renders a GraphCompare with check and dash cells", async () => {
-    const { mdxComponents } = await import("@/lib/mdx-components");
+    const { mdxComponents } = await import("@pzz-cms/core");
     const html = await renderMdxToHtml(
       `<GraphCompare title="COMPARE">\n| | A | B |\n| --- | --- | --- |\n| Oui | true | false |\n| Non | false | true |\n</GraphCompare>`,
       mdxComponents,

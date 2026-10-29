@@ -1,6 +1,6 @@
+import type { SiteConfig } from "@pzz-cms/core";
+import { renderLlmsTxt } from "@pzz-cms/core";
 import { describe, expect, it } from "vitest";
-import { renderLlmsTxt } from "@/lib/llms";
-import type { SiteConfig } from "@/lib/site";
 
 const site: SiteConfig = {
   name: "Example",

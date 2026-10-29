@@ -1,5 +1,5 @@
+import { prepareMdxHtml } from "@pzz-cms/core";
 import { describe, expect, it } from "vitest";
-import { prepareMdxHtml } from "@/lib/mdx-html";
 
 const HIDDEN = 'style="opacity:0;transform:translateY(8px)"';
 

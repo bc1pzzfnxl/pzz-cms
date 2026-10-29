@@ -1,8 +1,8 @@
 import { Database as Sqlite } from "bun:sqlite";
 import { readFileSync } from "node:fs";
+import type { Content } from "@pzz-cms/core";
+import { createContent } from "@pzz-cms/core";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Content } from "@/content";
-import { createContent } from "@/content";
 import { createBunDatabase } from "../helpers/bun-d1";
 
 const MIGRATIONS = [

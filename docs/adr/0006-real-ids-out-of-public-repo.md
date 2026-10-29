@@ -4,6 +4,9 @@
 
 Accepted.
 
+> Since ADR 0008 the app lives in `apps/site` and the config path is
+> `apps/site/wrangler.jsonc`; the mechanism below is unchanged.
+
 ## Context
 
 The CMS repository is public, but deploying it needs real Cloudflare resource

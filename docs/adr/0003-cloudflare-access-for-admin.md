@@ -2,8 +2,8 @@
 
 ## Status
 
-Superseded by [ADR 0007](./0007-passkey-auth.md). Access remains available as
-the `access` adapter of the auth seam.
+Superseded by [ADR 0008](./0008-split-site-cms.md): the admin runs locally
+only, so no remote auth exists anymore.
 
 ## Context
 

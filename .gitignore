@@ -36,3 +36,6 @@ content/
 
 # Dry-run SQL from content:import
 content-import.sql
+
+# Stray tool profiles (lighthouse)
+"C:\\Users\\"

@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   deleteMediaObjects,
   mediaKeysInHtml,
@@ -11,7 +10,8 @@ import {
   mediaVariantPath,
   mediaVariantWidths,
   optimizeBodyImages,
-} from "@/lib/media";
+} from "@pzz-cms/core";
+import { describe, expect, it } from "vitest";
 
 describe("mediaObjectKey", () => {
   it("builds an ASCII webp key from the file name", () => {

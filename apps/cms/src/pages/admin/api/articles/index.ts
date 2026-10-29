@@ -1,0 +1,44 @@
+import { env } from "cloudflare:workers";
+import { createContent } from "@pzz-cms/core";
+import type { APIRoute } from "astro";
+
+interface CreateBody {
+  title?: string;
+  description?: string;
+  bodyMdx?: string;
+  bodyHtml?: string;
+  ogImageKey?: string | null;
+  coverAlt?: string | null;
+  categoryId?: string | null;
+}
+
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8" },
+  });
+}
+
+export const POST: APIRoute = async ({ request }) => {
+  const content = createContent(env.DB);
+  const body = (await request.json()) as CreateBody;
+
+  if (!body.title?.trim()) {
+    return json({ error: "Le titre est obligatoire." }, 400);
+  }
+
+  const article = await content.createArticle({
+    title: body.title.trim(),
+    description: body.description,
+    bodyMdx: body.bodyMdx,
+    bodyHtml: body.bodyHtml,
+    ogImageKey: body.ogImageKey,
+    categoryId: body.categoryId,
+  });
+
+  if (article.ogImageKey && body.coverAlt !== undefined) {
+    await content.updateMediaAlt(article.ogImageKey, body.coverAlt?.trim() || null);
+  }
+
+  return json({ id: article.id, slug: article.slug }, 201);
+};

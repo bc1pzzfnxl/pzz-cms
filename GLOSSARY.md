@@ -70,10 +70,12 @@ The single module that reads and writes articles, categories, media, documents
 and redirects. It hides D1 behind the `Content` interface. No other module talks
 to the database directly.
 
-## Admin
+## Admin (CMS app)
 
-The `/admin` area, protected in-app by a single owner password (Better Auth).
-Cloudflare Access is available as an optional adapter. Single user.
+The `/admin` area, living in `apps/cms` (`@pzz-cms/cms`). It runs **locally
+only** through `wrangler dev --remote` and writes directly to the production
+D1/R2. It is never deployed and has no authentication: localhost is the
+boundary. See ADR 0008.
 
 ## Template
 
@@ -97,22 +99,16 @@ The state where the new engine answers the same URLs as the old blog, with the
 same status codes, titles, canonical tags and JSON-LD. Checked by a script
 during migration.
 
-## Auth provider
+## Site app
 
-The module behind the auth seam: `password` (default), `access`, or `none`.
-Selected by `AUTH_PROVIDER`. See ADR 0007.
+`apps/site` (`@pzz-cms/site`): the public site, the only deployable app. Reads
+D1/R2, serves pages, feeds, the sitemap and media.
 
-## Session
+## CMS app
 
-An authenticated visit: a cookie mapped to a row in the auth store. Created on
-password sign-in, lasting 7 days with a 1-day rolling refresh.
+`apps/cms` (`@pzz-cms/cms`): the local admin. See **Admin (CMS app)**.
 
-## Owner
+## Core package
 
-The single account allowed into the admin. There is no signup; the owner row is
-created during the setup.
-
-## Password
-
-The admin's login secret. Chosen by the owner at `/admin/setup`, hashed in D1 by
-Better Auth, changed at `/admin/password`. No password secret is configured.
+`packages/core` (`@pzz-cms/core`): the shared content module, helpers and MDX
+components used by both apps.

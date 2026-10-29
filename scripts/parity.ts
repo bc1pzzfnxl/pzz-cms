@@ -10,7 +10,7 @@
  * compares the status code, <title>, canonical link, <h1> and JSON-LD types.
  * Exits non-zero when any difference is found.
  */
-import { compareFacts, extractPageFacts } from "../src/lib/parity";
+import { compareFacts, extractPageFacts } from "@pzz-cms/core";
 
 const oldBase = (process.argv[2] ?? "https://example.com").replace(/\/$/, "");
 const newBase = (process.argv[3] ?? "http://127.0.0.1:8787").replace(/\/$/, "");

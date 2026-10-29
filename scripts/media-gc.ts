@@ -7,7 +7,7 @@
  * for an article that is still being edited is not deleted. The Git mirror is
  * text-only: old revisions may reference an image removed here.
  */
-import { mediaObjectKeys } from "../src/lib/media";
+import { mediaObjectKeys } from "@pzz-cms/core";
 
 const args = new Map(
   process.argv.slice(2).map((arg) => {

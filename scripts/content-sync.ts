@@ -10,8 +10,7 @@
  */
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { renderArticleMirror } from "../src/lib/content-mirror";
-import { mediaKeysInMarkdown } from "../src/lib/media";
+import { mediaKeysInMarkdown, renderArticleMirror } from "@pzz-cms/core";
 
 const args = new Map(
   process.argv.slice(2).map((arg) => {

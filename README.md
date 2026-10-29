@@ -5,29 +5,38 @@ Workers. It stores articles in D1, edits them in an MDX editor, and renders an
 SEO-focused blog with server-side rendering.
 
 This project is developed in the open. It is generic: branding, the canonical
-URL and the default metadata live in `src/lib/site.ts`, so the same code can
-drive any blog. See [`docs/template-vs-blog.md`](./docs/template-vs-blog.md) for
+URL and the default metadata live in `packages/core/src/lib/site.ts`, so the
+same code can drive any blog. See [`docs/template-vs-blog.md`](./docs/template-vs-blog.md) for
 the boundary between the template and a deployment.
 
-## Status
+## Model: deployed site, local CMS
 
-The reference blog runs on this engine in production. Phases P0–P7 are done;
-P8 (optional editorial components) is partial. See [`PLAN.md`](./PLAN.md) for the
-history and the open points.
+The repository is a bun-workspaces monorepo:
+
+| Package | Role |
+| --- | --- |
+| `apps/site` (`@pzz-cms/site`) | The public site. The **only deployable app**. |
+| `apps/cms` (`@pzz-cms/cms`) | The admin. **Never deployed**: it runs locally and writes directly to the production D1/R2. |
+| `packages/core` (`@pzz-cms/core`) | The shared content module, helpers and MDX components. |
+
+There is no authentication: the CMS runs on localhost, which is the security
+boundary. The public Worker exposes no admin routes, no auth routes and no
+secrets. See [`docs/adr/0008-split-site-cms.md`](./docs/adr/0008-split-site-cms.md) and
+[`docs/spec/split-site-cms.md`](./docs/spec/split-site-cms.md).
 
 ## Stack
 
 - Astro with the Cloudflare adapter, server-side rendering
 - Cloudflare D1 for content, R2 for media
-- MDX content, edited with MDXEditor
+- MDX content, edited with MDXEditor (CMS app only)
 - Tailwind CSS v4
 - Bun, TypeScript strict, Biome, Vitest, Playwright
 
 ## Requirements
 
-- [Bun](https://bun.sh/)
-- A Cloudflare account for D1, R2 and deployment (Cloudflare Access is optional;
-  the default admin auth is a password)
+- [Bun](https://bun.sh/) ≥ 1.4
+- A Cloudflare account for D1, R2 and deployment
+- For the local CMS: a `wrangler` login on your machine (`bunx wrangler login`)
 
 Node and npm are not required. Wrangler runs through Bun.
 
@@ -35,44 +44,39 @@ Node and npm are not required. Wrangler runs through Bun.
 
 ```bash
 bun install
-bun run dev          # Astro dev server on http://localhost:4321
+bun run dev            # public site on a local D1 (http://localhost:4321)
+bun run dev:cms        # admin on wrangler dev --remote → production D1/R2
 ```
 
-`astro dev` runs the Cloudflare Vite plugin on the real `workerd` runtime. If
-your environment blocks `workerd` (some sandboxes do), fall back to
-`bun run build` plus the checks below.
+`dev:cms` writes to the real production database: use it for editing, never for
+experiments. There is no admin on the deployed site.
 
 ## Checks
 
 ```bash
-bun run check        # Biome + Astro typecheck + Vitest
-bun run lint         # Biome only
-bun run typecheck    # Astro check
-bun run test         # Vitest
-bun audit            # dependency audit; must stay clean
+bun run check          # Biome + Astro typecheck (both apps) + Vitest
+bun run lint           # Biome only
+bun run typecheck      # astro check for site and cms
+bun run test           # Vitest
+bun run e2e            # Playwright (needs the workers booted; see CI)
+bun audit              # dependency audit; must stay clean
 ```
 
 ## Deployment
 
 ```bash
-bun run deploy       # astro build && wrangler deploy
+bun run deploy         # build:site && wrangler deploy (apps/site/wrangler.jsonc)
 ```
 
-`wrangler.jsonc` is a template. Fill in your own D1 and R2 IDs before deploying.
-
-For a real deployment, keep the template untouched and use a local, gitignored
-`wrangler.deploy.jsonc` with your own IDs:
-
-```bash
-bun run build
-bunx wrangler deploy --config wrangler.deploy.jsonc
-```
+`apps/site/wrangler.jsonc` is a template. Fill in your own D1 and R2 IDs before
+deploying. A deployment repository carries its own gitignored copy with real
+IDs (see `docs/template-vs-blog.md`).
 
 ### Cloudflare Workers Builds
 
-If you use Workers Builds, set the `BUN_VERSION` build variable to `1.4.3` (or
-`latest`). The build image ships Bun 1.2, which cannot read the `bun.lock`
-lockfile (lockfileVersion 2).
+If you use Workers Builds, set the build command to `bun run build:site` and
+the `BUN_VERSION` build variable to `latest`. Older Bun 1.2 images cannot read
+the `bun.lock` lockfile.
 
 ## R2 cost control
 
@@ -88,35 +92,14 @@ operations per month. Three things keep usage inside it:
 - **Spending limit.** Set a hard cap in the dashboard: **Manage Account →
   Billing → set a spending limit**. Notifications alone do not cap usage.
 
-## Authentication
-
-The admin (`/admin`) is protected in-app by a small auth seam. `AUTH_PROVIDER`
-selects `password` (default), `access`, or `none`. Password auth uses Better
-Auth (email/password, hashed in D1); it is portable and works everywhere.
-
-First install (there is no signup):
-
-1. set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `SETUP_TOKEN`, `OWNER_EMAIL`;
-2. open `/admin/setup?token=<SETUP_TOKEN>` and **choose your password**;
-3. remove `SETUP_TOKEN`.
-
-Change the password at `/admin/password` (current + new; keeps the session).
-Recovery: `bun run auth:reset`, then open the setup URL again.
-
-Cloudflare Access stays available as the `access` adapter. Set
-`AUTH_PROVIDER=access`, `ACCESS_TEAM_DOMAIN` (the team domain, e.g.
-`team.cloudflareaccess.com`) and `ACCESS_AUD` (the application audience tag);
-the Worker verifies the `Cf-Access-Jwt-Assertion` signature, issuer and
-audience against the team JWKS.
-
 ## Migration
 
 Import an existing Markdown blog into D1:
 
 ```bash
 bun run migrate ../your-blog/src/content   # writes migration-output/ (gitignored)
-bunx wrangler d1 execute DB --remote --config wrangler.deploy.jsonc --file=migration-output/articles.sql
-bunx wrangler d1 execute DB --remote --config wrangler.deploy.jsonc --file=migration-output/media.sql
+bunx wrangler d1 execute DB --remote --config apps/site/wrangler.jsonc --file=migration-output/articles.sql
+bunx wrangler d1 execute DB --remote --config apps/site/wrangler.jsonc --file=migration-output/media.sql
 bash migration-output/r2-upload.sh
 ```
 
@@ -131,22 +114,12 @@ bun run parity https://example.com https://your-worker.workers.dev /sitemap-inde
 Keep a Git history of the text content, without storing images:
 
 ```bash
-bun run content:sync -- --config=wrangler.deploy.jsonc
-bun run content:import -- --config=wrangler.deploy.jsonc
-bun run media:gc -- --bucket=<r2-bucket> --config=wrangler.deploy.jsonc
+bun run content:sync -- --config=apps/site/wrangler.jsonc
+bun run content:import -- --config=apps/site/wrangler.jsonc
+bun run media:gc -- --bucket=<r2-bucket> --config=apps/site/wrangler.jsonc
 ```
 
 `content:sync` mirrors published articles by default; `--all` includes drafts
 and requires a private repository. `content:import` restores text and media
-metadata into D1; R2 objects are not backed up. See
-[`docs/template-vs-blog.md`](./docs/template-vs-blog.md) and
-[`docs/backup.md`](./docs/backup.md).
-
-## Data policy
-
-This repository holds code only. Articles, images, database contents and
-secrets are never committed. Test fixtures are synthetic.
-
-## License
-
-[MIT](./LICENSE) © bc1pzzfnxl.
+metadata into D1. `media:gc` deletes orphaned media after a 7-day grace period.
+Recovery and Time Travel procedures: [`docs/backup.md`](./docs/backup.md).

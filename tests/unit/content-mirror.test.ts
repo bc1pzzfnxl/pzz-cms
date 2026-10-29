@@ -1,5 +1,5 @@
+import { parseArticleMirror, renderArticleMirror } from "@pzz-cms/core";
 import { describe, expect, it } from "vitest";
-import { parseArticleMirror, renderArticleMirror } from "@/lib/content-mirror";
 
 const article = {
   slug: "le-secret-du-psaume-91",

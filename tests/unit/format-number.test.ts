@@ -1,5 +1,5 @@
+import { formatNumber } from "@pzz-cms/core";
 import { describe, expect, it } from "vitest";
-import { formatNumber } from "@/lib/format-number";
 
 describe("formatNumber", () => {
   it("formats a plain number with the locale", () => {

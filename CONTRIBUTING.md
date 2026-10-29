@@ -4,10 +4,15 @@
 
 ```bash
 bun install
-bun run dev
+bun run dev            # public site, local D1
+bun run dev:cms        # admin against production D1/R2
 ```
 
 Bun is the only supported package manager. Do not use npm, pnpm or Yarn.
+
+The CMS is local-only and unauthenticated; the public site has no admin
+routes. See [`docs/spec/split-site-cms.md`](./docs/spec/split-site-cms.md) for
+the app layout.
 
 ## Before you push
 
@@ -18,14 +23,14 @@ same checks by hand:
 bun run check
 ```
 
-A phase is done only when its checks pass (typecheck, lint, tests).
+A change is done only when its checks pass (typecheck, lint, tests).
 
 ## Template vs deployment
 
 `pzz-cms` is the upstream template; each site is a deployment. Read
 [`docs/template-vs-blog.md`](./docs/template-vs-blog.md) before syncing code:
-never copy `src/lib/site.ts`, Wrangler config, secrets, content or generated
-assets between the two.
+never copy `site.ts`, Wrangler config, secrets, content or generated assets
+between the two, and never sync `apps/cms` into a deployment.
 
 ## Authoring a slug page
 

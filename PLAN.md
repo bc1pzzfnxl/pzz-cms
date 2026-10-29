@@ -1,6 +1,8 @@
 # pzz-cms — Implementation Plan
 
 A light, MDX-first CMS built on Astro and Cloudflare Workers. It is developed as a **public open-source project** in this repository. Once it is stable, its code is pushed into `your-blog` (private, it holds the Markdown articles), which replaces the rendering engine of https://example.com. The blog's design and URLs stay the same.
+The repo is split into `apps/site` (deployed), `apps/cms` (local admin)
+and `packages/core` (shared) — see ADR 0008 and `docs/spec/split-site-cms.md`.
 
 ## 1. Decisions
 
@@ -14,17 +16,17 @@ A light, MDX-first CMS built on Astro and Cloudflare Workers. It is developed as
 | Content format | Pure MDX. Components from mdxcn, plus `Stat`, are available inside articles. Pre-rendered to HTML at save time (ADR 0005). |
 | Editor | MDXEditor with custom components. |
 | Rendering | Astro SSR on Cloudflare Workers. Publication is immediate. |
-| Deployment | Cloudflare Workers (Astro adapter + `wrangler.jsonc`). Cloudflare Pages is not used. HTTPS is mandatory. |
-| Admin access | Password auth (Better Auth) behind a provider seam; single owner. Cloudflare Access is an optional adapter (ADR 0007). |
+| Deployment | Cloudflare Workers (Astro adapter + `apps/site/wrangler.jsonc`). `build:site` is the only deployable build. Cloudflare Pages is not used. HTTPS is mandatory. |
+| Admin access | None. The admin is a separate local-only app (`apps/cms`), never deployed, no auth (ADR 0008). |
 | Slugs | ASCII kebab-case generated from the title. Editable before publication. A change creates a 301 in the `redirects` table and updates the sitemap. |
 | Titles | `title` in frontmatter, with accents. It feeds `<h1>`, `<title>` and JSON-LD. File names are ASCII slugs. |
-| URLs | Page URLs are canonical with a trailing slash. `trailingSlash: "ignore"` plus middleware keeps the Better Auth routes working. Sitemap at the same address. |
+| URLs | Page URLs are canonical with a trailing slash. `trailingSlash: "ignore"` plus middleware canonicalizes to the trailing-slash form. Sitemap at the same address. |
 | Language | French UI and content. Code and docs in English. Multilingual support is v2. |
 | Media | Cloudflare R2. WebP conversion in the browser (canvas) before upload. Dimensions stored in D1. |
 | SEO | Modules from `skill-seo-astro` are added one by one. The blog layout is not overwritten. |
 | Linting and hooks | Biome (lint and format), TypeScript `strict`, Husky + lint-staged on pre-commit, GitHub Actions CI. |
 | Commits | Conventional Commits. Branches `feat/…`, `fix/…`, `chore/…`. |
-| Tests | Vitest (unit), D1 locally through `wrangler dev`, Playwright (E2E), parity script against the blog's sitemap. |
+| Tests | Vitest (unit), Playwright (E2E: `site` and `cms` projects, run in CI on workerd), parity script against the blog's sitemap. |
 | Out of scope | openSEO, DataForSEO, Raspberry Pi hosting (later), translation plugin (v2), design overhaul (after migration). |
 
 ## 2. Data policy (public vs private)
@@ -86,6 +88,9 @@ Not needed for the MVP: `pnpm`, `npx` (replaced by `bunx`), the openSEO stack, a
 never answers, and `astro dev` fails with `ECONNREFUSED` on a loopback fetch.
 Plain loopback works (verified with `Bun.serve`), so this is a sandbox
 limitation, not a code problem.
+
+Note (2026-10): under old Bun (1.4.x), `bunx wrangler dev` cannot serve
+requests (undici dispatcher, bun issue 39247). CI uses `bun: latest`.
 
 Resolved by CI: the `Runtime smoke test (workerd)` job in `.github/workflows/ci.yml`
 boots the built Worker on GitHub Actions and checks that `/` (200), an unknown
@@ -395,15 +400,17 @@ pzz-cms/
 ├── migrations/            # D1 migrations
 ├── scripts/               # migration and parity scripts (no content)
 ├── .github/workflows/     # CI
-├── src/
-│   ├── content/           # content module (deep module)
-│   ├── components/        # shadcn, mdxcn, numbers
-│   ├── layouts/           # MainLayout (blog design)
-│   ├── lib/               # SEO helpers, slugs, redirects, WebP conversion
-│   └── pages/             # public pages and /admin
+├── apps/
+│   ├── site/              # @pzz-cms/site — public site, deployed
+│   └── cms/               # @pzz-cms/cms — local admin, never deployed
+├── packages/
+│   └── core/              # @pzz-cms/core — content module + libs + MDX components
 ├── tests/                 # unit (Vitest) and E2E (Playwright), synthetic data only
-├── astro.config.mjs
-├── wrangler.jsonc         # template, IDs filled per deployment
+├── migrations/            # D1 migrations (symlinked into both apps)
 ├── biome.json
-└── package.json
+└── package.json           # workspaces + orchestration scripts
 ```
+
+### P9 — Site/CMS split — DONE (ADR 0008)
+
+See `docs/spec/split-site-cms.md` and `docs/adr/0008-split-site-cms.md`.
