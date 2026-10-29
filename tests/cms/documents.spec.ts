@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { gotoPublic } from "../helpers";
+import { SITE_BASE_URL } from "../helpers";
 
 const SAMPLE = {
   meta: { titre: "Programme test", auteur: "LaJota", principes_directeurs: ["Principe A"] },
