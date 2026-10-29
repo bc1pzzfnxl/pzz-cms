@@ -91,5 +91,5 @@ bun run media:gc -- --bucket=<r2-bucket> --config=apps/site/wrangler.jsonc
   into a local, gitignored `apps/cms/wrangler.local.jsonc`, then run:
 
   ```bash
-  bunx wrangler dev --remote --config apps/cms/wrangler.local.jsonc
+  bunx wrangler dev --remote --config apps/cms/wrangler.local.jsonc --port 8788
   ```
