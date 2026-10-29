@@ -7,6 +7,9 @@ dist/
 
 # Cloudflare
 .wrangler/
+
+# Local CMS config with real ids (never committed)
+apps/cms/wrangler.local.jsonc
 wrangler.deploy.jsonc
 
 # Env and secrets
