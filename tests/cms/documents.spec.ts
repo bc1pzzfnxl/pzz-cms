@@ -23,7 +23,9 @@ test("upload a JSON document and render its page", async ({ page }) => {
   });
   await page.waitForURL(/\/admin\/documents\/[0-9a-f-]{36}\/?$/);
 
-  await gotoPublic(page, "/mon-programme-politique/");
+  const response = await page.goto(`${SITE_BASE_URL}/mon-programme-politique/`);
+  console.log("read-back status:", response?.status());
+  expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Programme test" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Themes" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Souveraineté" })).toBeVisible();

@@ -1,16 +1,11 @@
 import { defineMiddleware } from "astro:middleware";
 
-function withSecurityHeaders(response: Response): Response {
-  const headers = new Headers(response.headers);
-  headers.set("x-content-type-options", "nosniff");
-  headers.set("x-frame-options", "DENY");
-  headers.set("referrer-policy", "strict-origin-when-cross-origin");
-  return new Response(response.body, { status: response.status, headers });
-}
-
 /**
  * Canonicalize page URLs to the trailing-slash form (`trailingSlash` is
  * "ignore"). Files and assets are left alone.
+ *
+ * No security headers here: the public pages must stay frameable by the home
+ * page's own hover preview iframe, and the deployed site never served them.
  */
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
@@ -24,5 +19,5 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect(`${pathname}/${url.search}`, 301);
   }
 
-  return withSecurityHeaders(await next());
+  return next();
 });
