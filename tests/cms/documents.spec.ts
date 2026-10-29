@@ -25,6 +25,9 @@ test("upload a JSON document and render its page", async ({ page }) => {
 
   const response = await page.goto(`${SITE_BASE_URL}/mon-programme-politique/`);
   console.log("read-back status:", response?.status());
+  if (response?.status() !== 200) {
+    console.log("read-back body:", (await response?.text())?.slice(0, 800));
+  }
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Programme test" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Themes" })).toBeVisible();
