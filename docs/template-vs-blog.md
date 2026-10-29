@@ -89,8 +89,8 @@ bun run media:gc -- --bucket=<r2-bucket> --config=apps/site/wrangler.jsonc
 - The admin (`apps/cms`) does not exist in the deployment repository. To edit
   a deployment from a template clone:
 
-  1. Replace the placeholder D1/R2 ids in `apps/cms/wrangler.jsonc` with the
-     deployment's real ids (a local change you never commit; the file stays
-     placeholders upstream).
+  1. Copy the deployment's real D1/R2 ids into a gitignored
+     `apps/cms/wrangler.local.jsonc` (the build reads it through the adapter's
+     `configPath`; the template file stays placeholders).
   2. `bunx wrangler login`, then `bun run dev:cms` (builds the admin and serves
      it on `http://localhost:8788/admin/` with remote bindings to production).
