@@ -87,9 +87,10 @@ bun run media:gc -- --bucket=<r2-bucket> --config=apps/site/wrangler.jsonc
   removed to keep `bun audit` at zero after CVE-2026-93753, which has no
   patched release yet).
 - The admin (`apps/cms`) does not exist in the deployment repository. To edit
-  a deployment from the template clone, copy the deployment's real D1/R2 ids
-  into a local, gitignored `apps/cms/wrangler.local.jsonc`, then run:
+  a deployment from a template clone:
 
-  ```bash
-  bunx wrangler dev --remote --config apps/cms/wrangler.local.jsonc --port 8788
-  ```
+  1. Replace the placeholder D1/R2 ids in `apps/cms/wrangler.jsonc` with the
+     deployment's real ids (a local change you never commit; the file stays
+     placeholders upstream).
+  2. `bunx wrangler login`, then `bun run dev:cms` (builds the admin and serves
+     it on `http://localhost:8788/admin/` with remote bindings to production).
