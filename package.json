@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "dev": "bun run --filter @pzz-cms/site dev",
-    "dev:cms": "bun run --filter @pzz-cms/cms dev:remote",
+    "dev:cms": "bun scripts/dev-cms.ts",
     "build": "bun run build:site",
     "build:site": "bun run --filter @pzz-cms/site build",
     "build:cms": "bun run --filter @pzz-cms/cms build",

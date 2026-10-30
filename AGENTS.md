@@ -32,12 +32,12 @@ bun run check          # Biome + typecheck (both apps) + Vitest
 bunx wrangler <cmd>    # wrangler only runs through Bun, there is no node binary
 ```
 
-Never use npm, pnpm or npx. Wrangler's global binary needs `node`, which is not
-installed; always call it as `bunx wrangler`.
-
-Note: `bunx wrangler dev` cannot serve requests under old Bun (1.4.x, undici
-dispatcher issue). CI uses `bun: latest`. Run local e2e with a recent Bun, or
-let CI validate it.
+Never use npm, pnpm or npx. Wrangler's global binary needs `node`; use
+`bunx wrangler` for one-shot commands (d1 execute, r2 object, migrations,
+deploy). The **dev server** (`bun run dev:cms`) must run under Node: Bun's
+`fetch()` ignores the undici dispatcher that Miniflare's dev proxy relies on
+(bun #39247). Node is installed at `~/.local/node` and symlinked into
+`~/.bun/bin/node`; `scripts/dev-cms.ts` drives wrangler with it.
 
 ## Rules
 

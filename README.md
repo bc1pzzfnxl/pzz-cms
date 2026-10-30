@@ -35,10 +35,13 @@ secrets. See [`docs/adr/0008-split-site-cms.md`](./docs/adr/0008-split-site-cms.
 ## Requirements
 
 - [Bun](https://bun.sh/) ≥ 1.4
+- [Node.js](https://nodejs.org/) — only to run the local CMS dev server
+  (`wrangler dev` cannot run under Bun; see AGENTS.md)
 - A Cloudflare account for D1, R2 and deployment
 - For the local CMS: a `wrangler` login on your machine (`bunx wrangler login`)
 
-Node and npm are not required. Wrangler runs through Bun.
+Node and npm are otherwise not required. One-shot wrangler commands run
+through Bun (`bunx wrangler`).
 
 ## Development
 

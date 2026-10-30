@@ -6,7 +6,6 @@
   "description": "Local-only admin of pzz-cms. Runs via wrangler dev --remote against production D1/R2.",
   "scripts": {
     "dev": "astro dev",
-    "dev:remote": "CMS_WRANGLER_CONFIG=wrangler.local.jsonc bun run build && wrangler dev --remote --config dist/server/wrangler.json --port 8788",
     "build": "astro build",
     "typecheck": "astro check"
   },
