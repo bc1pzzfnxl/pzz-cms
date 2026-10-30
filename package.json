@@ -32,7 +32,7 @@
     "content:sync": "bun scripts/content-sync.ts",
     "content:import": "bun scripts/content-import.ts",
     "media:gc": "bun scripts/media-gc.ts",
-    "check": "biome check . && bun run typecheck && vitest run",
+    "check": "biome check . && bun run typecheck && bun run test",
     "prepare": "husky"
   },
   "lint-staged": {
