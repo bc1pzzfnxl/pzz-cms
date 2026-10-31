@@ -2,6 +2,9 @@ import { renderMdxToHtml } from "@pzz-cms/core";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 
+const Badge = ({ children }: { children?: ReactNode }) =>
+  createElement("span", { className: "badge" }, children);
+
 describe("renderMdxToHtml", () => {
   it("renders headings and paragraphs", async () => {
     const html = await renderMdxToHtml("# Bonjour\n\nUn paragraphe.");
@@ -23,9 +26,6 @@ describe("renderMdxToHtml", () => {
   });
 
   it("renders a provided component", async () => {
-    const Badge = ({ children }: { children?: ReactNode }) =>
-      createElement("span", { className: "badge" }, children);
-
     const html = await renderMdxToHtml("<Badge>Nouveau</Badge>", { Badge });
     expect(html).toContain('<span class="badge">Nouveau</span>');
   });
