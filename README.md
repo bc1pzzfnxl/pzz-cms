@@ -13,11 +13,11 @@ the boundary between the template and a deployment.
 
 The repository is a bun-workspaces monorepo:
 
-| Package | Role |
-| --- | --- |
-| `apps/site` (`@pzz-cms/site`) | The public site. The **only deployable app**. |
-| `apps/cms` (`@pzz-cms/cms`) | The admin. **Never deployed**: it runs locally and writes directly to the production D1/R2. |
-| `packages/core` (`@pzz-cms/core`) | The shared content module, helpers and MDX components. |
+| Package                           | Role                                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------- |
+| `apps/site` (`@pzz-cms/site`)     | The public site. The **only deployable app**.                                               |
+| `apps/cms` (`@pzz-cms/cms`)       | The admin. **Never deployed**: it runs locally and writes directly to the production D1/R2. |
+| `packages/core` (`@pzz-cms/core`) | The shared content module, helpers and MDX components.                                      |
 
 There is no authentication: the CMS runs on localhost, which is the security
 boundary. The public Worker exposes no admin routes, no auth routes and no

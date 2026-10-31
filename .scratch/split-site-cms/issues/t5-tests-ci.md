@@ -5,16 +5,18 @@
 ## Blocking edges: T2, T3, T4
 
 ## Goal
+
 Root `tests/` split into `site/`, `cms/`, `core/` projects; CI runs two jobs.
 
 ## Work
+
 1. Rehome unit tests:
    - `tests/core/`: content, content-mirror, media, migration, mdx-html,
      mdx-normalize, render-mdx, slug, parity, format-number, llms, seo,
      json-document.
    - `tests/site/`: foundation + anything site-specific.
    - `tests/cms/`: admin-related unit tests (minus auth).
-   Update imports to `@pzz-cms/core`.
+     Update imports to `@pzz-cms/core`.
 2. E2E: `tests/site/` keeps `home-preview.spec.ts` (+ site smoke);
    `tests/cms/` keeps `admin`, `categories`, `documents` specs (no auth);
    playwright projects `site` (worker on 8787) and `cms` (worker on 8788).
@@ -29,5 +31,6 @@ Root `tests/` split into `site/`, `cms/`, `core/` projects; CI runs two jobs.
 5. Keep the "prepare local D1" and smoke patterns from the current workflow.
 
 ## Done when
+
 - `bun run check`, `bun run test`, `bun run e2e` green locally; CI workflow
   files pass a dry review against the repo scripts.

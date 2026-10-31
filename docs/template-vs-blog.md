@@ -25,15 +25,15 @@ repository alone.
 Never copy these from the template into a real site, or from a site into the
 template:
 
-| File | Why |
-| --- | --- |
-| `packages/core/src/lib/site.ts` | Name, canonical URL, description, author, logo, default cover |
-| `apps/site/wrangler.jsonc` / `apps/cms/wrangler.jsonc` | Real D1 database id, R2 bucket, Worker name (the deployment only carries the site one) |
-| `.dev.vars`, `.env*` | Secrets (`BETTER_AUTH_SECRET`, `SETUP_TOKEN`, owner email) |
-| `public/favicon*`, `public/apple-touch-icon.png`, `public/images/*` | Branding and site assets |
-| D1 rows and R2 objects | Articles, documents, categories, media |
-| `content/` | The Git mirror of the deployment's articles; never committed in the template |
-| `migration-output/` | Private imported content, gitignored |
+| File                                                                | Why                                                                                    |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `packages/core/src/lib/site.ts`                                     | Name, canonical URL, description, author, logo, default cover                          |
+| `apps/site/wrangler.jsonc` / `apps/cms/wrangler.jsonc`              | Real D1 database id, R2 bucket, Worker name (the deployment only carries the site one) |
+| `.dev.vars`, `.env*`                                                | Secrets (`BETTER_AUTH_SECRET`, `SETUP_TOKEN`, owner email)                             |
+| `public/favicon*`, `public/apple-touch-icon.png`, `public/images/*` | Branding and site assets                                                               |
+| D1 rows and R2 objects                                              | Articles, documents, categories, media                                                 |
+| `content/`                                                          | The Git mirror of the deployment's articles; never committed in the template           |
+| `migration-output/`                                                 | Private imported content, gitignored                                                   |
 
 `packages/core/src/lib/site.ts` is the **single source** of the site URL:
 the site `astro.config.mjs`, `robots.txt`, `llms.txt`, the sitemap, RSS and
@@ -88,7 +88,6 @@ bun run media:gc -- --bucket=<r2-bucket> --config=apps/site/wrangler.jsonc
   patched release yet).
 - The admin (`apps/cms`) does not exist in the deployment repository. To edit
   a deployment from a template clone:
-
   1. Copy the deployment's real D1/R2 ids into a gitignored
      `apps/cms/wrangler.local.jsonc` (the build reads it through the adapter's
      `configPath`; the template file stays placeholders).

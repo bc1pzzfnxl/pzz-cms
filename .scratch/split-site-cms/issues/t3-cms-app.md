@@ -5,10 +5,12 @@
 ## Blocking edges: T1
 
 ## Goal
+
 `apps/cms` becomes the local-only admin: same CRUD surface for articles,
 categories, documents, media — without auth.
 
 ## Work
+
 1. Move into `apps/cms/src`: `pages/admin/**` minus `login.astro`,
    `password.astro`, `setup.astro`, `api/setup.ts`; `layouts/AdminLayout.astro`;
    `components/admin/**`; `styles/admin.css`; `pages/media/[...key].ts`
@@ -27,5 +29,6 @@ categories, documents, media — without auth.
 6. Editor live preview keeps working (client-side MDX compile — untouched).
 
 ## Done when
+
 - `bun run build:cms` builds; `bun run dev:cms` boots against a local D1 (CI
   mode) and the admin CRUD e2e pass without any auth step.

@@ -5,6 +5,7 @@
 ## Blocking edges: T1..T6
 
 ## Work
+
 1. Clone `bc1pzzfnxl/bc1pzzfnxl-blog` fresh; sync `apps/site` +
    `packages/core` + `migrations/` + `scripts/` + root manifests + docs per
    the new `template-vs-blog.md` (never `apps/cms`).
@@ -20,6 +21,7 @@
    shows it → unpublish).
 
 ## Progress
+
 - 2026-10-31: `feat/split-site-cms` synced + merged to `main` (`168cd43`)
   with `session: false`, the `check` script on `bun run test`, and the
   deploy script fix.
@@ -35,6 +37,7 @@
   `ADMIN_PASSWORD`) — `secret list` now empty.
 
 ## Left
+
 - User: run the full local-CMS edit cycle (`bun run dev:cms` on their
   machine): create a draft → publish → see it on the site → unpublish.
 - Optional: orphan KV namespace `bc1pzzfnxl-blog-session` (old Astro
@@ -44,5 +47,6 @@
   code — decide keep/drop later.
 
 ## Done when
+
 - Production serves the split site, admin gone from the public surface,
   local CMS operates against production data.

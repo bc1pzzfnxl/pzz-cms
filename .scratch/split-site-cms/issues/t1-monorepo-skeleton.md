@@ -5,11 +5,13 @@
 ## Blocking edges: none (root ticket)
 
 ## Goal
+
 Turn the single-package repo into bun workspaces without changing behaviour:
 `apps/site`, `apps/cms`, `packages/core` exist and everything that was at
 `src/` has a new home.
 
 ## Work
+
 1. Root `package.json`: `"workspaces": ["apps/*", "packages/*"]`, private,
    scripts become orchestrators (`build:site`, `build:cms`, `dev:cms`, `dev`,
    `check`, `test`, `e2e` — may delegate to per-package scripts or `--filter`).
@@ -32,8 +34,10 @@ Turn the single-package repo into bun workspaces without changing behaviour:
    (still building empty apps at this point); `astro check` passes.
 
 ## Out of scope
+
 - Moving actual pages (T2/T3), tests (T5), docs (T6), auth purge (T4).
 
 ## Done when
+
 - `bun install` clean, `bun run check` green, workspace structure matches the
   spec (`docs/spec/split-site-cms.md`).

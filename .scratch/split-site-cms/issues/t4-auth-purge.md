@@ -5,10 +5,12 @@
 ## Blocking edges: T2, T3
 
 ## Goal
+
 Remove every trace of auth from code, CI, and production — "as if it never
 existed".
 
 ## Work
+
 1. Delete `src/auth/**`, `src/components/auth/**` (already not copied into
    apps), `scripts/auth-reset.ts`, `scripts/wizard-access.sh`.
 2. Remove `better-auth`, `jose` from all package manifests; delete
@@ -28,5 +30,6 @@ existed".
    to ADR 0008).
 
 ## Done when
+
 - `grep -ri "better-auth\|AUTH_PROVIDER\|ACCESS_AUD" apps packages scripts tests .github` is empty (docs excepted).
 - `bun run check` green.

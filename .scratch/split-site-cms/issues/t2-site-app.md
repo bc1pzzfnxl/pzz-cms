@@ -5,10 +5,12 @@
 ## Blocking edges: T1
 
 ## Goal
+
 `apps/site` becomes the full public site: same routes, same rendering, no
 admin, no auth, no React.
 
 ## Work
+
 1. Move into `apps/site/src`: `pages/{index.astro,[slug].astro,categorie,auteur.astro,404.astro,sitemap.xml.ts,sitemap-index.xml.ts,rss.xml.ts,robots.txt.ts,llms.txt.ts,media/[...key].ts}`, `layouts/MainLayout.astro`, `styles/global.css`.
 2. `middleware.ts`: keep security headers + trailing-slash canonicalization;
    remove `/api/auth` handling and the admin guard.
@@ -25,6 +27,7 @@ admin, no auth, no React.
    media helpers) and local `@/` for layouts/components.
 
 ## Done when
+
 - `bun run build:site` builds; `bun run dev` serves the home with a local D1
   seeded by `scripts/seed.sql`; existing site e2e (home-preview) passes;
   `/admin/*` and `/api/auth` 404.

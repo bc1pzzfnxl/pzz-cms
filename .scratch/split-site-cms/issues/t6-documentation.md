@@ -5,6 +5,7 @@
 ## Blocking edges: T1..T5 (describes the final state)
 
 ## Work
+
 1. `docs/adr/0008-split-site-cms.md` — the decision (structure, commands,
    security model, cutover), referencing `docs/spec/split-site-cms.md` and
    `docs/research/turborepo.md`.
@@ -20,5 +21,6 @@
 7. `AGENTS.md`: new commands and layout. `CONTRIBUTING.md`: same.
 
 ## Done when
+
 - Docs match the implemented structure; `bun run check` unaffected; links
   between docs resolve.

@@ -34,16 +34,16 @@ Why not compile at request time: Cloudflare Workers block `new Function`, which
 
 ## 2. What runs where
 
-| Step | Runs in | Notes |
-| --- | --- | --- |
-| MDX editor | admin browser | `ArticleEditor.tsx` |
-| MDX → HTML | admin browser | `src/lib/render-mdx.ts` (`evaluate` + `renderToStaticMarkup`) |
-| Static-state cleanup | admin + Worker | `src/lib/mdx-html.ts` (`prepareMdxHtml`) |
-| Storage | D1 | `body_mdx`, `body_html` |
-| Page rendering | Worker | `src/pages/[slug].astro`, `set:html` |
-| Cover/body images | R2 via `/media/<key>/` | `optimizeBodyImages` adds dimensions + lazy |
-| Animation | none | the article is static HTML; no client enhancer |
-| Admin preview | admin browser | same compiler and component map as saving |
+| Step                 | Runs in                | Notes                                                         |
+| -------------------- | ---------------------- | ------------------------------------------------------------- |
+| MDX editor           | admin browser          | `ArticleEditor.tsx`                                           |
+| MDX → HTML           | admin browser          | `src/lib/render-mdx.ts` (`evaluate` + `renderToStaticMarkup`) |
+| Static-state cleanup | admin + Worker         | `src/lib/mdx-html.ts` (`prepareMdxHtml`)                      |
+| Storage              | D1                     | `body_mdx`, `body_html`                                       |
+| Page rendering       | Worker                 | `src/pages/[slug].astro`, `set:html`                          |
+| Cover/body images    | R2 via `/media/<key>/` | `optimizeBodyImages` adds dimensions + lazy                   |
+| Animation            | none                   | the article is static HTML; no client enhancer                |
+| Admin preview        | admin browser          | same compiler and component map as saving                     |
 
 There is no React hydration of the article body and no client-side animation
 script. What the compiler produces is what the browser paints.
@@ -98,21 +98,21 @@ paste the clean tag.
 
 ### Available components
 
-| Component | Use for |
-| --- | --- |
-| `Callout` | a caveat, tip, warning, or breaking note |
-| `Quote` | one sentence someone else said, with a name under it |
-| `Verse` | a scripture quotation with a reference and an optional original-language line |
-| `Steps` | a procedure; bold is the current step, italic the next |
-| `Terminal` | a command and its output |
-| `Faq` | questions and answers |
-| `Figure` | an image with a caption and an optional credit |
-| `GraphCompare` | two options side by side, with ✓/– cells |
-| `GraphStat` | two to four large numbers |
-| `GraphTable` | tabular data |
-| `GraphTimeline` | dated events, one marked current |
-| `Stat` | one inline number, rendered at its final value |
-| `Reveal` | legacy wrapper; renders its children as a plain inline span |
+| Component       | Use for                                                                       |
+| --------------- | ----------------------------------------------------------------------------- |
+| `Callout`       | a caveat, tip, warning, or breaking note                                      |
+| `Quote`         | one sentence someone else said, with a name under it                          |
+| `Verse`         | a scripture quotation with a reference and an optional original-language line |
+| `Steps`         | a procedure; bold is the current step, italic the next                        |
+| `Terminal`      | a command and its output                                                      |
+| `Faq`           | questions and answers                                                         |
+| `Figure`        | an image with a caption and an optional credit                                |
+| `GraphCompare`  | two options side by side, with ✓/– cells                                      |
+| `GraphStat`     | two to four large numbers                                                     |
+| `GraphTable`    | tabular data                                                                  |
+| `GraphTimeline` | dated events, one marked current                                              |
+| `Stat`          | one inline number, rendered at its final value                                |
+| `Reveal`        | legacy wrapper; renders its children as a plain inline span                   |
 
 Grammar rules (shared by mdxcn components):
 
@@ -290,25 +290,25 @@ Consequences for a new component:
 
 ## 7. Debugging
 
-| Symptom | Check |
-| --- | --- |
-| A component is blank on the public page | `body_html` in D1 for `opacity:0`; the page should normalize it. Re-save if needed. |
-| The admin preview differs from the public page | The preview uses the same compiler; check that the component is in `mdx-components.ts` and the CSS is imported. |
-| An image has no dimensions | Upload it through the admin so the `media` row has `width`/`height`. |
-| A new component is missing in the preview | It is not registered in `src/lib/mdx-components.ts`. |
-| A pasted component tag has no spaces | `<Callouttype="tip">` is not `Callout`; the MDX compiler sees a different component. Paste the snippet as a code block, or use the editor's source mode. |
-| A pasted component appears escaped as text | The paste interceptor handles known tags; if it still happens, use Source mode. Preview and save unescape known tags. |
-| An old slug returns 404 | Check the `redirects` table; the 301 is created when the slug changes in the admin. |
+| Symptom                                        | Check                                                                                                                                                    |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A component is blank on the public page        | `body_html` in D1 for `opacity:0`; the page should normalize it. Re-save if needed.                                                                      |
+| The admin preview differs from the public page | The preview uses the same compiler; check that the component is in `mdx-components.ts` and the CSS is imported.                                          |
+| An image has no dimensions                     | Upload it through the admin so the `media` row has `width`/`height`.                                                                                     |
+| A new component is missing in the preview      | It is not registered in `src/lib/mdx-components.ts`.                                                                                                     |
+| A pasted component tag has no spaces           | `<Callouttype="tip">` is not `Callout`; the MDX compiler sees a different component. Paste the snippet as a code block, or use the editor's source mode. |
+| A pasted component appears escaped as text     | The paste interceptor handles known tags; if it still happens, use Source mode. Preview and save unescape known tags.                                    |
+| An old slug returns 404                        | Check the `redirects` table; the 301 is created when the slug changes in the admin.                                                                      |
 
 ## 8. File map
 
-| File | Role |
-| --- | --- |
-| `src/pages/[slug].astro` | serves articles, JSON documents, and 301s |
-| `src/lib/render-mdx.ts` | MDX → static HTML, in the admin |
-| `src/lib/mdx-html.ts` | strips motion's hidden state from the static HTML |
-| `src/lib/mdx-components.ts` | the global component map |
-| `src/styles/global.css` | article and data-component styles |
-| `src/styles/mdxcn.css` | mdxcn tokens and frame utilities |
-| `src/components/admin/ArticleEditor.tsx` | editor, live preview, save |
-| `tests/unit/render-mdx.test.ts` | compile and static-safety tests |
+| File                                     | Role                                              |
+| ---------------------------------------- | ------------------------------------------------- |
+| `src/pages/[slug].astro`                 | serves articles, JSON documents, and 301s         |
+| `src/lib/render-mdx.ts`                  | MDX → static HTML, in the admin                   |
+| `src/lib/mdx-html.ts`                    | strips motion's hidden state from the static HTML |
+| `src/lib/mdx-components.ts`              | the global component map                          |
+| `src/styles/global.css`                  | article and data-component styles                 |
+| `src/styles/mdxcn.css`                   | mdxcn tokens and frame utilities                  |
+| `src/components/admin/ArticleEditor.tsx` | editor, live preview, save                        |
+| `tests/unit/render-mdx.test.ts`          | compile and static-safety tests                   |

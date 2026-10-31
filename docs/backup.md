@@ -2,10 +2,10 @@
 
 The deployment has no separate backup product. Recovery relies on two layers:
 
-| Layer | Scope | Window | Restores |
-| --- | --- | --- | --- |
-| Git mirror (`content/`) | articles, categories, media metadata | forever | text, by re-import |
-| D1 Time Travel | whole database | 7 days (Free) / 30 days (Paid) | point-in-time database |
+| Layer                   | Scope                                | Window                         | Restores               |
+| ----------------------- | ------------------------------------ | ------------------------------ | ---------------------- |
+| Git mirror (`content/`) | articles, categories, media metadata | forever                        | text, by re-import     |
+| D1 Time Travel          | whole database                       | 7 days (Free) / 30 days (Paid) | point-in-time database |
 
 R2 images are **not** backed up. Replaced or orphaned images are deleted on
 purpose to stay inside the free tier; an old Git revision that references a

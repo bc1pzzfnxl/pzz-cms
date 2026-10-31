@@ -53,14 +53,14 @@ pzz-cms/
 
 ## Commands (the "flags")
 
-| Command | Effect |
-| --- | --- |
-| `bun run build:site` | Builds the site app only — the only deployable build |
-| `bun run build:cms` | Builds the CMS app (verification only, never deployed) |
-| `bun run dev:cms` | `wrangler dev --remote` in `apps/cms` → writes to production D1/R2 |
-| `bun run dev` | Site dev server on a **local** D1 (template work without Cloudflare) |
-| `bun run check` | lint + typecheck + unit tests across all packages |
-| `bun run test` / `bun run e2e` | Unit / e2e, per project (`--project site|cms|core`) |
+| Command                        | Effect                                                               |
+| ------------------------------ | -------------------------------------------------------------------- |
+| `bun run build:site`           | Builds the site app only — the only deployable build                 |
+| `bun run build:cms`            | Builds the CMS app (verification only, never deployed)               |
+| `bun run dev:cms`              | `wrangler dev --remote` in `apps/cms` → writes to production D1/R2   |
+| `bun run dev`                  | Site dev server on a **local** D1 (template work without Cloudflare) |
+| `bun run check`                | lint + typecheck + unit tests across all packages                    |
+| `bun run test` / `bun run e2e` | Unit / e2e, per project (`--project site                             | cms | core`) |
 
 ## Data & security
 
