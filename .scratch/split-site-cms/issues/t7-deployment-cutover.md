@@ -41,8 +41,8 @@
 - User: run the full local-CMS edit cycle (`bun run dev:cms` on their
   machine): create a draft → publish → see it on the site → unpublish.
 - Optional: orphan KV namespace `bc1pzzfnxl-blog-session` (old Astro
-  sessions binding) — delete with the user's go-ahead; `online-cv-session`
-  belongs to another project, untouched.
+  sessions binding) — deleted with the user's go-ahead on 2026-10-31;
+  `online-cv-session` belongs to another project, untouched.
 - Backlog fallout: D1 tables `redirects` and `_cf_KV` are referenced by no
   code — decide keep/drop later.
 
