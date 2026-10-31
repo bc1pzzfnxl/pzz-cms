@@ -39,7 +39,7 @@
     "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,md}": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.15",
+    "@biomejs/biome": "^2.6.4",
     "@playwright/test": "^1.64.0",
     "@pzz-cms/core": "workspace:*",
     "@types/bun": "^1.4.2",
