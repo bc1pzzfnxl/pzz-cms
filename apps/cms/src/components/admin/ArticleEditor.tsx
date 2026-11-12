@@ -8,6 +8,7 @@ import {
   diffSourcePlugin,
   GenericJsxEditor,
   headingsPlugin,
+  InsertImage,
   imagePlugin,
   type JsxComponentDescriptor,
   jsxPlugin,
@@ -277,38 +278,41 @@ export default function ArticleEditor({ initial, categories }: Props) {
     };
   }, [bodyMdx]);
 
+  async function uploadMedia(file: File, alt: string) {
+    const { blob, width, height } = await convertToWebp(file);
+    const variants = await convertToWebpVariants(
+      file,
+      MEDIA_VARIANT_WIDTHS.filter((variantWidth) => variantWidth < width),
+      0.85,
+    );
+    const form = new FormData();
+    const name = `${file.name.replace(/\.[^.]+$/, "") || "image"}.webp`;
+    form.append("file", new File([blob], name, { type: "image/webp" }));
+    for (const variant of variants) {
+      form.append(
+        `variant-${variant.width}`,
+        new File([variant.blob], `${name.replace(/\.webp$/, "")}-${variant.width}.webp`, {
+          type: "image/webp",
+        }),
+      );
+    }
+    form.append("width", String(width));
+    form.append("height", String(height));
+    form.append("alt", alt);
+
+    const res = await fetch("/admin/api/media/", { method: "POST", body: form });
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(err.error ?? "Échec de l'envoi de l'image.");
+    }
+    return (await res.json()) as { key: string; url: string };
+  }
+
   async function uploadCover(file: File) {
     setUploading(true);
     setMessage(null);
     try {
-      const { blob, width, height } = await convertToWebp(file);
-      const variants = await convertToWebpVariants(
-        file,
-        MEDIA_VARIANT_WIDTHS.filter((variantWidth) => variantWidth < width),
-        0.85,
-      );
-      const form = new FormData();
-      const name = `${file.name.replace(/\.[^.]+$/, "") || "image"}.webp`;
-      form.append("file", new File([blob], name, { type: "image/webp" }));
-      for (const variant of variants) {
-        form.append(
-          `variant-${variant.width}`,
-          new File([variant.blob], `${name.replace(/\.webp$/, "")}-${variant.width}.webp`, {
-            type: "image/webp",
-          }),
-        );
-      }
-      form.append("width", String(width));
-      form.append("height", String(height));
-      form.append("alt", coverAlt.trim());
-
-      const res = await fetch("/admin/api/media/", { method: "POST", body: form });
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        setMessage(err.error ?? "Échec de l'envoi de l'image.");
-        return;
-      }
-      const data = (await res.json()) as { key: string; url: string };
+      const data = await uploadMedia(file, coverAlt.trim());
       setOgImageKey(data.key);
       setCoverUrl(data.url);
       setMessage("Image envoyée. Enregistrez pour l'appliquer.");
@@ -318,6 +322,11 @@ export default function ArticleEditor({ initial, categories }: Props) {
       setUploading(false);
     }
   }
+
+  // MDXEditor image upload: convert to WebP in the browser, store in R2 and
+  // insert the public /media/ URL. The alt is left empty; edit the markdown.
+  const uploadBodyImage = (image: File): Promise<string> =>
+    uploadMedia(image, "").then((data) => data.url);
 
   async function save(): Promise<{ id: string; slug: string } | null> {
     if (!title.trim()) {
@@ -534,7 +543,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
               thematicBreakPlugin(),
               linkPlugin(),
               linkDialogPlugin(),
-              imagePlugin(),
+              imagePlugin({ imageUploadHandler: uploadBodyImage }),
               codeBlockPlugin(),
               diffSourcePlugin(),
               jsxPlugin({ jsxComponentDescriptors }),
@@ -547,6 +556,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
                     <BlockTypeSelect />
                     <ListsToggle />
                     <CreateLink />
+                    <InsertImage />
                   </DiffSourceToggleWrapper>
                 ),
               }),
