@@ -1,12 +1,16 @@
 ---
 import "../styles/admin.css";
 import { site } from "@pzz-cms/core";
+import { env } from "cloudflare:workers";
 
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
+// The CMS is local-only: "/" here is the admin origin, not the public site.
+// The public URL comes from the wrangler vars (SITE_PUBLIC_URL).
+const siteUrl = env.SITE_PUBLIC_URL || site.url;
 ---
 
 <!doctype html>
@@ -27,7 +31,7 @@ const { title } = Astro.props;
                     <a href="/admin/categories/" class="text-sm text-muted-foreground hover:underline">
                         Catégories
                     </a>
-                    <a href="/" target="_blank" rel="noreferrer" class="text-sm text-muted-foreground hover:underline">
+                    <a href={siteUrl} target="_blank" rel="noreferrer" class="text-sm text-muted-foreground hover:underline">
                         Voir le site ↗
                     </a>
                 </div>

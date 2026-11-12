@@ -19,6 +19,12 @@
       "bucket_name": "pzz-cms-media"
     }
   ],
+  // Public URL of the site the CMS edits. The CMS app cannot read the
+  // deployment's site.ts (never synced), so the admin links and previews use
+  // this variable instead. Replace with your own in wrangler.local.jsonc.
+  "vars": {
+    "SITE_PUBLIC_URL": "https://example.com"
+  },
   "observability": {
     "enabled": true
   }
