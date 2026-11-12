@@ -9,6 +9,9 @@ URL and the default metadata live in `packages/core/src/lib/site.ts`, so the
 same code can drive any blog. See [`docs/template-vs-blog.md`](./docs/template-vs-blog.md) for
 the boundary between the template and a deployment.
 
+New here? Follow [`docs/getting-started.md`](./docs/getting-started.md): from a
+fresh clone to a live blog with a working local admin in six steps.
+
 ## Model: deployed site, local CMS
 
 The repository is a bun-workspaces monorepo:
@@ -72,8 +75,9 @@ bun run deploy         # build:site && wrangler deploy (apps/site/wrangler.jsonc
 ```
 
 `apps/site/wrangler.jsonc` is a template. Fill in your own D1 and R2 IDs before
-deploying. A deployment repository carries its own gitignored copy with real
-IDs (see `docs/template-vs-blog.md`).
+deploying. A deployment repository carries its own gitignored copy
+(`wrangler.local.jsonc`) with real IDs (see `docs/template-vs-blog.md` and
+`docs/getting-started.md`).
 
 ### Cloudflare Workers Builds
 

@@ -90,6 +90,9 @@ bun run media:gc -- --bucket=<r2-bucket> --config=apps/site/wrangler.jsonc
   a deployment from a template clone:
   1. Copy the deployment's real D1/R2 ids into a gitignored
      `apps/cms/wrangler.local.jsonc` (the build reads it through the adapter's
-     `configPath`; the template file stays placeholders).
+     `configPath`; the template file stays placeholders). Set the
+     `SITE_PUBLIC_URL` var to the deployment's public URL: the admin's
+     "see the site" link reads it (it cannot fall back to `site.ts`, which is
+     never synced into `apps/cms`).
   2. `bunx wrangler login`, then `bun run dev:cms` (builds the admin and serves
      it on `http://localhost:8788/admin/` with remote bindings to production).
