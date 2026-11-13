@@ -1,9 +1,9 @@
 /**
- * Optimize the site's web fonts. Run by hand; the output is committed.
+ * Optimize the site's web fonts. The output is committed.
  *
  * What it does, per font (Geist Variable body font, Geist Mono):
  *  1. Compute the character set the site actually uses, from app source text
- *     (apps/site/src, packages/core/src) plus article content from a D1 dump.
+ *     (apps/site/src, packages/core/src) plus article content.
  *  2. Intersect with the characters the current font files cover, so rendering
  *     never changes: characters the font lacks today (Hebrew, box drawing,
  *     ←/→, CJK, …) keep falling back to system fonts.
@@ -24,22 +24,21 @@
  *     tnum; dnom/numr/frac/pnum are never requested by any CSS) and drop
  *     hinting (no TrueType instructions exist in the source files).
  *
- * Inputs:
- *   bun scripts/optimize-fonts.ts <d1-content-dump.json>
- *   The dump is read-only, produced with:
- *     bunx wrangler d1 execute <db> --remote --json \
- *       --command "SELECT title, description, body_mdx, status FROM articles" > dump.json
- *
- * Outputs (committed):
+ * Outputs (committed, skipped when byte-identical):
  *   apps/site/public/fonts/*.woff2
  *   apps/site/src/styles/fonts.css   (@font-face with exact unicode-ranges)
  *
- * Rerun when: article content or UI copy starts using characters outside the
- * current set (the script prints a warning listing any such characters), or
- * the site starts using font weights outside 400-700, or the fontsource
- * packages are upgraded.
+ * Runners:
+ *   - `bun run fonts` (scripts/fonts.ts): dumps article content from D1 and
+ *     calls optimizeFonts(); wired into `deploy`.
+ *   - `bun run fonts:watch` (scripts/fonts-watch.ts): polls D1 while the CMS
+ *     is open and regenerates on change; started by `bun run dev:cms`.
+ *   - Direct: bun scripts/optimize-fonts.ts <d1-content-dump.json> with
+ *     dump produced by
+ *     bunx wrangler d1 execute DB --remote --config apps/site/wrangler.jsonc \
+ *       --json --command "SELECT title, description, body_mdx, status FROM articles"
  */
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { openSync as fontkitOpen } from "fontkit";
 import subsetFont from "subset-font";
@@ -120,177 +119,202 @@ const FONTS: FontSpec[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// 1. Collect the text the site can render.
-
-const dumpPath = process.argv[2];
-let contentText = "";
-if (dumpPath) {
-  const dump = JSON.parse(readFileSync(dumpPath, "utf8")) as {
-    results?: Record<string, string | null>[];
-  };
-  const rows = dump.results ?? dump[0]?.results ?? [];
-  contentText = rows.map((r) => Object.values(r ?? {}).join(" ")).join(" ");
-  contentText = contentText.replace(/https?:\/\/\S+/g, " ");
-} else {
-  console.error("usage: bun scripts/optimize-fonts.ts <d1-content-dump.json>");
-  process.exit(1);
+/** Flatten D1 article rows (any columns) into one text blob for the census. */
+export function contentTextFromRows(rows: Record<string, unknown>[]): string {
+  const text = rows.map((r) => Object.values(r ?? {}).join(" ")).join(" ");
+  return text.replace(/https?:\/\/\S+/g, " ");
 }
 
-let sourceText = "";
-for (const root of ["apps/site/src", "packages/core/src"]) {
-  const walk = (dir: string) => {
-    for (const entry of readdirSync(dir)) {
-      const full = join(dir, entry);
-      if (statSync(full).isDirectory()) {
-        if (!/(node_modules|\.wrangler|dist|\.git|\.astro)/.test(full)) walk(full);
-      } else if (/\.(astro|tsx|ts|css|mjs)$/.test(entry)) {
-        sourceText += readFileSync(full, "utf8");
+/** Write only when the content differs, so watchers never churn the outputs. */
+function writeIfChanged(path: string, data: Buffer | string): boolean {
+  if (existsSync(path)) {
+    const prev = readFileSync(path);
+    if (Buffer.compare(prev, Buffer.isBuffer(data) ? data : Buffer.from(data)) === 0) return false;
+  }
+  writeFileSync(path, data);
+  return true;
+}
+
+export interface FontReport {
+  family: string;
+  coreChars: number;
+  coreBytes: number;
+  extChars: number;
+  extBytes: number;
+}
+
+export interface RegenResult {
+  /** True when at least one output file changed on disk. */
+  changed: boolean;
+  fonts: FontReport[];
+}
+
+/** Regenerate the font subsets and fonts.css for the given content text. */
+export async function optimizeFonts(contentText: string): Promise<RegenResult> {
+  // Prose from app source: UI copy, fallback labels, test expectations.
+  let sourceText = "";
+  for (const root of ["apps/site/src", "packages/core/src"]) {
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry);
+        if (statSync(full).isDirectory()) {
+          if (!/(node_modules|\.wrangler|dist|\.git|\.astro)/.test(full)) walk(full);
+        } else if (/\.(astro|tsx|ts|css|mjs)$/.test(entry)) {
+          sourceText += readFileSync(full, "utf8");
+        }
+      }
+    };
+    walk(root);
+  }
+  // Rough literal extraction keeps prose strings, drops code identifiers.
+  const literals = sourceText.match(/"[^"\n]{3,}"|'[^'\n]{3,}'|>[^<>{}\n]{2,}</g) ?? [];
+  const sourceProse = literals.join(" ").replace(/https?:\/\/\S+/g, " ");
+
+  const used = new Set<number>();
+  for (const ch of contentText + sourceProse) {
+    const cp = ch.codePointAt(0);
+    if (cp !== undefined && cp >= 0x20) used.add(cp);
+  }
+
+  function coverage(path: string): Set<number> {
+    const font = fontkitOpen(path);
+    return new Set([...(font.characterSet as Set<number>)]);
+  }
+
+  function mergeRanges(sorted: number[]): string {
+    const ranges: string[] = [];
+    let start = sorted[0];
+    let prev = sorted[0];
+    const flush = () => {
+      if (start === undefined) return;
+      ranges.push(
+        start === prev ? `U+${start.toString(16)}` : `U+${start.toString(16)}-${prev.toString(16)}`,
+      );
+    };
+    for (let i = 1; i < sorted.length; i++) {
+      const cp = sorted[i];
+      if (cp === prev + 1) {
+        prev = cp;
+      } else {
+        flush();
+        start = prev = cp;
       }
     }
-  };
-  walk(root);
-}
-// Rough literal extraction keeps prose strings, drops code identifiers.
-const literals = sourceText.match(/"[^"\n]{3,}"|'[^'\n]{3,}'|>[^<>{}\n]{2,}</g) ?? [];
-const sourceProse = literals.join(" ").replace(/https?:\/\/\S+/g, " ");
+    flush();
+    return ranges.join(",");
+  }
 
-const used = new Set<number>();
-for (const ch of contentText + sourceProse) {
-  const cp = ch.codePointAt(0);
-  if (cp !== undefined && cp >= 0x20) used.add(cp);
-}
+  mkdirSync(OUT_DIR, { recursive: true });
+  mkdirSync(join(CSS_PATH, ".."), { recursive: true });
 
-// ---------------------------------------------------------------------------
-// 2-3. Per font: used ∩ coverage, plus Latin-1 / Latin Ext-A kept when covered.
+  const cssBlocks: string[] = [];
+  const fonts: FontReport[] = [];
+  let changed = false;
 
-function coverage(path: string): Set<number> {
-  const font = fontkitOpen(path);
-  return new Set([...(font.characterSet as Set<number>)]);
-}
+  for (const spec of FONTS) {
+    const covered = coverage(spec.source);
 
-function mergeRanges(sorted: number[]): string {
-  const ranges: string[] = [];
-  let start = sorted[0];
-  let prev = sorted[0];
-  const flush = () => {
-    if (start === undefined) return;
-    ranges.push(
-      start === prev ? `U+${start.toString(16)}` : `U+${start.toString(16)}-${prev.toString(16)}`,
-    );
-  };
-  for (let i = 1; i < sorted.length; i++) {
-    const cp = sorted[i];
-    if (cp === prev + 1) {
-      prev = cp;
-    } else {
-      flush();
-      start = prev = cp;
+    // Everything the page could ask this font to render, that the font can
+    // actually deliver (missing glyphs fall back to system fonts today — keep).
+    const wanted = new Set<number>();
+    for (const cp of used) if (covered.has(cp)) wanted.add(cp);
+    // Core punctuation is kept even when unused: content can start using it any
+    // day, it is covered today, and dropping it would change future rendering.
+    for (const cp of CORE_EXTRA) if (covered.has(cp)) wanted.add(cp);
+    // Latin-1 + Latin Extended-A, kept even when unused (when covered).
+    for (let cp = 0x20; cp <= 0xff; cp++) if (covered.has(cp)) wanted.add(cp);
+    for (let cp = 0x100; cp <= 0x17f; cp++) if (covered.has(cp)) wanted.add(cp);
+    // Combining marks are never requested directly but can appear after any
+    // character; keep the ones covered.
+    for (const cp of covered) {
+      if (
+        (cp >= 0x300 && cp <= 0x36f) ||
+        (cp >= 0x1ab0 && cp <= 0x1dff) ||
+        (cp >= 0x20d0 && cp <= 0x20ff)
+      ) {
+        wanted.add(cp);
+      }
     }
-  }
-  flush();
-  return ranges.join(",");
-}
 
-mkdirSync(OUT_DIR, { recursive: true });
-mkdirSync(join(CSS_PATH, ".."), { recursive: true });
+    const chars = [...wanted].sort((a, b) => a - b);
 
-const cssBlocks: string[] = [];
+    // Split: core = ASCII printable + common punctuation + prose letters; the
+    // rest (Latin-1 symbols, rare letters, combining marks) goes to ext.
+    const inCore = (cp: number) =>
+      (cp >= 0x20 && cp <= 0x7e) ||
+      CORE_EXTRA.includes(cp) ||
+      CORE_PROSE.some(([min, max]) => cp >= min && cp <= max);
+    const coreSet = chars.filter(inCore);
+    const extSet = chars.filter((cp) => !inCore(cp));
 
-for (const spec of FONTS) {
-  const covered = coverage(spec.source);
+    const subsetOptions = {
+      targetFormat: "woff2" as const,
+      keepFeatures: KEEP_FEATURES,
+      noHinting: true,
+      // STAT was measured at 112 B (0.5% of the core): dropping it is not
+      // worth a full pixel-diff verification round.
+      dropTables: ["gasp"],
+      preserveNameIds: [1, 2, 3, 4, 6, 7],
+      ...(CLAMP_WGHT && spec.variable
+        ? { variationAxes: { wght: { min: WGHT_MIN, max: WGHT_MAX } } }
+        : {}),
+    };
+    const textOf = (set: number[]) => set.map((cp) => String.fromCodePoint(cp)).join("");
 
-  // Everything the page could ask this font to render, that the font can
-  // actually deliver (missing glyphs fall back to system fonts today — keep).
-  const wanted = new Set<number>();
-  for (const cp of used) if (covered.has(cp)) wanted.add(cp);
-  // Core punctuation is kept even when unused: content can start using it any
-  // day, it is covered today, and dropping it would change future rendering.
-  for (const cp of CORE_EXTRA) if (covered.has(cp)) wanted.add(cp);
-  // Latin-1 + Latin Extended-A, kept even when unused (when covered).
-  for (let cp = 0x20; cp <= 0xff; cp++) if (covered.has(cp)) wanted.add(cp);
-  for (let cp = 0x100; cp <= 0x17f; cp++) if (covered.has(cp)) wanted.add(cp);
-  // Combining marks are never requested directly but can appear after any
-  // character; keep the ones covered.
-  for (const cp of covered) {
-    if (
-      (cp >= 0x300 && cp <= 0x36f) ||
-      (cp >= 0x1ab0 && cp <= 0x1dff) ||
-      (cp >= 0x20d0 && cp <= 0x20ff)
-    ) {
-      wanted.add(cp);
+    const coreBuf = await subsetFont(readFileSync(spec.source), textOf(coreSet), subsetOptions);
+    const extBuf = await subsetFont(readFileSync(spec.source), textOf(extSet), subsetOptions);
+
+    const corePath = join(OUT_DIR, `${spec.outPrefix}-core.woff2`);
+    const extPath = join(OUT_DIR, `${spec.outPrefix}-ext.woff2`);
+    if (writeIfChanged(corePath, coreBuf)) changed = true;
+    if (writeIfChanged(extPath, extBuf)) changed = true;
+
+    // Verify what the generated files actually contain (tools have quirks).
+    const verify = (path: string) => {
+      const f = fontkitOpen(path);
+      const set = [...(f.characterSet as Set<number>)].sort((a, b) => a - b);
+      const axes =
+        (f as unknown as { variationAxes?: Record<string, unknown> }).variationAxes ?? {};
+      const features = (f as unknown as { availableFeatures?: string[] }).availableFeatures ?? [];
+      return { set, axes, features, numGlyphs: f.numGlyphs };
+    };
+    const coreV = verify(corePath);
+    const extV = verify(extPath);
+
+    const lost = extSet.filter((cp) => !extV.set.includes(cp));
+    const lostCore = coreSet.filter((cp) => !coreV.set.includes(cp));
+    if (lost.length || lostCore.length) {
+      console.error(
+        `WARNING [${spec.family}]: characters dropped by the subsetter:`,
+        [...lost, ...lostCore].map((cp) => `U+${cp.toString(16)}`).join(" "),
+      );
     }
-  }
+    // Characters the site uses that neither file nor fallback covers.
+    const uncovered = [...used].filter((cp) => !wanted.has(cp));
+    if (uncovered.length) {
+      console.error(
+        `NOTE [${spec.family}]: used characters not covered (system fallback, unchanged):`,
+        uncovered
+          .slice(0, 30)
+          .map((cp) => `U+${cp.toString(16)} ${String.fromCodePoint(cp)}`)
+          .join(" "),
+      );
+    }
 
-  const chars = [...wanted].sort((a, b) => a - b);
-
-  // Split: core = ASCII printable + common punctuation + prose letters; the
-  // rest (Latin-1 symbols, rare letters, combining marks) goes to ext.
-  const inCore = (cp: number) =>
-    (cp >= 0x20 && cp <= 0x7e) ||
-    CORE_EXTRA.includes(cp) ||
-    CORE_PROSE.some(([min, max]) => cp >= min && cp <= max);
-  const coreSet = chars.filter(inCore);
-  const extSet = chars.filter((cp) => !inCore(cp));
-
-  const subsetOptions = {
-    targetFormat: "woff2" as const,
-    keepFeatures: KEEP_FEATURES,
-    noHinting: true,
-    dropTables: ["gasp"],
-    preserveNameIds: [1, 2, 3, 4, 6, 7],
-    ...(CLAMP_WGHT && spec.variable
-      ? { variationAxes: { wght: { min: WGHT_MIN, max: WGHT_MAX } } }
-      : {}),
-  };
-  const textOf = (set: number[]) => set.map((cp) => String.fromCodePoint(cp)).join("");
-
-  const coreBuf = await subsetFont(readFileSync(spec.source), textOf(coreSet), subsetOptions);
-  const extBuf = await subsetFont(readFileSync(spec.source), textOf(extSet), subsetOptions);
-
-  const corePath = join(OUT_DIR, `${spec.outPrefix}-core.woff2`);
-  const extPath = join(OUT_DIR, `${spec.outPrefix}-ext.woff2`);
-  writeFileSync(corePath, coreBuf);
-  writeFileSync(extPath, extBuf);
-
-  // Verify what the generated files actually contain (tools have quirks).
-  const verify = (path: string) => {
-    const f = fontkitOpen(path);
-    const set = [...(f.characterSet as Set<number>)].sort((a, b) => a - b);
-    const axes = (f as unknown as { variationAxes?: Record<string, unknown> }).variationAxes ?? {};
-    const features = (f as unknown as { availableFeatures?: string[] }).availableFeatures ?? [];
-    return { set, axes, features, numGlyphs: f.numGlyphs };
-  };
-  const coreV = verify(corePath);
-  const extV = verify(extPath);
-
-  const lost = extSet.filter((cp) => !extV.set.includes(cp));
-  const lostCore = coreSet.filter((cp) => !coreV.set.includes(cp));
-  if (lost.length || lostCore.length) {
-    console.error(
-      `WARNING [${spec.family}]: characters dropped by the subsetter:`,
-      [...lost, ...lostCore].map((cp) => `U+${cp.toString(16)}`).join(" "),
+    console.log(
+      `${spec.family}: core ${coreSet.length} chars (${coreBuf.length} B), ext ${extSet.length} chars (${extBuf.length} B)`,
+      `| axes ${JSON.stringify(coreV.axes)} | features ${(coreV.features ?? []).join(" ")}`,
     );
-  }
-  // Characters the site uses that neither file nor fallback covers.
-  const uncovered = [...used].filter((cp) => !wanted.has(cp));
-  if (uncovered.length) {
-    console.error(
-      `NOTE [${spec.family}]: used characters not covered (system fallback, unchanged):`,
-      uncovered
-        .slice(0, 30)
-        .map((cp) => `U+${cp.toString(16)} ${String.fromCodePoint(cp)}`)
-        .join(" "),
-    );
-  }
+    fonts.push({
+      family: spec.family,
+      coreChars: coreSet.length,
+      coreBytes: coreBuf.length,
+      extChars: extSet.length,
+      extBytes: extBuf.length,
+    });
 
-  console.log(
-    `${spec.family}: core ${coreSet.length} chars (${coreBuf.length} B), ext ${extSet.length} chars (${extBuf.length} B)`,
-    `| axes ${JSON.stringify(coreV.axes)} | features ${(coreV.features ?? []).join(" ")}`,
-  );
-
-  cssBlocks.push(
-    `/* ${spec.family} — core: ASCII + common punctuation. Preloaded by MainLayout. */
+    cssBlocks.push(
+      `/* ${spec.family} — core: ASCII + common punctuation. Preloaded by MainLayout. */
 @font-face {
   font-family: "${spec.family}";
   font-style: normal;
@@ -310,13 +334,26 @@ for (const spec of FONTS) {
   src: url("/fonts/${spec.outPrefix}-ext.woff2") format("${spec.format}");
   unicode-range: ${mergeRanges(extV.set)};
 }`,
-  );
+    );
+  }
+
+  const css = `/* Generated by scripts/optimize-fonts.ts. Do not edit by hand:
+   rerun \`bun run fonts\` (see the script header for when). */\n\n${cssBlocks.join("\n\n")}\n`;
+  if (writeIfChanged(CSS_PATH, css)) changed = true;
+  if (changed) console.log(`wrote fonts + ${CSS_PATH}`);
+  return { changed, fonts };
 }
 
-writeFileSync(
-  CSS_PATH,
-  `/* Generated by scripts/optimize-fonts.ts. Do not edit by hand:
-   rerun the script (see the script header for when). */\n\n${cssBlocks.join("\n\n")}\n`,
-);
-
-console.log(`wrote ${CSS_PATH}`);
+if (import.meta.main) {
+  const dumpPath = process.argv[2];
+  if (!dumpPath) {
+    console.error("usage: bun scripts/optimize-fonts.ts <d1-content-dump.json>");
+    console.error("or:    bun run fonts   (dumps D1 automatically)");
+    process.exit(1);
+  }
+  const dump = JSON.parse(readFileSync(dumpPath, "utf8")) as {
+    results?: Record<string, string | null>[];
+  };
+  const rows = dump.results ?? dump[0]?.results ?? [];
+  await optimizeFonts(contentTextFromRows(rows));
+}

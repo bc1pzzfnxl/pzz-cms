@@ -11,6 +11,7 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { mediaKeysInMarkdown, renderArticleMirror } from "@pzz-cms/core";
+import { d1Query } from "./lib/d1";
 
 const args = new Map(
   process.argv.slice(2).map((arg) => {
@@ -52,31 +53,7 @@ interface CategoryRow {
 }
 
 function query<T>(sql: string): T[] {
-  const result = Bun.spawnSync(
-    [
-      "bunx",
-      "wrangler",
-      "d1",
-      "execute",
-      "DB",
-      "--remote",
-      "--config",
-      config,
-      "--json",
-      "--command",
-      sql,
-    ],
-    { stdout: "pipe", stderr: "inherit" },
-  );
-
-  if (result.exitCode !== 0) {
-    throw new Error(`D1 query failed: ${sql}`);
-  }
-
-  const text = result.stdout.toString();
-  const start = text.indexOf("[");
-  if (start === -1) throw new Error(`Unexpected D1 output: ${text.slice(0, 200)}`);
-  return (JSON.parse(text.slice(start))[0].results ?? []) as T[];
+  return d1Query<T>(sql, config);
 }
 
 const articles = query<ArticleRow>(

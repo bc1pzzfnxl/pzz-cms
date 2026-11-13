@@ -45,6 +45,12 @@
       "formatter": {
         "enabled": false
       }
+    },
+    {
+      "includes": ["apps/site/src/styles/fonts.css"],
+      "formatter": {
+        "enabled": false
+      }
     }
   ]
 }

@@ -26,6 +26,7 @@ a deployable public site and a local-only admin (bun workspaces). Read
 bun install
 bun run dev            # public site, local D1
 bun run dev:cms        # admin against production D1/R2 (wrangler dev --remote)
+bun run fonts          # regenerate the font subsets from current content
 bun run build:site     # the only deployable build
 bun run build:cms      # admin build, verification only
 bun run check          # Biome + typecheck (both apps) + Vitest
