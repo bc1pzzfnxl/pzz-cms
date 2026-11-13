@@ -2,8 +2,7 @@
 import { ClientRouter } from "astro:transitions";
 // src/layouts/MainLayout.astro
 import { Icon } from "astro-icon/components";
-import "@fontsource/geist-mono/400.css";
-import geistVariable from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
+import "../styles/fonts.css";
 import "../styles/global.css";
 import { site } from "@pzz-cms/core";
 
@@ -45,8 +44,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-        <!-- Preload the above-the-fold font so the swap happens before paint -->
-        <link rel="preload" href={geistVariable} as="font" type="font/woff2" crossorigin="anonymous" />
+        <!-- Preload the above-the-fold font (core subset only) so the swap
+             happens before paint. The extended file loads on demand. -->
+        <link rel="preload" href="/fonts/geist-sans-core.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
 
         <!-- Preload LCP Image -->
         {image && (

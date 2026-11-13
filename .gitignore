@@ -40,5 +40,8 @@ content/
 # Dry-run SQL from content:import
 content-import.sql
 
+# Font pixel-diff screenshots (contain article content, never committed)
+font-shots/
+
 # Stray tool profiles (lighthouse)
 "C:\\Users\\"
