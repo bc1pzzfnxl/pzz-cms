@@ -6,7 +6,7 @@ import {
   rewriteImageUrls,
   slugFromFilename,
   toInsertSql,
-} from "@pzz-cms/core";
+} from "@pzz-cms/core/migration";
 import { describe, expect, it } from "vitest";
 
 const RAW = `---

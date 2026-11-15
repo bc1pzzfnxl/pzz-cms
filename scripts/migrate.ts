@@ -11,14 +11,14 @@
  */
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
+import { renderMdxToHtml } from "@pzz-cms/core";
 import {
   type MigratedArticle,
   type MigratedMedia,
   parseArticleFile,
-  renderMdxToHtml,
   toInsertSql,
   toMediaInsertSql,
-} from "@pzz-cms/core";
+} from "@pzz-cms/core/migration";
 import sharp from "sharp";
 
 const contentDir = resolve(

@@ -10,8 +10,23 @@ export default defineConfig({
     include: ["tests/unit/**/*.test.ts"],
   },
   resolve: {
-    alias: {
-      "@pzz-cms/core": fileURLToPath(new URL("./packages/core/src/index.ts", import.meta.url)),
-    },
+    alias: [
+      {
+        find: /^@pzz-cms\/core\/migration$/,
+        replacement: fileURLToPath(
+          new URL("./packages/core/src/lib/migration.ts", import.meta.url),
+        ),
+      },
+      {
+        find: /^@pzz-cms\/core\/mirror$/,
+        replacement: fileURLToPath(
+          new URL("./packages/core/src/lib/content-mirror.ts", import.meta.url),
+        ),
+      },
+      {
+        find: /^@pzz-cms\/core$/,
+        replacement: fileURLToPath(new URL("./packages/core/src/index.ts", import.meta.url)),
+      },
+    ],
   },
 });

@@ -6,6 +6,8 @@
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
+    "./migration": "./src/lib/migration.ts",
+    "./mirror": "./src/lib/content-mirror.ts",
     "./styles/mdxcn.css": "./styles/mdxcn.css",
     "./styles/documents.css": "./styles/documents.css",
     "./styles/verse.css": "./styles/verse.css"

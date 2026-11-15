@@ -1,4 +1,4 @@
-import { parseArticleMirror, renderArticleMirror } from "@pzz-cms/core";
+import { parseArticleMirror, renderArticleMirror } from "@pzz-cms/core/mirror";
 import { describe, expect, it } from "vitest";
 
 const article = {
