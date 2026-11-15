@@ -254,6 +254,29 @@ export default function ArticleEditor({ initial, categories }: Props) {
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState("");
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [mediaDims, setMediaDims] = useState<Map<string, { width: number; height: number }>>(
+    new Map(),
+  );
+
+  // Intrinsic dimensions of every known image, so the live preview reserves
+  // space and picks variants exactly like the published page does.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/admin/api/media/")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((rows: { key: string; width: number | null; height: number | null }[]) => {
+        if (cancelled) return;
+        const dims = new Map<string, { width: number; height: number }>();
+        for (const row of rows) {
+          if (row.width && row.height) dims.set(row.key, { width: row.width, height: row.height });
+        }
+        setMediaDims(dims);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Live preview: the same compiler used on save, so the author sees exactly
   // what will be published (Stat, Reveal, mdxcn components included).
@@ -263,7 +286,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
       try {
         const html = await renderMdxToHtml(normalizeMdxJsx(bodyMdx, componentNames), mdxComponents);
         if (!cancelled) {
-          setPreview(optimizeBodyImages(html, new Map()));
+          setPreview(optimizeBodyImages(html, mediaDims));
           setPreviewError(null);
         }
       } catch (error) {
@@ -276,7 +299,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [bodyMdx]);
+  }, [bodyMdx, mediaDims]);
 
   async function uploadMedia(file: File, alt: string) {
     const { blob, width, height } = await convertToWebp(file);
@@ -305,7 +328,19 @@ export default function ArticleEditor({ initial, categories }: Props) {
       const err = (await res.json().catch(() => ({}))) as { error?: string };
       throw new Error(err.error ?? "Échec de l'envoi de l'image.");
     }
-    return (await res.json()) as { key: string; url: string };
+    const data = (await res.json()) as {
+      key: string;
+      url: string;
+      width: number | null;
+      height: number | null;
+    };
+    const { key, width: mediaWidth, height: mediaHeight } = data;
+    if (mediaWidth !== null && mediaHeight !== null) {
+      // Register the new image immediately so the preview renders it with
+      // dimensions without waiting for a reload.
+      setMediaDims((prev) => new Map(prev).set(key, { width: mediaWidth, height: mediaHeight }));
+    }
+    return data;
   }
 
   async function uploadCover(file: File) {

@@ -318,9 +318,12 @@ Notes from the build:
 - React 19 `renderToStaticMarkup` emits a `<link rel="preload">` per image; the
   compiler strips them so body images are never preloaded (only the cover is).
 - **Pending:** the parity run needs a staging deploy and the production sitemap.
-- **Known gap:** body image `width`/`height` are not injected yet (CLS on body
-  images). The cover has intrinsic dimensions from D1; body images rely on the
-  media table, which is not consulted at render time.
+- **Known gap — resolved:** body image `width`/`height`/`srcset` are injected
+  at render time by `optimizeBodyImages` (`[slug].astro`, verified in
+  production). The editor preview now fetches the same dimensions from
+  `GET /admin/api/media/`, so what the author sees matches what is published.
+  Note: the `documents` table does not exist in production D1 — the feature is
+  unused on the blog, so no body-image work is needed for JSON documents.
 
 ### P7 — Switch — DONE
 

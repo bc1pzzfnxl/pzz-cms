@@ -9,6 +9,19 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+export const GET: APIRoute = async () => {
+  const content = createContent(env.DB);
+  const media = await content.listMedia();
+  return json(
+    media.map((row) => ({
+      key: row.r2Key,
+      width: row.width,
+      height: row.height,
+      alt: row.alt,
+    })),
+  );
+};
+
 export const POST: APIRoute = async ({ request }) => {
   const content = createContent(env.DB);
   const form = await request.formData();
