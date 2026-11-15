@@ -1,33 +1,33 @@
 # pzz-cms — Implementation Plan
 
-A light, MDX-first CMS built on Astro and Cloudflare Workers. It is developed as a **public open-source project** in this repository. Once it is stable, its code is pushed into `your-blog` (private, it holds the Markdown articles), which replaces the rendering engine of https://example.com. The blog's design and URLs stay the same.
+A light, MDX-first CMS built on Astro and Cloudflare Workers. It is developed as a **public open-source project** in this repository. Its code is deployed into `bc1pzzfnxl-blog` (private, it holds the articles and the real Cloudflare IDs), which runs https://bc1pzzfnxl.com. The blog's design and URLs stay the same.
 The repo is split into `apps/site` (deployed), `apps/cms` (local admin)
 and `packages/core` (shared) — see ADR 0008 and `docs/spec/split-site-cms.md`.
 
 ## 1. Decisions
 
-| Topic             | Decision                                                                                                                                                        |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Goal              | Build `pzz-cms` first as a public open-source CMS, then swap the engine of `your-blog`.                                                                         |
-| Repository        | `pzz-cms`, **public**, on GitHub. Holds code only. No article, no personal data, no secret.                                                                     |
-| Blog repository   | `your-blog`, **private**. Holds the Markdown articles. Receives the CMS code in phase P7 via a `feat/cms` branch and a PR.                                      |
-| License           | MIT (proposed, see section 6).                                                                                                                                  |
-| Content storage   | Cloudflare D1. Code and articles are separated: code goes through Git, articles go through the admin.                                                           |
-| Content format    | Pure MDX. Components from mdxcn, plus `Stat`, are available inside articles. Pre-rendered to HTML at save time (ADR 0005).                                      |
-| Editor            | MDXEditor with custom components.                                                                                                                               |
-| Rendering         | Astro SSR on Cloudflare Workers. Publication is immediate.                                                                                                      |
-| Deployment        | Cloudflare Workers (Astro adapter + `apps/site/wrangler.jsonc`). `build:site` is the only deployable build. Cloudflare Pages is not used. HTTPS is mandatory.   |
-| Admin access      | None. The admin is a separate local-only app (`apps/cms`), never deployed, no auth (ADR 0008).                                                                  |
-| Slugs             | ASCII kebab-case generated from the title. Editable before publication. A change creates a 301 in the `redirects` table and updates the sitemap.                |
-| Titles            | `title` in frontmatter, with accents. It feeds `<h1>`, `<title>` and JSON-LD. File names are ASCII slugs.                                                       |
-| URLs              | Page URLs are canonical with a trailing slash. `trailingSlash: "ignore"` plus middleware canonicalizes to the trailing-slash form. Sitemap at the same address. |
-| Language          | French UI and content. Code and docs in English. Multilingual support is v2.                                                                                    |
-| Media             | Cloudflare R2. WebP conversion in the browser (canvas) before upload. Dimensions stored in D1.                                                                  |
-| SEO               | Modules from `skill-seo-astro` are added one by one. The blog layout is not overwritten.                                                                        |
-| Linting and hooks | Biome (lint and format), TypeScript `strict`, Husky + lint-staged on pre-commit, GitHub Actions CI.                                                             |
-| Commits           | Conventional Commits. Branches `feat/…`, `fix/…`, `chore/…`.                                                                                                    |
-| Tests             | Vitest (unit), Playwright (E2E: `site` and `cms` projects, run in CI on workerd), parity script against the blog's sitemap.                                     |
-| Out of scope      | openSEO, DataForSEO, Raspberry Pi hosting (later), translation plugin (v2), design overhaul (after migration).                                                  |
+| Topic             | Decision                                                                                                                                                         |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Goal              | Build `pzz-cms` first as a public open-source CMS, then swap the engine of `bc1pzzfnxl-blog`.                                                                    |
+| Repository        | `pzz-cms`, **public**, on GitHub. Holds code only. No article, no personal data, no secret.                                                                      |
+| Blog repository   | `bc1pzzfnxl-blog`, **private**. Holds the articles and the real Cloudflare IDs. Receives the template's shared files on every sync (`docs/template-vs-blog.md`). |
+| License           | MIT (proposed, see section 6).                                                                                                                                   |
+| Content storage   | Cloudflare D1. Code and articles are separated: code goes through Git, articles go through the admin.                                                            |
+| Content format    | Pure MDX. Components from mdxcn, plus `Stat`, are available inside articles. Pre-rendered to HTML at save time (ADR 0005).                                       |
+| Editor            | MDXEditor with custom components.                                                                                                                                |
+| Rendering         | Astro SSR on Cloudflare Workers. Publication is immediate.                                                                                                       |
+| Deployment        | Cloudflare Workers (Astro adapter + `apps/site/wrangler.jsonc`). `build:site` is the only deployable build. Cloudflare Pages is not used. HTTPS is mandatory.    |
+| Admin access      | None. The admin is a separate local-only app (`apps/cms`), never deployed, no auth (ADR 0008).                                                                   |
+| Slugs             | ASCII kebab-case generated from the title. Editable before publication. A change creates a 301 in the `redirects` table and updates the sitemap.                 |
+| Titles            | `title` in frontmatter, with accents. It feeds `<h1>`, `<title>` and JSON-LD. File names are ASCII slugs.                                                        |
+| URLs              | Page URLs are canonical with a trailing slash. `trailingSlash: "ignore"` plus middleware canonicalizes to the trailing-slash form. Sitemap at the same address.  |
+| Language          | French UI and content. Code and docs in English. Multilingual support is v2.                                                                                     |
+| Media             | Cloudflare R2. WebP conversion in the browser (canvas) before upload. Dimensions stored in D1.                                                                   |
+| SEO               | Modules from `skill-seo-astro` are added one by one. The blog layout is not overwritten.                                                                         |
+| Linting and hooks | Biome (lint and format), TypeScript `strict`, Husky + lint-staged on pre-commit, GitHub Actions CI.                                                              |
+| Commits           | Conventional Commits. Branches `feat/…`, `fix/…`, `chore/…`.                                                                                                     |
+| Tests             | Vitest (unit), Playwright (E2E: `site` and `cms` projects, run in CI on workerd), parity script against the blog's sitemap.                                      |
+| Out of scope      | openSEO, DataForSEO, Raspberry Pi hosting (later), translation plugin (v2), design overhaul (after migration).                                                   |
 
 ## 2. Data policy (public vs private)
 
@@ -297,7 +297,7 @@ Notes from the build:
 - Parity script: crawls every URL of the blog's sitemap on staging and compares status codes, titles, canonical tags and JSON-LD.
 - **Exit:** parity report has no difference. chrome-devtools is used for visual checks.
 
-Result: **parity OK** against production (`https://example.com` vs the
+Result: **parity OK** against production (`https://bc1pzzfnxl.com` vs the
 staging Worker) for all 5 URLs. Titles, canonicals, `<h1>` and status match;
 `BreadcrumbList` is an allowed addition.
 
@@ -327,14 +327,14 @@ Notes from the build:
 
 ### P7 — Switch — DONE
 
-- Copy the CMS code into `your-blog` on `feat/cms`, open a PR, review with `code-review`, describe with `pr`.
+- Copy the shared files from `pzz-cms` into `bc1pzzfnxl-blog` following `docs/template-vs-blog.md`, review with `code-review`, describe with `pr`.
 - Remove the Pages `deploy` script and the `editor` script.
 - Final `shadscan` audit. DNS switch and Search Console check (`wizard`).
 - **Exit:** the domain serves the new engine, and the parity check passes against production.
 
 Done:
 
-- PR [your-blog#1](https://github.com/your-org/your-blog/pull/1) merged into `main`.
+- PR [bc1pzzfnxl-blog#1](https://github.com/bc1pzzfnxl/bc1pzzfnxl-blog/pull/1) merged into `main`.
 - The blog's `src/content/*.md` were removed (content lives in D1; kept in git history).
 - The Pages `deploy` script and the `editor` script are gone; `bun run deploy`
   uses the adapter entrypoint (`@astrojs/cloudflare/entrypoints/server`), so a
@@ -351,12 +351,28 @@ Done:
   (lockfileVersion 2). The blog's deploy command is `npx wrangler versions
   upload` (a preview upload, not a live deploy), so production still deploys
   manually.
+- **Decision (2026-11-15):** production deploys stay **manual** (`bun run
+  deploy` in `bc1pzzfnxl-blog`). The Workers Builds integration keeps doing
+  preview uploads only; each push is reviewed before it goes live.
 
-### P8 — Optional enhancements — PARTIAL
+### Fonts — DONE
+
+- The site serves 4 subset woff2 files (Geist Sans/Mono, core + ext) instead of
+  the full variable fonts; roughly 20 % smaller per page load.
+- `scripts/optimize-fonts.ts` regenerates them from the live content charset;
+  `scripts/fonts.ts` dumps D1 and runs it, `scripts/fonts-watch.ts` re-runs on
+  content change while developing, and `deploy` regenerates before every build.
+- **Decision (2026-11-15):** do **not** clamp the `wght` axis to 400–700. The
+  saving is only ~7.8 KB on a 168 KB core subset, and clamping reflowed a
+  heading rendered at weight 600. Keeping the full axis guarantees the render
+  stays pixel-identical.
+
+### P8 — Optional enhancements — DONE (template scope)
 
 - `numbers` as an MDX component for article content. Scroll and typewriter text
   (`kugiri`) were dropped: public pages ship no animation script.
-- Design improvements to the blog (after the switch).
+- Design improvements to the blog (after the switch): **deployment concern**,
+  tracked in `bc1pzzfnxl-blog`, not a template deliverable.
 - **Exit:** each component has a unit test and renders in MDXEditor and on the public page.
 
 Done:
@@ -374,7 +390,8 @@ Not done:
 - `@sfinterface/numbers` was not adopted: it animates on value change
   (interactive dashboards), not on view, and would need React hydration on the
   public page. `Stat` is self-contained and SEO-safe.
-- Design improvements to the blog: still open.
+- Design improvements to the blog: still open — deployment concern
+  (`bc1pzzfnxl-blog`), out of the template's scope.
 
 The editor preview now renders the same compiled HTML as the published page
 (`renderMdxToHtml` + `optimizeBodyImages`), and the blog repository is synced.
