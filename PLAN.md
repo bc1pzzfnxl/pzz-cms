@@ -367,6 +367,21 @@ Done:
   heading rendered at weight 600. Keeping the full axis guarantees the render
   stays pixel-identical.
 
+### Dependency audits — current
+
+- `bun audit` (2026-11-15): astro upgraded to 7.4.12 (XSS GHSA-mh32-jxcr-mh9f,
+  path traversal GHSA-r3h5-4585-7x3w). Upgrading exposed two bun issues, both
+  fixed in-repo: `gray-matter` (CJS `require("fs")`) crashed workerd when
+  bundled into the server worker — fixed by moving the script-only
+  migration/content-mirror helpers behind `@pzz-cms/core/migration` and
+  `@pzz-cms/core/mirror` subpaths; bun hoisted `@emnapi/runtime`
+  2.0.0-beta.2 over the 1.11.3 that `@astrojs/astro2tsx` expects — fixed with
+  explicit `overrides`.
+- Remaining, waiting on upstream: `fast-xml-parser` low
+  (GHSA-474x-hrwr-fgx4, via `@astrojs/rss`). Re-check periodically.
+- Every dependency change is smoke-tested against a seeded local D1 with the
+  built worker before it is deployed.
+
 ### P8 — Optional enhancements — DONE (template scope)
 
 - `numbers` as an MDX component for article content. Scroll and typewriter text
