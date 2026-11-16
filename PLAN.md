@@ -354,6 +354,10 @@ Done:
 - **Decision (2026-11-15):** production deploys stay **manual** (`bun run
   deploy` in `bc1pzzfnxl-blog`). The Workers Builds integration keeps doing
   preview uploads only; each push is reviewed before it goes live.
+- **Deploy smoke check (2026-11-16):** `bun run deploy` now ends with
+  `scripts/verify-deploy.ts`, which fetches the home page, `rss.xml` and a
+  sitemap page and fails loudly on a broken worker (error 1101 class). A
+  bad deploy is caught in seconds, right after `wrangler deploy`.
 
 ### Fonts — DONE
 
