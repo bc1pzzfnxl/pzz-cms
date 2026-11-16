@@ -15,18 +15,30 @@ export const TOC_MIN_HEADINGS = 3;
 const HEADING_PATTERN = /<(h[23])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi;
 const EXISTING_ID = /\bid\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
 
-const ENTITIES: Record<string, string> = {
-  "&amp;": "&",
-  "&lt;": "<",
-  "&gt;": ">",
-  "&quot;": '"',
-  "&#39;": "'",
-  "&apos;": "'",
-  "&nbsp;": " ",
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
 };
 
+/**
+ * Decode character references the compiled body may carry: named, decimal
+ * (&#39;) and hexadecimal (&#x27;, the apostrophe form rehype emits).
+ */
 function unescapeEntities(text: string): string {
-  return text.replace(/&(?:amp|lt|gt|quot|#39|apos|nbsp);/g, (entity) => ENTITIES[entity]);
+  return text.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);/g, (entity, code: string) => {
+    if (code[0] === "#") {
+      const digits = code[1] === "x" || code[1] === "X" ? code.slice(2) : code.slice(1);
+      const base = code[1] === "x" || code[1] === "X" ? 16 : 10;
+      const num = Number.parseInt(digits, base);
+      // Skip control characters (e.g. &#0;) to keep the TOC text printable.
+      return Number.isNaN(num) || num < 32 ? entity : String.fromCodePoint(num);
+    }
+    return NAMED_ENTITIES[code] ?? entity;
+  });
 }
 
 /**
@@ -47,6 +59,8 @@ export function withHeadingIds(html: string): { html: string; toc: TocEntry[] } 
         .trim(),
     );
     const existing = attrs.match(EXISTING_ID);
+    // Decode first: the slug must be computed on the readable text, not on
+    // the raw entity (it would leak "x27" into the anchor).
     let id = existing ? (existing[1] ?? existing[2] ?? "") : slugify(text) || "section";
     if (!existing) {
       while (used.has(id)) id = `${id}-${used.size + 1}`;

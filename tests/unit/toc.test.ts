@@ -36,6 +36,20 @@ describe("withHeadingIds", () => {
     expect(toc[0].text).toBe("De l'église & de l'État");
   });
 
+  it("decodes hexadecimal entities before slugging (rehype's &#x27;)", () => {
+    const html = "<h2>La Torah c&#x27;est quoi ?</h2>";
+    const { html: out, toc } = withHeadingIds(html);
+
+    expect(toc[0].text).toBe("La Torah c'est quoi ?");
+    expect(toc[0].id).toBe("la-torah-cest-quoi");
+    expect(out).toContain('<h2 id="la-torah-cest-quoi">');
+    // The body keeps its entity (it renders fine); only the TOC text and the
+    // anchor id must be clean.
+    expect(toc.every((entry) => !entry.text.includes("x27") && !entry.id.includes("x27"))).toBe(
+      true,
+    );
+  });
+
   it("ignores h1 and h4 headings", () => {
     const html = "<h1>Titre</h1><h2>Section</h2><h4>Détail</h4>";
     const { toc } = withHeadingIds(html);
