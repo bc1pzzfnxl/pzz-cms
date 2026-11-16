@@ -18,6 +18,11 @@ export interface SiteConfig {
   logo: string;
   /** Public path to the fallback Open Graph image. */
   defaultCover: string;
+  /**
+   * Public contact email, rendered as a mailto link in the footer. Leave it
+   * empty to omit the contact link (the template ships empty).
+   */
+  contactEmail: string;
   /** Site author, used in JSON-LD and the author page. */
   author: {
     name: string;
@@ -37,6 +42,7 @@ export const site: SiteConfig = {
   locale: "en",
   logo: "https://example.com/logo.png",
   defaultCover: "https://example.com/images/default-cover.webp",
+  contactEmail: "",
   author: {
     name: "Your name",
     url: "https://example.com",

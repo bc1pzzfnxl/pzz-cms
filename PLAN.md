@@ -358,6 +358,16 @@ Done:
   `scripts/verify-deploy.ts`, which fetches the home page, `rss.xml` and a
   sitemap page and fails loudly on a broken worker (error 1101 class). A
   bad deploy is caught in seconds, right after `wrangler deploy`.
+- **Reading & navigation batch (2026-11-16):** static (zero-JS) UX additions
+  implemented in the template: article table of contents (ids injected on
+  h2/h3 at render time by `lib/toc.ts`, Sommaire shown from
+  `TOC_MIN_HEADINGS` headings, h3 entries indented), visible breadcrumb
+  (Accueil › catégorie › titre, aligned with `breadcrumbSchema` which gained
+  an optional middle level), a site-wide footer (© + site name, `/rss.xml`
+  and an optional mailto driven by the new `SiteConfig.contactEmail`, empty
+  in the template) and reading typography (`text-wrap: balance/pretty`,
+  `hyphens: auto` on articles). The last three may reflow text, so the font
+  pixel-diff harness needs a re-baseline.
 
 ### Fonts — DONE
 

@@ -63,25 +63,39 @@ export function blogPostingSchema(input: BlogPostingInput) {
   };
 }
 
-/** Schema.org BreadcrumbList: home, then the current page. */
-export function breadcrumbSchema(site: SiteConfig, title: string, url: string) {
+/** Schema.org BreadcrumbList: home, an optional middle level, then the page. */
+export function breadcrumbSchema(
+  site: SiteConfig,
+  title: string,
+  url: string,
+  middle?: { name: string; url: string },
+) {
+  const items = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: site.name,
+      item: site.url,
+    },
+  ];
+  if (middle) {
+    items.push({
+      "@type": "ListItem",
+      position: 2,
+      name: middle.name,
+      item: middle.url,
+    });
+  }
+  items.push({
+    "@type": "ListItem",
+    position: items.length + 1,
+    name: title,
+    item: url,
+  });
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: site.name,
-        item: site.url,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: title,
-        item: url,
-      },
-    ],
+    itemListElement: items,
   };
 }
 

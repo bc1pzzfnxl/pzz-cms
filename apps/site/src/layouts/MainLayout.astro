@@ -399,6 +399,111 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
             html.dark-mode article blockquote em {
                 color: #9ca3af;
             }
+
+            /* --- Footer (all pages) --- */
+            .site-footer {
+                margin-top: 4rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid #e5e7eb;
+                font-size: 0.85rem;
+                color: #6b7280;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem 1.5rem;
+                align-items: baseline;
+            }
+            .site-footer a {
+                color: #6b7280;
+            }
+            html.dark-mode .site-footer {
+                border-top-color: #27272a;
+                color: #9ca3af;
+            }
+            html.dark-mode .site-footer a {
+                color: #9ca3af;
+            }
+
+            /* --- Breadcrumb --- */
+            .breadcrumb {
+                font-size: 0.85rem;
+                color: #6b7280;
+                margin-bottom: 1rem;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: baseline;
+                gap: 0.35rem;
+            }
+            .breadcrumb a {
+                color: #6b7280;
+            }
+            .breadcrumb span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 100%;
+            }
+            html.dark-mode .breadcrumb {
+                color: #9ca3af;
+            }
+            html.dark-mode .breadcrumb a {
+                color: #9ca3af;
+            }
+
+            /* --- Table of contents (Sommaire) --- */
+            .article-toc {
+                margin: 2rem 0 2.5rem 0;
+                padding: 1.25rem 1.5rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+            }
+            .article-toc-title {
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-weight: 600;
+                color: #4b5563;
+                margin-bottom: 0.75rem;
+            }
+            .article-toc ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .article-toc li {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-size: 0.95rem;
+            }
+            .article-toc li:last-child {
+                margin-bottom: 0;
+            }
+            .article-toc li.toc-h3 {
+                padding-left: 1.25rem;
+                font-size: 0.9rem;
+            }
+            html.dark-mode .article-toc {
+                border-color: #27272a;
+            }
+            html.dark-mode .article-toc-title {
+                color: #9ca3af;
+            }
+
+            /* --- Reading typography --- */
+            h1,
+            h2,
+            h3,
+            h4 {
+                text-wrap: balance;
+            }
+            p,
+            li {
+                text-wrap: pretty;
+            }
+            article {
+                hyphens: auto;
+                -webkit-hyphens: auto;
+            }
+
             .moon-icon { display: none; }
             .sun-icon { display: block; }
             html.dark-mode .moon-icon { display: block; }
@@ -422,6 +527,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         <main>
             <slot />
         </main>
+        <footer class="site-footer">
+            <span>© {new Date().getFullYear()} {site.name}</span>
+            {site.contactEmail && <a href={`mailto:${site.contactEmail}`}>Contact</a>}
+            <a href="/rss.xml">RSS</a>
+        </footer>
         <script>
             document.addEventListener('click', (event) => {
                 if (event.target instanceof Element) {

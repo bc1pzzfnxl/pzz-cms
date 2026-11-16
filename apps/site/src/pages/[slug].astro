@@ -9,6 +9,7 @@ import { mediaKeysInHtml, mediaPublicPath, MEDIA_SIZES, mediaSrcSet, optimizeBod
 import { prepareMdxHtml } from "@pzz-cms/core";
 import { absoluteUrl, blogPostingSchema, breadcrumbSchema, creativeWorkSchema } from "@pzz-cms/core";
 import { site } from "@pzz-cms/core";
+import { TOC_MIN_HEADINGS, withHeadingIds } from "@pzz-cms/core";
 
 const content = createContent(env.DB);
 const slug = Astro.params.slug ?? "";
@@ -36,6 +37,12 @@ const coverSrcSet =
 // motion's inline `opacity:0`; normalize at render time so they do not need a
 // re-save. New rows already carry the marker and are left unchanged.
 const articleHtml = article ? prepareMdxHtml(article.bodyHtml) : "";
+
+// Table of contents: ids are injected on h2/h3 at render time, the Sommaire is
+// plain anchor links (no JavaScript on the public page).
+const articleToc = article ? withHeadingIds(articleHtml) : { html: "", toc: [] };
+
+const category = article?.categoryId ? await content.getCategoryById(article.categoryId) : null;
 
 const dimensions = new Map<string, { width: number; height: number }>();
 if (article) {
@@ -102,7 +109,17 @@ if (article) {
       author: { name: site.author.name, url: site.author.url },
       publisher: { name: site.name, url: site.url, logo: site.logo },
     }),
-    breadcrumbSchema(site, article.title, url),
+    breadcrumbSchema(
+      site,
+      article.title,
+      url,
+      category
+        ? {
+            name: category.name,
+            url: absoluteUrl(site.url, `/categorie/${category.slug}/`),
+          }
+        : undefined,
+    ),
   );
 }
 if (document && jsonData) {
@@ -136,6 +153,11 @@ if (document && jsonData) {
         {
             article ? (
                 <>
+                    <nav class="breadcrumb" aria-label="Fil d'Ariane">
+                        <a href="/">Accueil</a>
+                        {category && <a href={`/categorie/${category.slug}/`}>{category.name}</a>}
+                        <span>{article.title}</span>
+                    </nav>
                     <h1>{article.title}</h1>
                     {publishDate && (
                         <div class="article-meta">
@@ -168,7 +190,21 @@ if (document && jsonData) {
                             </figure>
                         )
                     }
-                    <div class="article-body" set:html={optimizeBodyImages(articleHtml, dimensions)} />
+                    {
+                        articleToc.toc.length >= TOC_MIN_HEADINGS && (
+                            <nav class="article-toc" aria-label="Sommaire">
+                                <p class="article-toc-title">Sommaire</p>
+                                <ul>
+                                    {articleToc.toc.map((entry) => (
+                                        <li class={entry.level === 3 ? "toc-h3" : "toc-h2"}>
+                                            <a href={`#${entry.id}`}>{entry.text}</a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </nav>
+                        )
+                    }
+                    <div class="article-body" set:html={optimizeBodyImages(articleToc.html, dimensions)} />
                 </>
             ) : document && jsonData ? (
                 <>

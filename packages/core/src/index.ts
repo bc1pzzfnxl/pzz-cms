@@ -20,4 +20,5 @@ export * from "./lib/render-mdx";
 export * from "./lib/seo";
 export * from "./lib/site";
 export * from "./lib/slug";
+export * from "./lib/toc";
 export * from "./lib/utils";
