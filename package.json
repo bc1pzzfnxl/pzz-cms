@@ -58,7 +58,7 @@
     "subset-font": "^2.9.0",
     "typescript": "6",
     "vitest": "^5.0.3",
-    "wrangler": "4.152.0"
+    "wrangler": "4.163.0"
   },
   "overrides": {
     "@emnapi/core": "1.11.3",
