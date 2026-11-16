@@ -10,7 +10,9 @@
     {
       "binding": "DB",
       "database_name": "pzz-cms",
-      "database_id": "00000000-0000-0000-0000-000000000000"
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Explicit: see apps/site/wrangler.jsonc.
+      "migrations_dir": "../../migrations"
     }
   ],
   "r2_buckets": [
