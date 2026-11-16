@@ -66,6 +66,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         <meta name="description" content={description} />
         <link rel="canonical" href={canonicalURL} />
 
+        <!-- RSS discovery: lets search engines and aggregators find the feed. -->
+        <link
+            rel="alternate"
+            type="application/rss+xml"
+            title={site.name}
+            href={new URL("rss.xml", Astro.site)}
+        />
+
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content={ogType} />
         <meta property="og:url" content={Astro.url} />
