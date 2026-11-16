@@ -34,8 +34,10 @@ playwright-report/
 # Migration output (private content, never committed)
 migration-output/
 
-# Content mirror (deployment repositories commit this, the template does not)
-content/
+# Content mirror (deployment repositories commit this, the template does not).
+# Root-anchored: the unanchored form would also ignore
+# packages/core/src/content/, which is source code and must be linted.
+/content/
 
 # Dry-run SQL from content:import
 content-import.sql

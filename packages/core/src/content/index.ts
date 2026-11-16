@@ -495,7 +495,9 @@ export function createContent(db: Database): Content {
 
     async listMedia() {
       const { results } = await db
-        .prepare("SELECT id, r2_key, width, height, alt, created_at FROM media ORDER BY created_at ASC")
+        .prepare(
+          "SELECT id, r2_key, width, height, alt, created_at FROM media ORDER BY created_at ASC",
+        )
         .all<MediaRow>();
       return results.map(toMedia);
     },
