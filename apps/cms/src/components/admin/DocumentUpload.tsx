@@ -32,7 +32,7 @@ export default function DocumentUpload() {
 
   return (
     <div className="text-right">
-      <label className="inline-block cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+      <label className="btn btn-primary cursor-pointer">
         Importer un .json
         <input
           type="file"

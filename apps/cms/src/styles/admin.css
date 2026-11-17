@@ -137,6 +137,269 @@
   }
 }
 
+/* -------------------------------------------------------------------------
+ * Dashboard shell and components (the look validated in the maquette).
+ * Tokens above stay the shadcn set; these classes only compose them.
+ * ---------------------------------------------------------------------- */
+
+/* Accent presets, applied on <html data-accent="…"> by the appearance panel. */
+html[data-accent="blue"] {
+  --primary: oklch(0.55 0.18 255);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.55 0.18 255 / 50%);
+  --sidebar-primary: oklch(0.55 0.18 255);
+  --sidebar-ring: oklch(0.55 0.18 255);
+}
+html.dark[data-accent="blue"] {
+  --primary: oklch(0.67 0.16 255);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.67 0.16 255 / 50%);
+  --sidebar-primary: oklch(0.67 0.16 255);
+  --sidebar-ring: oklch(0.67 0.16 255);
+}
+html[data-accent="violet"] {
+  --primary: oklch(0.55 0.22 300);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.55 0.22 300 / 50%);
+  --sidebar-primary: oklch(0.55 0.22 300);
+  --sidebar-ring: oklch(0.55 0.22 300);
+}
+html.dark[data-accent="violet"] {
+  --primary: oklch(0.68 0.19 300);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.68 0.19 300 / 50%);
+  --sidebar-primary: oklch(0.68 0.19 300);
+  --sidebar-ring: oklch(0.68 0.19 300);
+}
+html[data-accent="emerald"] {
+  --primary: oklch(0.58 0.14 165);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.58 0.14 165 / 50%);
+  --sidebar-primary: oklch(0.58 0.14 165);
+  --sidebar-ring: oklch(0.58 0.14 165);
+}
+html.dark[data-accent="emerald"] {
+  --primary: oklch(0.7 0.13 165);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.7 0.13 165 / 50%);
+  --sidebar-primary: oklch(0.7 0.13 165);
+  --sidebar-ring: oklch(0.7 0.13 165);
+}
+html[data-accent="amber"] {
+  --primary: oklch(0.75 0.16 80);
+  --primary-foreground: oklch(0.205 0 0);
+  --ring: oklch(0.75 0.16 80 / 50%);
+  --sidebar-primary: oklch(0.75 0.16 80);
+  --sidebar-ring: oklch(0.75 0.16 80);
+}
+html.dark[data-accent="amber"] {
+  --primary: oklch(0.8 0.15 85);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.8 0.15 85 / 50%);
+  --sidebar-primary: oklch(0.8 0.15 85);
+  --sidebar-ring: oklch(0.8 0.15 85);
+}
+html[data-accent="rose"] {
+  --primary: oklch(0.6 0.2 15);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.6 0.2 15 / 50%);
+  --sidebar-primary: oklch(0.6 0.2 15);
+  --sidebar-ring: oklch(0.6 0.2 15);
+}
+html.dark[data-accent="rose"] {
+  --primary: oklch(0.72 0.17 15);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.72 0.17 15 / 50%);
+  --sidebar-primary: oklch(0.72 0.17 15);
+  --sidebar-ring: oklch(0.72 0.17 15);
+}
+
+/* Components. */
+.card {
+  @apply rounded-xl border bg-card text-card-foreground;
+}
+.btn {
+  @apply inline-flex h-9 items-center gap-[7px] rounded-md px-3.5 text-sm font-medium whitespace-nowrap;
+  transition:
+    background-color 0.12s ease,
+    opacity 0.12s ease;
+}
+.btn-primary {
+  @apply bg-primary text-primary-foreground;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+.btn-outline {
+  @apply border bg-card text-foreground;
+}
+.btn-outline:hover {
+  @apply bg-accent;
+}
+.btn-ghost {
+  @apply text-foreground;
+}
+.btn-ghost:hover {
+  @apply bg-accent;
+}
+.btn-sm {
+  @apply h-[30px] px-2.5 text-[13px];
+}
+.badge {
+  @apply inline-flex items-center gap-1 rounded-full border border-transparent px-2.5 py-[2px] text-xs font-medium whitespace-nowrap;
+}
+.badge-published {
+  background: oklch(0.95 0.05 155);
+  color: oklch(0.38 0.09 155);
+}
+.dark .badge-published {
+  background: oklch(0.35 0.07 155 / 40%);
+  color: oklch(0.8 0.1 155);
+}
+.badge-draft {
+  @apply bg-muted text-muted-foreground;
+}
+.badge-cat {
+  @apply border-border text-muted-foreground;
+}
+.nav-item {
+  @apply flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-sidebar-foreground;
+  cursor: pointer;
+}
+.nav-item:hover {
+  @apply bg-sidebar-accent;
+}
+.nav-item.active {
+  @apply bg-sidebar-accent font-medium;
+}
+.nav-item.active svg {
+  color: var(--sidebar-primary);
+}
+.field-label {
+  @apply mb-1.5 block text-[13px] font-medium;
+}
+.input,
+.select,
+.textarea {
+  @apply w-full rounded-md border border-input bg-transparent text-sm text-foreground;
+}
+.input,
+.select {
+  @apply h-9 px-2.5;
+}
+.input.with-icon {
+  padding-left: 2.1rem;
+}
+.textarea {
+  @apply px-2.5 py-2;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: -1px;
+}
+.data-table {
+  @apply w-full border-collapse text-sm;
+}
+.data-table th {
+  @apply border-b px-4 py-2.5 text-left text-[13px] font-medium whitespace-nowrap text-muted-foreground;
+}
+.data-table td {
+  @apply border-b px-4 py-3 align-middle;
+}
+.data-table tbody tr:hover td {
+  background: color-mix(in oklch, var(--muted) 55%, transparent);
+}
+.data-table tbody tr:last-child td {
+  @apply border-b-0;
+}
+.data-table td:last-child {
+  white-space: nowrap;
+}
+html[data-density="compact"] .data-table td {
+  @apply py-2;
+}
+html[data-density="compact"] .card-body {
+  @apply px-4 pb-4 pt-3.5;
+}
+.stat-value {
+  @apply text-[30px] font-semibold leading-none tracking-tight;
+}
+.toast {
+  @apply flex items-center gap-2 rounded-md border bg-popover px-3.5 py-2.5 text-sm text-popover-foreground;
+  box-shadow: 0 10px 25px -12px rgb(0 0 0 / 0.3);
+  animation: toast-in 0.18s ease-out;
+}
+@keyframes toast-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in oklch, var(--muted) 60%, var(--background)) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+  @apply rounded-sm;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.sheet {
+  @apply fixed inset-y-0 right-0 z-[60] border-l bg-background;
+  width: 360px;
+  box-shadow: -20px 0 50px -30px rgb(0 0 0 / 0.35);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+}
+.sheet.open {
+  transform: none;
+}
+.swatch {
+  @apply h-[30px] w-[30px] rounded-full border-2 border-transparent;
+  cursor: pointer;
+}
+.swatch.selected {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+.cmd-overlay {
+  @apply fixed inset-0 z-[70] hidden items-start justify-center bg-black/35 pt-[12vh];
+}
+.cmd-overlay.open {
+  @apply flex;
+}
+.cmd-item {
+  @apply flex cursor-pointer items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm;
+}
+.cmd-item:hover,
+.cmd-item.hl {
+  @apply bg-accent;
+}
+.dropzone {
+  @apply cursor-pointer rounded-xl border-[1.5px] border-dashed p-6 text-center text-sm text-muted-foreground;
+}
+.dropzone:hover {
+  border-color: var(--ring);
+  background: color-mix(in oklch, var(--muted) 40%, transparent);
+}
+.thumb {
+  aspect-ratio: 16 / 10;
+  @apply rounded-t-md;
+}
+
 /* Live preview of article MDX (uses the real compiler). */
 .mdx-preview {
   font-size: 1rem;

@@ -1,7 +1,7 @@
 ---
 import "../styles/admin.css";
-import { site } from "@pzz-cms/core";
 import { env } from "cloudflare:workers";
+import { createContent, site } from "@pzz-cms/core";
 
 interface Props {
   title: string;
@@ -11,6 +11,42 @@ const { title } = Astro.props;
 // The CMS is local-only: "/" here is the admin origin, not the public site.
 // The public URL comes from the wrangler vars (SITE_PUBLIC_URL).
 const siteUrl = env.SITE_PUBLIC_URL || site.url;
+
+const content = createContent(env.DB);
+const stats = await content.getStats();
+
+const path = Astro.url.pathname;
+const section = path.startsWith("/admin/articles")
+  ? "articles"
+  : path.startsWith("/admin/categories")
+    ? "categories"
+    : path.startsWith("/admin/documents")
+      ? "documents"
+      : path.startsWith("/admin/media")
+        ? "media"
+        : path === "/admin" || path === "/admin/"
+          ? "dashboard"
+          : "articles";
+
+const nav = [
+  { key: "dashboard", href: "/admin/", label: "Vue d'ensemble", count: null as number | null },
+  { key: "articles", href: "/admin/articles/", label: "Articles", count: stats.articles.published + stats.articles.draft },
+  { key: "categories", href: "/admin/categories/", label: "Catégories", count: stats.categories },
+  { key: "documents", href: "/admin/documents/", label: "Documents", count: stats.documents.published + stats.documents.draft },
+  { key: "media", href: "/admin/media/", label: "Médias", count: stats.media },
+];
+
+const icons: Record<string, string> = {
+  dashboard:
+    '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  articles:
+    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/>',
+  categories:
+    '<path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l8.58-8.58a1 1 0 0 0 0-1.42z"/><circle cx="7" cy="7" r="1.5"/>',
+  documents: '<path d="M4 6h6l2 2h8v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z"/>',
+  media:
+    '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+};
 ---
 
 <!doctype html>
@@ -20,25 +56,455 @@ const siteUrl = env.SITE_PUBLIC_URL || site.url;
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="noindex, nofollow" />
         <title>{title} · {site.name}</title>
+        <script is:inline>
+            // Apply the saved appearance before first paint (no flash).
+            (function () {
+                try {
+                    var root = document.documentElement;
+                    var mode = localStorage.getItem("admin:mode");
+                    var dark = mode === "dark" || (mode !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+                    if (dark) root.classList.add("dark");
+                    var accent = localStorage.getItem("admin:accent");
+                    if (accent) root.dataset.accent = accent;
+                    var radius = localStorage.getItem("admin:radius");
+                    if (radius) root.style.setProperty("--radius", radius + "rem");
+                    var density = localStorage.getItem("admin:density");
+                    if (density) root.dataset.density = density;
+                } catch (error) {
+                    /* preferences are optional */
+                }
+            })();
+        </script>
     </head>
-    <body>
-        <header class="border-b">
-            <nav class="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-4">
-                <a href="/admin" class="font-medium">{site.name}</a>
-                <div class="flex items-center gap-4">
-                    <a href="/admin" class="text-sm text-muted-foreground hover:underline">Articles</a>
-                    <a href="/admin/documents/" class="text-sm text-muted-foreground hover:underline">Documents</a>
-                    <a href="/admin/categories/" class="text-sm text-muted-foreground hover:underline">
-                        Catégories
-                    </a>
-                    <a href={siteUrl} target="_blank" rel="noreferrer" class="text-sm text-muted-foreground hover:underline">
-                        Voir le site ↗
-                    </a>
+    <body class="min-h-screen">
+        <aside
+            class="fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+        >
+            <div class="flex h-16 items-center gap-2.5 border-b border-sidebar-border px-4">
+                <div
+                    class="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"
+                >
+                    <span class="text-sm font-bold">pz</span>
                 </div>
+                <div class="leading-tight">
+                    <div class="text-[15px] font-semibold tracking-tight">{site.name}</div>
+                    <div class="text-[11.5px] text-muted-foreground">admin local</div>
+                </div>
+            </div>
+
+            <nav class="flex-1 space-y-1 overflow-y-auto p-2.5">
+                <div class="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Pilotage
+                </div>
+                {nav.slice(0, 1).map((item) => (
+                    <a href={item.href} class:list={["nav-item", { active: section === item.key }]}>
+                        <svg
+                            viewBox="0 0 24 24"
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            set:html={icons[item.key]}
+                        />
+                        {item.label}
+                    </a>
+                ))}
+                <div class="px-2.5 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Contenu
+                </div>
+                {nav.slice(1).map((item) => (
+                    <a href={item.href} class:list={["nav-item", { active: section === item.key }]}>
+                        <svg
+                            viewBox="0 0 24 24"
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            set:html={icons[item.key]}
+                        />
+                        {item.label}
+                        <span class="ml-auto rounded-full bg-sidebar-accent px-2 py-0.5 text-[11px] text-sidebar-accent-foreground">
+                            {item.count}
+                        </span>
+                    </a>
+                ))}
             </nav>
-        </header>
-        <main class="mx-auto max-w-4xl px-6 py-10">
-            <slot />
-        </main>
+
+            <div class="border-t border-sidebar-border p-2.5">
+                <button type="button" class="nav-item w-full" data-appearance-open>
+                    <svg
+                        viewBox="0 0 24 24"
+                        class="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+                        <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+                        <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                        <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+                        <path
+                            d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.4-4.5-8-10-8z"
+                        ></path>
+                    </svg>
+                    Personnaliser
+                </button>
+                <a class="nav-item w-full" href={siteUrl} target="_blank" rel="noreferrer">
+                    <svg
+                        viewBox="0 0 24 24"
+                        class="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M15 3h6v6"></path>
+                        <path d="M10 14 21 3"></path>
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    </svg>
+                    Voir le site
+                </a>
+            </div>
+        </aside>
+
+        <div class="pl-[264px]">
+            <header
+                class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/85 px-7 backdrop-blur"
+            >
+                <div class="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <span>{site.name}</span>
+                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m9 18 6-6-6-6"></path>
+                    </svg>
+                    <span class="font-medium text-foreground">{title}</span>
+                </div>
+
+                <button
+                    type="button"
+                    class="ml-auto flex h-9 w-[290px] items-center gap-2 rounded-md border px-3 text-left text-[13.5px] text-muted-foreground hover:bg-accent"
+                    data-cmd-open
+                >
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </svg>
+                    Rechercher…
+                    <span class="ml-auto rounded border bg-muted px-1.5 text-xs text-muted-foreground">Ctrl K</span>
+                </button>
+
+                <button type="button" class="nav-item !px-2 !py-2 text-muted-foreground" data-theme-toggle title="Basculer le thème">
+                    <svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path
+                            d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+                        ></path>
+                    </svg>
+                </button>
+                <button type="button" class="nav-item !px-2 !py-2 text-muted-foreground" data-appearance-open title="Personnaliser l'apparence">
+                    <svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5z"></path>
+                    </svg>
+                </button>
+            </header>
+
+            <main class="mx-auto max-w-6xl px-7 py-8">
+                <slot />
+            </main>
+        </div>
+
+        <!-- Appearance panel -->
+        <aside class="sheet" data-appearance-sheet aria-label="Apparence">
+            <div class="flex h-16 items-center justify-between border-b px-5">
+                <div class="text-[15px] font-semibold">Apparence</div>
+                <button type="button" class="nav-item !px-2 !py-2" data-appearance-close>
+                    <svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6 6 18M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-6 overflow-y-auto p-5" style="max-height: calc(100vh - 64px);">
+                <div>
+                    <div class="field-label">Mode</div>
+                    <div class="flex items-center gap-1 rounded-md border p-0.5">
+                        <button type="button" class="btn btn-sm btn-ghost flex-1" data-mode="light">Clair</button>
+                        <button type="button" class="btn btn-sm btn-ghost flex-1" data-mode="dark">Sombre</button>
+                        <button type="button" class="btn btn-sm btn-ghost flex-1" data-mode="system">Système</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="field-label">Couleur d'accent</div>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" class="swatch selected" data-accent-swatch="neutral" style="background: oklch(0.205 0 0)" aria-label="Neutre"></button>
+                        <button type="button" class="swatch" data-accent-swatch="blue" style="background: oklch(0.55 0.18 255)" aria-label="Bleu"></button>
+                        <button type="button" class="swatch" data-accent-swatch="violet" style="background: oklch(0.55 0.22 300)" aria-label="Violet"></button>
+                        <button type="button" class="swatch" data-accent-swatch="emerald" style="background: oklch(0.58 0.14 165)" aria-label="Émeraude"></button>
+                        <button type="button" class="swatch" data-accent-swatch="amber" style="background: oklch(0.75 0.16 80)" aria-label="Ambre"></button>
+                        <button type="button" class="swatch" data-accent-swatch="rose" style="background: oklch(0.6 0.2 15)" aria-label="Rose"></button>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between">
+                        <div class="field-label mb-0">Rayon des angles</div>
+                        <span class="text-xs text-muted-foreground" data-radius-value>0.625rem</span>
+                    </div>
+                    <input type="range" min="0" max="1.4" step="0.05" value="0.625" class="mt-2.5 w-full" data-radius />
+                </div>
+                <div>
+                    <div class="field-label">Densité</div>
+                    <div class="flex items-center gap-1 rounded-md border p-0.5">
+                        <button type="button" class="btn btn-sm btn-ghost flex-1" data-density="comfortable">Confort</button>
+                        <button type="button" class="btn btn-sm btn-ghost flex-1" data-density="compact">Compact</button>
+                    </div>
+                </div>
+                <div class="rounded-lg border p-4">
+                    <div class="text-[11px] uppercase tracking-wider text-muted-foreground">Aperçu</div>
+                    <div class="mt-2.5 flex items-center gap-2">
+                        <button type="button" class="btn btn-primary btn-sm">Bouton</button>
+                        <span class="badge badge-published">publié</span>
+                        <span class="badge badge-draft">brouillon</span>
+                    </div>
+                    <div class="mt-2.5 text-[12.5px] text-muted-foreground">
+                        Les couleurs, le rayon et la densité s'appliquent à toute l'admin.
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline w-full" data-appearance-reset>Réinitialiser</button>
+            </div>
+        </aside>
+
+        <!-- Command palette -->
+        <div class="cmd-overlay" data-cmd aria-hidden="true">
+            <div class="w-[600px] overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-2xl">
+                <div class="flex items-center gap-2 border-b px-3">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </svg>
+                    <input
+                        class="h-12 w-full bg-transparent text-sm outline-none"
+                        placeholder="Rechercher une page, un article, une action…"
+                        data-cmd-input
+                    />
+                    <span class="rounded border bg-muted px-1.5 text-xs text-muted-foreground">Échap</span>
+                </div>
+                <div class="max-h-[360px] overflow-y-auto p-2" data-cmd-list>
+                    <div class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Navigation</div>
+                    {nav.map((item) => (
+                        <a href={item.href} class="cmd-item" data-cmd-item>
+                            <svg
+                                viewBox="0 0 24 24"
+                                class="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                set:html={icons[item.key]}
+                            />
+                            {item.label}
+                        </a>
+                    ))}
+                    <div class="px-2.5 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Actions</div>
+                    <a href="/admin/new/" class="cmd-item" data-cmd-item>
+                        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                        Nouvel article
+                    </a>
+                    <a href="/admin/documents/" class="cmd-item" data-cmd-item>
+                        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 16V4"></path><path d="m6 10 6-6 6 6"></path><path d="M4 20h16"></path>
+                        </svg>
+                        Importer un document JSON
+                    </a>
+                    <button type="button" class="cmd-item w-full text-left" data-appearance-open>
+                        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5z"></path>
+                        </svg>
+                        Personnaliser l'apparence
+                    </button>
+                    <a href={siteUrl} target="_blank" rel="noreferrer" class="cmd-item" data-cmd-item>
+                        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h6v6"></path><path d="M10 14 21 3"></path>
+                        </svg>
+                        Voir le site
+                    </a>
+                    <div class="px-2.5 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Articles récents</div>
+                    {stats.recent.slice(0, 3).map((article) => (
+                        <a href={`/admin/${article.id}`} class="cmd-item" data-cmd-item>
+                            {article.title}
+                        </a>
+                    ))}
+                </div>
+            </div>
+        </div>
+
+        <div class="fixed bottom-4 right-4 z-[80] flex w-[320px] flex-col gap-2" data-toasts></div>
+
+        <script>
+            const root = document.documentElement;
+            const $ = (selector: string) => document.querySelector(selector);
+            const $$ = (selector: string) => document.querySelectorAll(selector);
+
+            type ToastKind = "success" | "danger";
+
+            const toast = (message: string, kind: ToastKind = "success") => {
+                const host = $("[data-toasts]");
+                if (!host) return;
+                const el = document.createElement("div");
+                el.className = "toast";
+                el.innerHTML = `<span style="color:${kind === "danger" ? "var(--destructive)" : "var(--primary)"}">●</span><span></span>`;
+                const text = el.querySelector("span:last-child");
+                if (text) text.textContent = message;
+                host.appendChild(el);
+                setTimeout(() => el.remove(), 3200);
+            };
+
+            // Shared helper: components call window.toast("…").
+            (window as Window & { toast?: (message: string, kind?: ToastKind) => void }).toast = toast;
+
+            /* ---- Appearance ---- */
+            const applyMode = (mode: "light" | "dark" | "system") => {
+                const dark =
+                    mode === "dark" ||
+                    (mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+                root.classList.toggle("dark", dark);
+                localStorage.setItem("admin:mode", mode);
+                $$("[data-mode]").forEach((button) =>
+                    button.classList.toggle(
+                        "btn-outline",
+                        (button as HTMLElement).dataset.mode === mode,
+                    ),
+                );
+            };
+
+            const applyAccent = (accent: string) => {
+                root.dataset.accent = accent;
+                localStorage.setItem("admin:accent", accent);
+                $$("[data-accent-swatch]").forEach((swatch) =>
+                    swatch.classList.toggle(
+                        "selected",
+                        (swatch as HTMLElement).dataset.accentSwatch === accent,
+                    ),
+                );
+            };
+
+            const applyRadius = (value: number) => {
+                root.style.setProperty("--radius", `${value}rem`);
+                const label = $("[data-radius-value]");
+                if (label) label.textContent = `${Number(value).toFixed(3).replace(/0+$/, "")}rem`;
+                const input = $("[data-radius]") as HTMLInputElement | null;
+                if (input) input.value = String(value);
+                localStorage.setItem("admin:radius", String(value));
+            };
+
+            const applyDensity = (density: "comfortable" | "compact") => {
+                root.dataset.density = density;
+                localStorage.setItem("admin:density", density);
+                $$("[data-density]").forEach((button) =>
+                    button.classList.toggle(
+                        "btn-outline",
+                        (button as HTMLElement).dataset.density === density,
+                    ),
+                );
+            };
+
+            const openAppearance = () => {
+                $("[data-appearance-sheet]")?.classList.add("open");
+                closeCommand();
+            };
+            const closeAppearance = () => $("[data-appearance-sheet]")?.classList.remove("open");
+            const resetAppearance = () => {
+                applyMode("light");
+                applyAccent("neutral");
+                applyRadius(0.625);
+                applyDensity("comfortable");
+                toast("Apparence réinitialisée.");
+            };
+
+            $$("[data-appearance-open]").forEach((button) =>
+                button.addEventListener("click", openAppearance),
+            );
+            $$("[data-appearance-close]").forEach((button) =>
+                button.addEventListener("click", closeAppearance),
+            );
+            $("[data-appearance-reset]")?.addEventListener("click", resetAppearance);
+            $$("[data-mode]").forEach((button) =>
+                button.addEventListener("click", () =>
+                    applyMode((button as HTMLElement).dataset.mode as "light" | "dark" | "system"),
+                ),
+            );
+            $$("[data-accent-swatch]").forEach((button) =>
+                button.addEventListener("click", () =>
+                    applyAccent((button as HTMLElement).dataset.accentSwatch ?? "neutral"),
+                ),
+            );
+            $$("[data-density]").forEach((button) =>
+                button.addEventListener("click", () =>
+                    applyDensity((button as HTMLElement).dataset.density as "comfortable" | "compact"),
+                ),
+            );
+            $("[data-radius]")?.addEventListener("input", (event) =>
+                applyRadius(Number((event.target as HTMLInputElement).value)),
+            );
+            $("[data-theme-toggle]")?.addEventListener("click", () =>
+                applyMode(root.classList.contains("dark") ? "light" : "dark"),
+            );
+
+            /* ---- Command palette ---- */
+            const openCommand = () => {
+                const overlay = $("[data-cmd]");
+                overlay?.classList.add("open");
+                overlay?.setAttribute("aria-hidden", "false");
+                setTimeout(() => ($("[data-cmd-input]") as HTMLInputElement | null)?.focus(), 30);
+            };
+            const closeCommand = () => {
+                const overlay = $("[data-cmd]");
+                overlay?.classList.remove("open");
+                overlay?.setAttribute("aria-hidden", "true");
+                const input = $("[data-cmd-input]") as HTMLInputElement | null;
+                if (input) input.value = "";
+                filterCommand();
+            };
+            const filterCommand = () => {
+                const query = (($("[data-cmd-input]") as HTMLInputElement | null)?.value ?? "").toLowerCase();
+                $$("[data-cmd-list] [data-cmd-item]").forEach((item) => {
+                    (item as HTMLElement).style.display = item.textContent?.toLowerCase().includes(query)
+                        ? ""
+                        : "none";
+                });
+            };
+
+            $$("[data-cmd-open]").forEach((button) => button.addEventListener("click", openCommand));
+            $("[data-cmd-input]")?.addEventListener("input", filterCommand);
+            $("[data-cmd]")?.addEventListener("click", (event) => {
+                if (event.target === event.currentTarget) closeCommand();
+            });
+            document.addEventListener("keydown", (event) => {
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+                    event.preventDefault();
+                    openCommand();
+                }
+                if (event.key === "Escape") {
+                    closeCommand();
+                    closeAppearance();
+                }
+            });
+
+            /* ---- Restore the saved appearance ---- */
+            const savedMode = (localStorage.getItem("admin:mode") ?? "light") as "light" | "dark" | "system";
+            applyMode(savedMode);
+            applyAccent(localStorage.getItem("admin:accent") ?? "neutral");
+            applyRadius(Number(localStorage.getItem("admin:radius") ?? 0.625));
+            applyDensity(
+                (localStorage.getItem("admin:density") as "comfortable" | "compact") ?? "comfortable",
+            );
+        </script>
     </body>
 </html>

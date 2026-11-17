@@ -12,7 +12,10 @@ interface Props {
   initial: Category[];
 }
 
-const inputClass = "w-full rounded-md border px-3 py-2 text-sm";
+const inputClass = "input";
+
+const toast = (message: string, kind: "success" | "danger" = "success") =>
+  (window as Window & { toast?: (message: string, kind?: string) => void }).toast?.(message, kind);
 
 export default function CategoryManager({ initial }: Props) {
   const [categories, setCategories] = useState(initial);
@@ -44,6 +47,7 @@ export default function CategoryManager({ initial }: Props) {
       }
       setName("");
       setDescription("");
+      toast("Catégorie créée.");
       await refresh();
     } finally {
       setBusy(false);
@@ -59,7 +63,11 @@ export default function CategoryManager({ initial }: Props) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) setMessage("Erreur à l'enregistrement.");
+    if (!res.ok) {
+      setMessage("Erreur à l'enregistrement.");
+    } else {
+      toast("Catégorie enregistrée.");
+    }
     await refresh();
   }
 
@@ -70,7 +78,11 @@ export default function CategoryManager({ initial }: Props) {
       return;
     }
     const res = await fetch(`/admin/api/categories/${id}/`, { method: "DELETE" });
-    if (!res.ok) setMessage("Erreur à la suppression.");
+    if (!res.ok) {
+      setMessage("Erreur à la suppression.");
+    } else {
+      toast("Catégorie supprimée.");
+    }
     await refresh();
   }
 
@@ -85,39 +97,48 @@ export default function CategoryManager({ initial }: Props) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <form
-        className="flex items-end gap-3"
+        className="card p-6"
         onSubmit={(event) => {
           event.preventDefault();
           void create();
         }}
       >
-        <div className="flex-1">
-          <label className="block text-sm font-medium" htmlFor="category-name">
-            Nouvelle catégorie
-          </label>
-          <input
-            id="category-name"
-            data-testid="category-name"
-            className={`${inputClass} mt-1`}
-            value={name}
-            placeholder="Théologie"
-            onChange={(event) => setName(event.target.value)}
-          />
-          <input
-            aria-label="Description de la nouvelle catégorie"
-            className={`${inputClass} mt-2`}
-            value={description}
-            placeholder="Description affichée sur la page de la catégorie (optionnel)"
-            onChange={(event) => setDescription(event.target.value)}
-          />
+        <div className="text-[15px] font-medium">Nouvelle catégorie</div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div>
+            <label className="field-label" htmlFor="category-name">
+              Nom
+            </label>
+            <input
+              id="category-name"
+              data-testid="category-name"
+              className={inputClass}
+              value={name}
+              placeholder="Théologie"
+              onChange={(event) => setName(event.target.value)}
+            />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="category-description">
+              Description (optionnel)
+            </label>
+            <input
+              id="category-description"
+              aria-label="Description de la nouvelle catégorie"
+              className={inputClass}
+              value={description}
+              placeholder="Affichée sur la page de la catégorie"
+              onChange={(event) => setDescription(event.target.value)}
+            />
+          </div>
         </div>
         <button
           type="submit"
           data-testid="category-create"
           disabled={busy}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          className="btn btn-primary mt-3"
         >
           Ajouter
         </button>
@@ -125,66 +146,82 @@ export default function CategoryManager({ initial }: Props) {
 
       {message && <p className="text-sm text-muted-foreground">{message}</p>}
 
-      {categories.length > 0 ? (
-        <ul className="space-y-2">
-          {categories.map((category, index) => (
-            <li key={category.id} className="flex items-center gap-3 rounded-md border p-3">
-              <div className="flex flex-col gap-1">
-                <button
-                  type="button"
-                  aria-label="Monter"
-                  className="text-xs disabled:opacity-30"
-                  disabled={index === 0}
-                  onClick={() => void move(index, -1)}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  aria-label="Descendre"
-                  className="text-xs disabled:opacity-30"
-                  disabled={index === categories.length - 1}
-                  onClick={() => void move(index, 1)}
-                >
-                  ↓
-                </button>
-              </div>
-              <div className="flex-1">
-                <input
-                  className={inputClass}
-                  defaultValue={category.name}
-                  onBlur={(event) => {
-                    const value = event.target.value.trim();
-                    if (value && value !== category.name) void update(category.id, { name: value });
-                  }}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">{category.slug}</p>
-                <input
-                  aria-label={`Description de ${category.name}`}
-                  className={`${inputClass} mt-2`}
-                  defaultValue={category.description ?? ""}
-                  placeholder="Description affichée sur /categorie/…"
-                  onBlur={(event) => {
-                    const value = event.target.value.trim();
-                    if (value !== (category.description ?? "")) {
-                      void update(category.id, { description: value || null });
-                    }
-                  }}
-                />
-              </div>
-              <button
-                type="button"
-                className="text-sm text-destructive hover:underline"
-                onClick={() => void remove(category.id)}
+      <div className="card overflow-hidden">
+        {categories.length > 0 ? (
+          <div>
+            <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[13px] font-medium text-muted-foreground">
+              <span className="w-[52px]">Ordre</span>
+              <span className="flex-1">Nom et description</span>
+              <span className="w-20" />
+            </div>
+            {categories.map((category, index) => (
+              <div
+                key={category.id}
+                className="flex items-center gap-3 border-b px-4 py-3 last:border-b-0"
               >
-                Supprimer
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-muted-foreground">Aucune catégorie.</p>
-      )}
+                <div className="flex w-[52px] flex-col gap-1">
+                  <button
+                    type="button"
+                    aria-label="Monter"
+                    className="btn btn-ghost btn-sm h-6 px-1.5 text-xs disabled:opacity-30"
+                    disabled={index === 0}
+                    onClick={() => void move(index, -1)}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Descendre"
+                    className="btn btn-ghost btn-sm h-6 px-1.5 text-xs disabled:opacity-30"
+                    disabled={index === categories.length - 1}
+                    onClick={() => void move(index, 1)}
+                  >
+                    ↓
+                  </button>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <input
+                      aria-label={`Nom de ${category.name}`}
+                      className={inputClass}
+                      defaultValue={category.name}
+                      onBlur={(event) => {
+                        const value = event.target.value.trim();
+                        if (value && value !== category.name)
+                          void update(category.id, { name: value });
+                      }}
+                    />
+                    <span className="font-mono text-xs text-muted-foreground">
+                      /{category.slug}/
+                    </span>
+                  </div>
+                  <input
+                    aria-label={`Description de ${category.name}`}
+                    className={inputClass}
+                    defaultValue={category.description ?? ""}
+                    placeholder="Description affichée sur /categorie/…"
+                    onBlur={(event) => {
+                      const value = event.target.value.trim();
+                      if (value !== (category.description ?? "")) {
+                        void update(category.id, { description: value || null });
+                      }
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm text-destructive"
+                  onClick={() => void remove(category.id)}
+                >
+                  Supprimer
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="p-6 text-sm text-muted-foreground">Aucune catégorie.</p>
+        )}
+      </div>
     </div>
   );
 }

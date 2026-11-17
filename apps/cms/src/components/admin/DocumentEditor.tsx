@@ -16,7 +16,7 @@ interface Props {
   initial: InitialDocument;
 }
 
-const input = "mt-1 w-full rounded-md border px-3 py-2 text-sm";
+const input = "input mt-1";
 
 export default function DocumentEditor({ initial }: Props) {
   const [title, setTitle] = useState(initial.title);
@@ -138,7 +138,7 @@ export default function DocumentEditor({ initial }: Props) {
           <span className="block text-sm font-medium">JSON</span>
           <textarea
             data-testid="document-json"
-            className="mt-1 h-[28rem] w-full rounded-md border px-3 py-2 font-mono text-xs"
+            className="textarea mt-1 h-[28rem] font-mono text-xs"
             value={bodyJson}
             onChange={(event) => setBodyJson(event.target.value)}
             spellCheck={false}
@@ -173,7 +173,7 @@ export default function DocumentEditor({ initial }: Props) {
           type="submit"
           data-testid="document-save"
           disabled={busy || jsonError !== null}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          className="btn btn-primary"
         >
           Enregistrer
         </button>
@@ -183,7 +183,7 @@ export default function DocumentEditor({ initial }: Props) {
             data-testid="document-unpublish"
             onClick={() => void changeStatus("draft")}
             disabled={busy}
-            className="rounded-md border px-4 py-2 text-sm disabled:opacity-50"
+            className="btn btn-outline"
           >
             Dépublier
           </button>
@@ -193,17 +193,12 @@ export default function DocumentEditor({ initial }: Props) {
             data-testid="document-publish"
             onClick={() => void changeStatus("published")}
             disabled={busy}
-            className="rounded-md border px-4 py-2 text-sm disabled:opacity-50"
+            className="btn btn-outline"
           >
             Publier
           </button>
         )}
-        <a
-          href={`/${slug}/`}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-md border px-4 py-2 text-sm"
-        >
+        <a href={`/${slug}/`} target="_blank" rel="noreferrer" className="btn btn-outline">
           Voir la page ↗
         </a>
       </div>

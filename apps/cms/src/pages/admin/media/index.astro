@@ -1,0 +1,108 @@
+---
+import { env } from "cloudflare:workers";
+import { createContent } from "@pzz-cms/core";
+import MediaUpload from "../../../components/admin/MediaUpload";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const media = await content.listMedia();
+---
+
+<AdminLayout title="Médias">
+    <div class="mb-7">
+        <h1 class="text-[24px] font-semibold tracking-tight">Médias</h1>
+        <p class="mt-1 text-sm text-muted-foreground">
+            {media.length} images sur R2 · variantes WebP 480 / 800 / 1200 générées à l'envoi
+        </p>
+    </div>
+
+    <MediaUpload client:load />
+
+    <div class="mt-4 flex items-center gap-2.5">
+        <div class="relative">
+            <svg
+                viewBox="0 0 24 24"
+                class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+            </svg>
+            <input
+                type="search"
+                class="input with-icon"
+                style="width: 270px"
+                placeholder="Rechercher un média…"
+                data-media-search
+                aria-label="Rechercher un média"
+            />
+        </div>
+        <span class="text-[13px] text-muted-foreground" data-media-count>{media.length} médias</span>
+    </div>
+
+    {
+        media.length > 0 ? (
+            <div class="mt-4 grid grid-cols-4 gap-4" data-media-grid>
+                {media.map((item) => (
+                    <div class="card overflow-hidden" data-media-card data-search={`${item.r2Key} ${item.alt ?? ""}`.toLowerCase()}>
+                        <a href={`/media/${item.r2Key}`} target="_blank" rel="noreferrer">
+                            <img
+                                src={`/media/${item.r2Key}`}
+                                alt={item.alt ?? ""}
+                                loading="lazy"
+                                class="thumb w-full bg-muted object-cover"
+                            />
+                        </a>
+                        <div class="p-3.5">
+                            <div class="truncate text-[13.5px] font-medium">{item.r2Key.split("/").pop()}</div>
+                            <div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                                {item.width && item.height ? <span>{item.width} × {item.height}</span> : <span>dimensions inconnues</span>}
+                            </div>
+                            <div class="mt-1 truncate text-xs text-muted-foreground">
+                                {item.alt ?? "sans texte alternatif"}
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm mt-2.5 w-full" data-copy={`/media/${item.r2Key}`}>
+                                Copier l'URL
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        ) : (
+            <p class="mt-4 text-sm text-muted-foreground">Aucun média. Envoie la première image ci-dessus.</p>
+        )
+    }
+
+    <script>
+        const search = document.querySelector("[data-media-search]") as HTMLInputElement | null;
+        const countLabel = document.querySelector("[data-media-count]");
+        const cards = [...document.querySelectorAll<HTMLElement>("[data-media-card]")];
+
+        search?.addEventListener("input", () => {
+            const query = search.value.toLowerCase().trim();
+            let visible = 0;
+            for (const card of cards) {
+                const matches = !query || (card.dataset.search ?? "").includes(query);
+                card.style.display = matches ? "" : "none";
+                if (matches) visible += 1;
+            }
+            if (countLabel) countLabel.textContent = `${visible} média(s)`;
+        });
+
+        for (const button of document.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
+            button.addEventListener("click", async () => {
+                const url = `${window.location.origin}${button.dataset.copy ?? ""}`;
+                try {
+                    await navigator.clipboard.writeText(url);
+                    (window as Window & { toast?: (message: string) => void }).toast?.("URL copiée.");
+                } catch {
+                    (window as Window & { toast?: (message: string) => void }).toast?.(
+                        "Copie impossible dans ce navigateur.",
+                    );
+                }
+            });
+        }
+    </script>
+</AdminLayout>

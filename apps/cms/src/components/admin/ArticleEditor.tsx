@@ -48,6 +48,8 @@ interface InitialArticle {
   ogImageKey: string | null;
   coverAlt: string | null;
   categoryId: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 interface Props {
@@ -55,7 +57,17 @@ interface Props {
   categories: { id: string; name: string }[];
 }
 
-const inputClass = "mt-1 w-full rounded-md border px-3 py-2 text-sm";
+const inputClass = "input mt-1";
+
+const formatEditorDate = (value: string | null) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(
+        date,
+      );
+};
 
 /**
  * Raw JSX must survive the rich-text editor. Without descriptors MDXEditor
@@ -405,7 +417,8 @@ export default function ArticleEditor({ initial, categories }: Props) {
         window.location.href = `/admin/${data.id}`;
       } else {
         setSlug(data.slug);
-        setMessage("Enregistré.");
+        setMessage(null);
+        (window as Window & { toast?: (message: string) => void }).toast?.("Enregistré.");
       }
       return data;
     } catch (error) {
@@ -432,7 +445,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
         return;
       }
       setStatus(next);
-      window.location.assign("/admin/");
+      window.location.assign("/admin/articles/");
     } finally {
       setBusy(false);
     }
@@ -440,214 +453,283 @@ export default function ArticleEditor({ initial, categories }: Props) {
 
   return (
     <form
-      className="space-y-6"
+      className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();
         void save();
       }}
     >
-      <h1 className="text-2xl font-semibold">
-        {articleId ? "Modifier l'article" : "Nouvel article"}
-      </h1>
-
-      <div>
-        <label className="block text-sm font-medium" htmlFor="title">
-          Titre
-        </label>
-        <input
-          id="title"
-          data-testid="title"
-          className={inputClass}
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium" htmlFor="slug">
-          Slug (optionnel, généré depuis le titre)
-        </label>
-        <input
-          id="slug"
-          data-testid="slug"
-          className={inputClass}
-          value={slug}
-          placeholder="le-mystere-de-barabbas"
-          onChange={(event) => setSlug(event.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium" htmlFor="description">
-          Description (SEO)
-        </label>
-        <textarea
-          id="description"
-          data-testid="description"
-          className={inputClass}
-          rows={3}
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium" htmlFor="category">
-          Catégorie
-        </label>
-        <select
-          id="category"
-          data-testid="category"
-          className={inputClass}
-          value={categoryId ?? ""}
-          onChange={(event) => setCategoryId(event.target.value || null)}
-        >
-          <option value="">Sans catégorie</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <span className="block text-sm font-medium">Image de couverture</span>
-        {coverUrl && (
-          <img src={coverUrl} alt="" className="mt-2 h-32 rounded-md border object-cover" />
-        )}
-        <label className="mt-3 block text-sm">
-          <span className="font-medium">Texte alternatif de la couverture</span>
-          <input
-            className={inputClass}
-            value={coverAlt}
-            onChange={(event) => setCoverAlt(event.target.value)}
-            placeholder="Décrivez l'image : sujet, source, date"
-            data-testid="cover-alt"
-          />
-        </label>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Affiché sous l'image et lu par les lecteurs d'écran. Vide : le titre de l'article sert de
-          repli.
-        </p>
-        <input
-          type="file"
-          accept="image/*"
-          data-testid="cover-input"
-          disabled={uploading}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) void uploadCover(file);
-          }}
-          className="mt-2 block text-sm"
-        />
-        <p className="mt-1 text-xs text-muted-foreground">
-          Convertie en WebP dans le navigateur avant l'envoi.
-        </p>
-      </div>
-
-      <div>
-        <span className="block text-sm font-medium">Contenu (MDX)</span>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Composants : Callout, Quote, Steps, Terminal, Faq, Figure, GraphCompare, GraphStat,
-          GraphTable, GraphTimeline, Stat, Reveal, Verse. Pour du JSX brut, utilisez le mode Source
-          (bouton Diff/Source).
-        </p>
-        <div
-          data-testid="body-editor"
-          className="mt-1 rounded-md border"
-          onPasteCapture={(event) => {
-            const text = event.clipboardData.getData("text/plain");
-            if (!jsxPastePattern.test(text)) return;
-            // Let the MDX parser create a JSX node instead of escaping the
-            // pasted tag as text.
-            event.preventDefault();
-            event.stopPropagation();
-            editorRef.current?.insertMarkdown(text);
-          }}
-        >
-          <MDXEditor
-            ref={editorRef}
-            markdown={bodyMdx}
-            onChange={setBodyMdx}
-            plugins={[
-              headingsPlugin(),
-              listsPlugin(),
-              quotePlugin(),
-              tablePlugin(),
-              thematicBreakPlugin(),
-              linkPlugin(),
-              linkDialogPlugin(),
-              imagePlugin({ imageUploadHandler: uploadBodyImage }),
-              codeBlockPlugin(),
-              diffSourcePlugin(),
-              jsxPlugin({ jsxComponentDescriptors }),
-              markdownShortcutPlugin(),
-              toolbarPlugin({
-                toolbarContents: () => (
-                  <DiffSourceToggleWrapper>
-                    <UndoRedo />
-                    <BoldItalicUnderlineToggles />
-                    <BlockTypeSelect />
-                    <ListsToggle />
-                    <CreateLink />
-                    <InsertImage />
-                  </DiffSourceToggleWrapper>
-                ),
-              }),
-            ]}
-          />
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <a href="/admin/articles/" className="hover:underline">
+            Articles
+          </a>
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            className="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+          <span className="max-w-[420px] truncate font-medium text-foreground">
+            {articleId ? title || "Sans titre" : "Nouvel article"}
+          </span>
+          {status === "published" ? (
+            <span className="badge badge-published ml-1">publié</span>
+          ) : (
+            <span className="badge badge-draft ml-1">brouillon</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <a href="/admin/articles/" className="btn btn-ghost">
+            Annuler
+          </a>
+          <button type="submit" data-testid="save" disabled={busy} className="btn btn-outline">
+            Enregistrer
+          </button>
+          {status === "published" ? (
+            <button
+              type="button"
+              data-testid="unpublish"
+              onClick={() => void changeStatus("draft")}
+              disabled={busy}
+              className="btn btn-outline"
+            >
+              Dépublier
+            </button>
+          ) : (
+            <button
+              type="button"
+              data-testid="publish"
+              onClick={() => void changeStatus("published")}
+              disabled={busy}
+              className="btn btn-primary"
+            >
+              Publier
+            </button>
+          )}
         </div>
       </div>
 
-      <div>
-        <span className="block text-sm font-medium">Aperçu</span>
-        <div
-          data-testid="preview"
-          className="mdx-preview mt-1 rounded-md border p-4"
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: compiled locally from the author's own MDX
-          dangerouslySetInnerHTML={{ __html: preview }}
-        />
-        {previewError && <p className="mt-1 text-xs text-destructive">{previewError}</p>}
-      </div>
+      <div className="grid grid-cols-3 items-start gap-4">
+        <div className="col-span-2 space-y-4">
+          <div className="card space-y-5 p-6">
+            <div>
+              <label className="block text-sm font-medium" htmlFor="title">
+                Titre
+              </label>
+              <input
+                id="title"
+                data-testid="title"
+                className={inputClass}
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+              />
+            </div>
 
-      {message && (
-        <p data-testid="message" className="text-sm text-muted-foreground">
-          {message}
-        </p>
-      )}
+            <div>
+              <label className="block text-sm font-medium" htmlFor="slug">
+                Slug (optionnel, généré depuis le titre)
+              </label>
+              <input
+                id="slug"
+                data-testid="slug"
+                className={inputClass}
+                value={slug}
+                placeholder="le-mystere-de-barabbas"
+                onChange={(event) => setSlug(event.target.value)}
+              />
+            </div>
 
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          data-testid="save"
-          disabled={busy}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
-          Enregistrer
-        </button>
+            <div>
+              <label className="block text-sm font-medium" htmlFor="description">
+                Description (SEO)
+              </label>
+              <textarea
+                id="description"
+                data-testid="description"
+                className={inputClass}
+                rows={3}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+              />
+            </div>
 
-        {status === "published" ? (
-          <button
-            type="button"
-            data-testid="unpublish"
-            onClick={() => void changeStatus("draft")}
-            disabled={busy}
-            className="rounded-md border px-4 py-2 text-sm disabled:opacity-50"
-          >
-            Dépublier
-          </button>
-        ) : (
-          <button
-            type="button"
-            data-testid="publish"
-            onClick={() => void changeStatus("published")}
-            disabled={busy}
-            className="rounded-md border px-4 py-2 text-sm disabled:opacity-50"
-          >
-            Publier
-          </button>
-        )}
+            <div>
+              <label className="block text-sm font-medium" htmlFor="category">
+                Catégorie
+              </label>
+              <select
+                id="category"
+                data-testid="category"
+                className={inputClass}
+                value={categoryId ?? ""}
+                onChange={(event) => setCategoryId(event.target.value || null)}
+              >
+                <option value="">Sans catégorie</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <span className="block text-sm font-medium">Image de couverture</span>
+              {coverUrl && (
+                <img src={coverUrl} alt="" className="mt-2 h-32 rounded-md border object-cover" />
+              )}
+              <label className="mt-3 block text-sm">
+                <span className="font-medium">Texte alternatif de la couverture</span>
+                <input
+                  className={inputClass}
+                  value={coverAlt}
+                  onChange={(event) => setCoverAlt(event.target.value)}
+                  placeholder="Décrivez l'image : sujet, source, date"
+                  data-testid="cover-alt"
+                />
+              </label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Affiché sous l'image et lu par les lecteurs d'écran. Vide : le titre de l'article
+                sert de repli.
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                data-testid="cover-input"
+                disabled={uploading}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void uploadCover(file);
+                }}
+                className="mt-2 block text-sm"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Convertie en WebP dans le navigateur avant l'envoi.
+              </p>
+            </div>
+          </div>
+
+          <div className="card p-4">
+            <span className="block text-sm font-medium">Contenu (MDX)</span>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Composants : Callout, Quote, Steps, Terminal, Faq, Figure, GraphCompare, GraphStat,
+              GraphTable, GraphTimeline, Stat, Reveal, Verse. Pour du JSX brut, utilisez le mode
+              Source (bouton Diff/Source).
+            </p>
+            <div
+              data-testid="body-editor"
+              className="mt-1 rounded-md border"
+              onPasteCapture={(event) => {
+                const text = event.clipboardData.getData("text/plain");
+                if (!jsxPastePattern.test(text)) return;
+                // Let the MDX parser create a JSX node instead of escaping the
+                // pasted tag as text.
+                event.preventDefault();
+                event.stopPropagation();
+                editorRef.current?.insertMarkdown(text);
+              }}
+            >
+              <MDXEditor
+                ref={editorRef}
+                markdown={bodyMdx}
+                onChange={setBodyMdx}
+                plugins={[
+                  headingsPlugin(),
+                  listsPlugin(),
+                  quotePlugin(),
+                  tablePlugin(),
+                  thematicBreakPlugin(),
+                  linkPlugin(),
+                  linkDialogPlugin(),
+                  imagePlugin({ imageUploadHandler: uploadBodyImage }),
+                  codeBlockPlugin(),
+                  diffSourcePlugin(),
+                  jsxPlugin({ jsxComponentDescriptors }),
+                  markdownShortcutPlugin(),
+                  toolbarPlugin({
+                    toolbarContents: () => (
+                      <DiffSourceToggleWrapper>
+                        <UndoRedo />
+                        <BoldItalicUnderlineToggles />
+                        <BlockTypeSelect />
+                        <ListsToggle />
+                        <CreateLink />
+                        <InsertImage />
+                      </DiffSourceToggleWrapper>
+                    ),
+                  }),
+                ]}
+              />
+            </div>
+          </div>
+
+          <div className="card p-4">
+            <span className="block text-sm font-medium">Aperçu</span>
+            <div
+              data-testid="preview"
+              className="mdx-preview mt-1 rounded-md border p-4"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: compiled locally from the author's own MDX
+              dangerouslySetInnerHTML={{ __html: preview }}
+            />
+            {previewError && <p className="mt-1 text-xs text-destructive">{previewError}</p>}
+          </div>
+
+          {message && (
+            <p data-testid="message" className="text-sm text-muted-foreground">
+              {message}
+            </p>
+          )}
+        </div>
+
+        <aside className="space-y-4">
+          <div className="card p-6">
+            <div className="text-[15px] font-medium">Publication</div>
+            <div className="mt-4 space-y-4">
+              <div>
+                <div className="field-label">Statut</div>
+                {status === "published" ? (
+                  <span className="badge badge-published">publié</span>
+                ) : (
+                  <span className="badge badge-draft">brouillon</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-[13px]">
+                <div>
+                  <div className="text-muted-foreground">Créé</div>
+                  <div className="mt-0.5 font-medium">
+                    {formatEditorDate(initial?.createdAt ?? null)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Modifié</div>
+                  <div className="mt-0.5 font-medium">
+                    {formatEditorDate(initial?.updatedAt ?? null)}
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-md border p-3 text-[13px]">
+                <div className="text-muted-foreground">URL publique</div>
+                <div className="mt-1 truncate font-mono text-xs">/{slug || "…"}/</div>
+              </div>
+            </div>
+          </div>
+          <div className="card p-6 text-[13px] text-muted-foreground">
+            <div className="text-[15px] font-medium text-foreground">Aide</div>
+            <p className="mt-1.5">
+              L'aperçu compile le MDX avec le même moteur que la publication : ce que tu vois est ce
+              qui sera servi.
+            </p>
+            <p className="mt-2">
+              Les images ajoutées dans le corps sont converties en WebP, envoyées sur R2 et
+              référencées avec leurs dimensions.
+            </p>
+          </div>
+        </aside>
       </div>
     </form>
   );

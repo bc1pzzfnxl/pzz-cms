@@ -82,6 +82,7 @@ export interface AdminArticleSummary {
   slug: string;
   title: string;
   status: ArticleStatus;
+  categoryId: string | null;
   publishedAt: string | null;
   updatedAt: string;
 }

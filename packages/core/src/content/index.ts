@@ -49,6 +49,20 @@ function toArticle(row: ArticleRow): Article {
   };
 }
 
+/** Aggregates for the admin dashboard. Read-only, computed in D1. */
+export interface DashboardStats {
+  articles: { published: number; draft: number };
+  documents: { published: number; draft: number };
+  media: number;
+  categories: number;
+  /** Published articles per month, oldest first (six months max). */
+  publicationsByMonth: { month: string; count: number }[];
+  /** Published article count per category, highest first. */
+  byCategory: { id: string; name: string; count: number }[];
+  /** Most recently updated articles. */
+  recent: AdminArticleSummary[];
+}
+
 /**
  * The content module. It is the only place that talks to the database. The
  * public site uses the read methods; the admin uses the write methods.
@@ -64,6 +78,7 @@ export interface Content {
   getArticleById(id: string): Promise<Article | null>;
   getArticleBySlug(slug: string): Promise<Article | null>;
   listSlugs(): Promise<string[]>;
+  getStats(): Promise<DashboardStats>;
 
   // Admin write path
   createArticle(input: CreateArticleInput): Promise<Article>;
@@ -319,13 +334,14 @@ export function createContent(db: Database): Content {
     async listAll() {
       const { results } = await db
         .prepare(
-          "SELECT id, slug, title, status, published_at, updated_at FROM articles ORDER BY updated_at DESC",
+          "SELECT id, slug, title, status, category_id, published_at, updated_at FROM articles ORDER BY updated_at DESC",
         )
         .all<{
           id: string;
           slug: string;
           title: string;
           status: string;
+          category_id: string | null;
           published_at: string | null;
           updated_at: string;
         }>();
@@ -336,6 +352,7 @@ export function createContent(db: Database): Content {
           slug: row.slug,
           title: row.title,
           status: row.status === "published" ? "published" : "draft",
+          categoryId: row.category_id,
           publishedAt: row.published_at,
           updatedAt: row.updated_at,
         }),
@@ -500,6 +517,79 @@ export function createContent(db: Database): Content {
         )
         .all<MediaRow>();
       return results.map(toMedia);
+    },
+
+    async getStats() {
+      const count = async (sql: string) => (await db.prepare(sql).first<{ n: number }>())?.n ?? 0;
+
+      const [
+        articlesPublished,
+        articlesDraft,
+        documentsPublished,
+        documentsDraft,
+        media,
+        categories,
+      ] = await Promise.all([
+        count("SELECT COUNT(*) AS n FROM articles WHERE status = 'published'"),
+        count("SELECT COUNT(*) AS n FROM articles WHERE status = 'draft'"),
+        count("SELECT COUNT(*) AS n FROM documents WHERE status = 'published'"),
+        count("SELECT COUNT(*) AS n FROM documents WHERE status = 'draft'"),
+        count("SELECT COUNT(*) AS n FROM media"),
+        count("SELECT COUNT(*) AS n FROM categories"),
+      ]);
+
+      const { results: months } = await db
+        .prepare(
+          `SELECT substr(published_at, 1, 7) AS month, COUNT(*) AS n
+           FROM articles
+           WHERE status = 'published' AND published_at IS NOT NULL
+           GROUP BY month
+           ORDER BY month DESC
+           LIMIT 6`,
+        )
+        .all<{ month: string; n: number }>();
+
+      const { results: perCategory } = await db
+        .prepare(
+          `SELECT c.id AS id, c.name AS name, COUNT(a.id) AS n
+           FROM categories c
+           LEFT JOIN articles a ON a.category_id = c.id AND a.status = 'published'
+           GROUP BY c.id
+           ORDER BY n DESC, c.position ASC, c.name ASC`,
+        )
+        .all<{ id: string; name: string; n: number }>();
+
+      const { results: recent } = await db
+        .prepare(
+          "SELECT id, slug, title, status, category_id, published_at, updated_at FROM articles ORDER BY updated_at DESC LIMIT 5",
+        )
+        .all<{
+          id: string;
+          slug: string;
+          title: string;
+          status: string;
+          category_id: string | null;
+          published_at: string | null;
+          updated_at: string | null;
+        }>();
+
+      return {
+        articles: { published: articlesPublished, draft: articlesDraft },
+        documents: { published: documentsPublished, draft: documentsDraft },
+        media,
+        categories,
+        publicationsByMonth: months.map((row) => ({ month: row.month, count: row.n })).reverse(),
+        byCategory: perCategory.map((row) => ({ id: row.id, name: row.name, count: row.n })),
+        recent: recent.map((row) => ({
+          id: row.id,
+          slug: row.slug,
+          title: row.title,
+          status: row.status === "published" ? "published" : "draft",
+          categoryId: row.category_id,
+          publishedAt: row.published_at,
+          updatedAt: row.updated_at ?? "",
+        })),
+      };
     },
 
     getMediaByKey,

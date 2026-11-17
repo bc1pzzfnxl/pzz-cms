@@ -53,7 +53,8 @@ The admin (`apps/cms`) is never deployed. It runs on your machine with
    `apps/cms/wrangler.local.jsonc` with your real D1 id and R2 bucket, plus the
    public URL of your site as the `SITE_PUBLIC_URL` var (the admin's
    "see the site" link uses it).
-2. `bun run dev:cms`, then open `http://localhost:8788/admin/`.
+2. `bun run dev:cms`, then open `http://localhost:8788/admin/` (overview;
+   articles live under `/admin/articles/`).
 
 There is no authentication: localhost is the security boundary. Content saved
 in the admin appears on the deployed site immediately.

@@ -26,6 +26,8 @@ const initial = article
       ogImageKey: article.ogImageKey,
       coverAlt: cover?.alt ?? null,
       categoryId: article.categoryId,
+      createdAt: article.createdAt,
+      updatedAt: article.updatedAt,
     }
   : null;
 ---
@@ -35,7 +37,7 @@ const initial = article
         id !== "new" && !initial ? (
             <div>
                 <h1 class="text-2xl font-semibold">Article introuvable</h1>
-                <a href="/admin" class="mt-4 inline-block text-sm hover:underline">
+                <a href="/admin/articles/" class="mt-4 inline-block text-sm hover:underline">
                     ← Retour aux articles
                 </a>
             </div>

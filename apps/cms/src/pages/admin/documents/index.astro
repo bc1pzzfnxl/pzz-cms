@@ -1,7 +1,7 @@
 ---
 import { env } from "cloudflare:workers";
-import DocumentUpload from "../../../components/admin/DocumentUpload";
 import { createContent } from "@pzz-cms/core";
+import DocumentUpload from "../../../components/admin/DocumentUpload";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 
 const content = createContent(env.DB);
@@ -14,60 +14,68 @@ const formatDate = (dateStr: string | null) => {
     ? dateStr
     : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(date);
 };
+
+const published = documents.filter((document) => document.status === "published").length;
+const drafts = documents.length - published;
 ---
 
 <AdminLayout title="Documents">
-    <div class="mb-8 flex items-start justify-between gap-4">
+    <div class="mb-7 flex items-end justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-semibold">Documents JSON</h1>
+            <h1 class="text-[24px] font-semibold tracking-tight">Documents</h1>
             <p class="mt-1 text-sm text-muted-foreground">
-                Chaque fichier est servi à <code>/&lt;slug&gt;/</code>.
+                Pages JSON (hors articles) · {documents.length} documents · {drafts} brouillon(s)
             </p>
         </div>
         <DocumentUpload client:load />
     </div>
 
-    {
-        documents.length > 0 ? (
-            <table class="w-full border-collapse text-sm">
-                <thead>
-                    <tr class="border-b text-left text-muted-foreground">
-                        <th class="py-2 pr-4 font-medium">Titre</th>
-                        <th class="py-2 pr-4 font-medium">Statut</th>
-                        <th class="py-2 pr-4 font-medium">Modifié</th>
-                        <th class="py-2 font-medium" />
-                    </tr>
-                </thead>
-                <tbody>
-                    {documents.map((document) => (
-                        <tr class="border-b">
-                            <td class="py-3 pr-4">
-                                <a href={`/admin/documents/${document.id}`} class="font-medium hover:underline">
-                                    {document.title}
-                                </a>
-                                <div class="text-xs text-muted-foreground">/{document.slug}/</div>
-                            </td>
-                            <td class="py-3 pr-4">
-                                {document.status === "published" ? (
-                                    <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">publié</span>
-                                ) : (
-                                    <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                                        brouillon
-                                    </span>
-                                )}
-                            </td>
-                            <td class="py-3 pr-4 text-muted-foreground">{formatDate(document.updatedAt)}</td>
-                            <td class="py-3 text-right">
-                                <a href={`/admin/documents/${document.id}`} class="text-sm hover:underline">
-                                    Modifier
-                                </a>
-                            </td>
+    <div class="card overflow-hidden">
+        {
+            documents.length > 0 ? (
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Titre</th>
+                            <th>Slug</th>
+                            <th>Statut</th>
+                            <th>Modifié</th>
+                            <th class="w-[100px]" />
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-        ) : (
-            <p class="text-muted-foreground">Aucun document. Importe un fichier .json.</p>
-        )
-    }
+                    </thead>
+                    <tbody>
+                        {documents.map((document) => (
+                            <tr>
+                                <td>
+                                    <a href={`/admin/documents/${document.id}`} class="font-medium hover:underline">
+                                        {document.title}
+                                    </a>
+                                </td>
+                                <td class="font-mono text-xs text-muted-foreground">/{document.slug}/</td>
+                                <td>
+                                    {document.status === "published" ? (
+                                        <span class="badge badge-published">publié</span>
+                                    ) : (
+                                        <span class="badge badge-draft">brouillon</span>
+                                    )}
+                                </td>
+                                <td class="text-muted-foreground">{formatDate(document.updatedAt)}</td>
+                                <td class="text-right">
+                                    <a href={`/admin/documents/${document.id}`} class="btn btn-ghost btn-sm">
+                                        Modifier
+                                    </a>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                <p class="p-6 text-sm text-muted-foreground">Aucun document. Importe un fichier .json.</p>
+            )
+        }
+    </div>
+
+    <p class="mt-3 text-[13px] text-muted-foreground">
+        Chaque document est servi sur <code>/&lt;slug&gt;/</code> ; un brouillon renvoie 404.
+    </p>
 </AdminLayout>

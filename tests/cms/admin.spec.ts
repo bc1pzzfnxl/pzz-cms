@@ -15,13 +15,13 @@ async function publish(page: Page) {
   );
   await page.getByTestId("publish").click();
   await published;
-  // The editor navigates back to the list after a status change; wait for it
-  // before the test issues its own navigation.
-  await page.waitForURL(/\/admin\/?$/, { timeout: 30_000 });
+  // The editor navigates back to the articles list after a status change;
+  // wait for it before the test issues its own navigation.
+  await page.waitForURL(/\/admin\/articles\/?$/, { timeout: 30_000 });
 }
 
 test("create, publish and read back an article", async ({ page }) => {
-  await page.goto("/admin/");
+  await page.goto("/admin/articles/");
   await expect(page.getByRole("heading", { name: "Articles" })).toBeVisible();
 
   await page.getByRole("link", { name: "Nouvel article" }).click();
@@ -44,7 +44,7 @@ test("create, publish and read back an article", async ({ page }) => {
 });
 
 test("a draft is not visible on the public site", async ({ page }) => {
-  await page.goto("/admin/");
+  await page.goto("/admin/articles/");
   await page.getByRole("link", { name: "Nouvel article" }).click();
 
   await page.getByTestId("title").fill("Brouillon E2E");

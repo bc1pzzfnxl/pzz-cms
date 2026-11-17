@@ -368,6 +368,18 @@ Done:
   in the template) and reading typography (`text-wrap: balance/pretty`,
   `hyphens: auto` on articles). The last three may reflow text, so the font
   pixel-diff harness needs a re-baseline.
+- **Admin dashboard (2026-11-17):** `apps/cms` now uses a shadcn-style
+  dashboard shell: sidebar navigation with live counts, a header with a
+  command palette (`Ctrl+K`), and an appearance panel
+  (light/dark/system, six accent colours, corner radius, density) persisted
+  in `localStorage`. New pages: `/admin/` is the overview (counts, a
+  server-rendered SVG chart of publications per month in the Amicro
+  mono-charts style, category distribution, recent articles),
+  `/admin/articles/` the article list, `/admin/media/` the media library
+  (grid, copy URL, WebP upload). Articles, categories and documents pages
+  were restyled; `content.getStats()` in `packages/core` computes the
+  aggregates in D1 (no client-side chart library, no new runtime
+  dependency).
 
 ### Fonts — DONE
 
