@@ -1,0 +1,76 @@
+{
+  "name": "pzz-cms",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A light, MDX-first CMS built on Astro and Cloudflare Workers.",
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter @pzz-cms/site dev",
+    "dev:cms": "bun scripts/dev-cms.ts",
+    "build": "bun run build:site",
+    "build:site": "bun run --filter @pzz-cms/site build",
+    "build:cms": "bun run --filter @pzz-cms/cms build",
+    "deploy": "bun run fonts && bun run build:site && bunx wrangler deploy --config apps/site/wrangler.jsonc",
+    "fonts": "bun scripts/fonts.ts",
+    "fonts:watch": "bun scripts/fonts-watch.ts",
+    "typecheck": "bun run --filter @pzz-cms/site typecheck && bun run --filter @pzz-cms/cms typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "bunx --bun vitest run",
+    "test:watch": "bunx --bun vitest",
+    "e2e": "playwright test",
+    "migrate": "bun scripts/migrate.ts",
+    "parity": "bun scripts/parity.ts",
+    "images:optimize": "bun scripts/optimize-images.ts",
+    "content:sync": "bun scripts/content-sync.ts",
+    "content:import": "bun scripts/content-import.ts",
+    "media:gc": "bun scripts/media-gc.ts",
+    "check": "biome check . && bun run typecheck && bun run test",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,md}": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.4",
+    "@playwright/test": "^1.64.0",
+    "@pzz-cms/core": "workspace:*",
+    "@types/bun": "^1.4.2",
+    "@vitejs/plugin-react": "^6.1.2",
+    "fontkit": "^3.0.0",
+    "gray-matter": "^4.0.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "pixelmatch": "^8.0.0",
+    "pngjs": "^7.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sharp": "^0.35.5",
+    "subset-font": "^2.9.0",
+    "typescript": "6",
+    "vitest": "^5.0.3",
+    "wrangler": "4.163.0"
+  },
+  "overrides": {
+    "@emnapi/core": "1.11.3",
+    "@emnapi/runtime": "1.11.3",
+    "@napi-rs/wasm-runtime": "1.2.7",
+    "body-parser": "^2.4.0",
+    "fast-uri": "^3.1.9",
+    "miniflare": {
+      "undici": "^7.30.1"
+    },
+    "unifont": {
+      "undici": "^8.12.2"
+    }
+  }
+}

@@ -1,0 +1,167 @@
+---
+import { env } from "cloudflare:workers";
+import { createContent } from "@pzz-cms/core";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const [articles, categories] = await Promise.all([content.listAll(), content.listCategories()]);
+const categoryNames = new Map(categories.map((category) => [category.id, category.name]));
+
+const formatDate = (dateStr: string | null) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime())
+    ? dateStr
+    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(date);
+};
+
+const published = articles.filter((article) => article.status === "published").length;
+const drafts = articles.length - published;
+---
+
+<AdminLayout title="Articles">
+    <div class="mb-7 flex items-end justify-between gap-4">
+        <div>
+            <h1 class="text-[24px] font-semibold tracking-tight">Articles</h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+                {articles.length} articles · {published} publiés · {drafts} brouillons
+            </p>
+        </div>
+        <a href="/admin/new/" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            Nouvel article
+        </a>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-2.5">
+        <div class="relative">
+            <svg
+                viewBox="0 0 24 24"
+                class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+            </svg>
+            <input
+                type="search"
+                class="input with-icon"
+                style="width: 270px"
+                placeholder="Rechercher un article…"
+                data-article-search
+                aria-label="Rechercher un article"
+            />
+        </div>
+        <div class="flex items-center gap-1 rounded-md border p-0.5">
+            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="all">Tous</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="published">Publiés</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="draft">Brouillons</button>
+        </div>
+        <select class="select" style="width: 190px" data-filter-category aria-label="Filtrer par catégorie">
+            <option value="">Toutes les catégories</option>
+            {categories.map((category) => (
+                <option value={category.id}>{category.name}</option>
+            ))}
+        </select>
+    </div>
+
+    <div class="card overflow-hidden">
+        {
+            articles.length > 0 ? (
+                <table class="data-table" data-articles-table>
+                    <thead>
+                        <tr>
+                            <th>Titre</th>
+                            <th>Catégorie</th>
+                            <th>Statut</th>
+                            <th>Modifié</th>
+                            <th class="w-[110px]" />
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {articles.map((article) => (
+                            <tr
+                                data-status={article.status}
+                                data-category={article.categoryId ?? ""}
+                                data-search={`${article.title} ${article.slug}`.toLowerCase()}
+                            >
+                                <td>
+                                    <a href={`/admin/${article.id}`} class="font-medium hover:underline">
+                                        {article.title}
+                                    </a>
+                                    <div class="mt-0.5 text-xs text-muted-foreground">/{article.slug}/</div>
+                                </td>
+                                <td>
+                                    {article.categoryId && categoryNames.has(article.categoryId) ? (
+                                        <span class="badge badge-cat">{categoryNames.get(article.categoryId)}</span>
+                                    ) : (
+                                        <span class="text-xs text-muted-foreground">sans catégorie</span>
+                                    )}
+                                </td>
+                                <td>
+                                    {article.status === "published" ? (
+                                        <span class="badge badge-published">publié</span>
+                                    ) : (
+                                        <span class="badge badge-draft">brouillon</span>
+                                    )}
+                                </td>
+                                <td class="text-muted-foreground">{formatDate(article.updatedAt)}</td>
+                                <td class="text-right">
+                                    <a href={`/admin/${article.id}`} class="btn btn-ghost btn-sm">
+                                        Modifier
+                                    </a>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                <p class="p-6 text-sm text-muted-foreground">Aucun article. Crée le premier avec « Nouvel article ».</p>
+            )
+        }
+        <div class="flex items-center justify-between border-t px-4 py-3 text-[13px] text-muted-foreground">
+            <span data-article-count>{articles.length} articles affichés</span>
+        </div>
+    </div>
+
+    <script>
+        const search = document.querySelector("[data-article-search]") as HTMLInputElement | null;
+        const table = document.querySelector("[data-articles-table]");
+        const countLabel = document.querySelector("[data-article-count]");
+        const categoryFilter = document.querySelector("[data-filter-category]") as HTMLSelectElement | null;
+        const statusButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-filter-status]")];
+        let status = "all";
+
+        const filterRows = () => {
+            if (!table) return;
+            const query = (search?.value ?? "").toLowerCase().trim();
+            const category = categoryFilter?.value ?? "";
+            let visible = 0;
+            for (const row of table.querySelectorAll<HTMLTableRowElement>("tbody tr")) {
+                const matches =
+                    (status === "all" || row.dataset.status === status) &&
+                    (!category || row.dataset.category === category) &&
+                    (!query || (row.dataset.search ?? "").includes(query));
+                row.style.display = matches ? "" : "none";
+                if (matches) visible += 1;
+            }
+            if (countLabel) countLabel.textContent = `${visible} article(s) affiché(s)`;
+        };
+
+        search?.addEventListener("input", filterRows);
+        categoryFilter?.addEventListener("change", filterRows);
+        for (const button of statusButtons) {
+            button.addEventListener("click", () => {
+                status = button.dataset.filterStatus ?? "all";
+                for (const other of statusButtons) {
+                    other.classList.toggle("btn-outline", other === button);
+                }
+                filterRows();
+            });
+        }
+    </script>
+</AdminLayout>

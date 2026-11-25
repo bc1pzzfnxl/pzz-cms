@@ -1,0 +1,199 @@
+/*
+ * Article reading styles, shared by the public site and the admin preview so
+ * the two render identically. Colours come from the site theme tokens
+ * (--site-*) injected by the layout; the fallbacks are the shipped defaults
+ * so the file also renders standalone.
+ */
+.site-reading {
+  color: var(--site-text, #374151);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.site-reading h1,
+.site-reading h2,
+.site-reading h3,
+.site-reading h4 {
+  color: var(--site-heading, #111111);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.site-reading h1 {
+  font-size: 2.25rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+.site-reading h2 {
+  font-size: 1.75rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+.site-reading h3 {
+  font-size: 1.25rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+.site-reading h4 {
+  font-size: 1.05rem;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.site-reading p {
+  margin-bottom: 1.75rem;
+}
+
+.site-reading a {
+  color: var(--site-link, #111111);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+.site-reading a:hover {
+  background-color: var(--site-link, #111111);
+  color: var(--site-bg, #ffffff);
+  text-decoration: none;
+}
+
+.site-reading ul {
+  list-style: disc;
+  padding-left: 24px;
+  margin-bottom: 2rem;
+}
+.site-reading li {
+  display: list-item;
+  margin-bottom: 0.75rem;
+}
+
+.site-reading table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.25rem 0 2rem 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  border: 1px solid var(--site-border, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.site-reading th,
+.site-reading td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+}
+.site-reading th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--site-muted, #6b7280);
+  background-color: color-mix(in oklch, var(--site-text, #374151) 3%, var(--site-bg, #ffffff));
+  border-bottom: 1px solid var(--site-border, #e5e7eb);
+}
+.site-reading td {
+  border-bottom: 1px solid var(--site-border, #e5e7eb);
+}
+.site-reading tr:last-child td {
+  border-bottom: none;
+}
+.site-reading tr:nth-child(even) td {
+  background-color: color-mix(in oklch, var(--site-text, #374151) 2%, var(--site-bg, #ffffff));
+}
+
+.site-reading blockquote {
+  margin: 1.25rem 0 2rem 0;
+  padding: 1.25rem 1.5rem;
+  border-left: 3px solid var(--site-heading, #111111);
+  background-color: color-mix(in oklch, var(--site-text, #374151) 3%, var(--site-bg, #ffffff));
+  border-radius: 0 8px 8px 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.site-reading blockquote p {
+  margin-bottom: 1.1rem;
+}
+.site-reading blockquote p:last-child {
+  margin-bottom: 0;
+}
+.site-reading blockquote strong {
+  display: block;
+  color: var(--site-heading, #111111);
+  font-weight: 600;
+  font-size: 1rem;
+}
+.site-reading blockquote em {
+  display: block;
+  color: var(--site-muted, #6b7280);
+  font-style: italic;
+  font-size: 0.92rem;
+  margin-top: 0.2rem;
+}
+
+.site-reading code {
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-family: var(--mono-font, monospace);
+  font-size: 0.9em;
+  background-color: color-mix(in oklch, var(--site-text, #374151) 7%, var(--site-bg, #ffffff));
+}
+.site-reading pre {
+  margin: 1.25rem 0 2rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--site-border, #e5e7eb);
+  background-color: color-mix(in oklch, var(--site-text, #374151) 4%, var(--site-bg, #ffffff));
+}
+.site-reading pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.site-reading img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5rem 0 2rem 0;
+  display: block;
+}
+
+.site-reading .article-cover-wrapper {
+  margin: 1rem 0 2rem 0;
+  width: 100%;
+  text-align: center;
+}
+.site-reading .article-cover {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 550px;
+  border-radius: 8px;
+  margin: 0 auto;
+  display: block;
+}
+.site-reading .article-cover-caption,
+.site-reading .article-caption {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--site-muted, #6b7280);
+  margin-top: 0.5rem;
+  text-align: center;
+  font-style: italic;
+}
+.site-reading .article-figure {
+  margin: 1.5rem 0 2rem 0;
+}
+.site-reading .article-figure img {
+  margin: 0;
+}
+.site-reading .article-meta {
+  font-size: 0.9rem;
+  color: var(--site-muted, #6b7280);
+  margin-top: -0.5rem;
+  margin-bottom: 1.5rem;
+}

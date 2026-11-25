@@ -1,0 +1,20 @@
+---
+import { env } from "cloudflare:workers";
+import CategoryManager from "../../../components/admin/CategoryManager";
+import { createContent } from "@pzz-cms/core";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const categories = await content.listCategories();
+---
+
+<AdminLayout title="Catégories">
+    <div class="mb-7">
+        <h1 class="text-[24px] font-semibold tracking-tight">Catégories</h1>
+        <p class="mt-1 text-sm text-muted-foreground">
+            Regroupent les articles sur la page d'accueil et alimentent le fil d'Ariane.
+        </p>
+    </div>
+
+    <CategoryManager client:load initial={categories} />
+</AdminLayout>
