@@ -44,6 +44,14 @@ Worker SSR), the MDX rules, and the checklist for adding a component.
 
 Branches: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`.
 
+### Pull requests
+
+1. Branch from `main`.
+2. Run `bun run check` (or let the pre-commit hook do it).
+3. Open the pull request against `main`; CI runs lint, typecheck, unit tests,
+   both builds and the end-to-end suite.
+4. Merge with a squash merge, so `main` keeps one commit per change.
+
 ## Code style
 
 - TypeScript with `strict`. Type every public boundary.
