@@ -15,7 +15,7 @@ a deployable public site and a local-only admin (bun workspaces). Read
 - `apps/site/` — public site (the only deployable app)
 - `apps/cms/` — local admin; runs with `wrangler dev --remote`, never deployed
 - `packages/core/` — shared content module, libs, MDX components
-- `migrations/` — D1 migrations (reachable from both apps via symlinks)
+- `migrations/` — D1 migrations (copied into both apps for tooling that reads them next to the config)
 - `scripts/` — content-sync, content-import, media-gc, migrate, parity,
   optimize-images
 - `tests/` — unit + e2e, split into `site/`, `cms/`, helpers
