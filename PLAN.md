@@ -478,7 +478,7 @@ pzz-cms/
 ├── packages/
 │   └── core/              # @pzz-cms/core — content module + libs + MDX components
 ├── tests/                 # unit (Vitest) and E2E (Playwright), synthetic data only
-├── migrations/            # D1 migrations (symlinked into both apps)
+├── migrations/            # D1 migrations (copied into both apps)
 ├── biome.json
 └── package.json           # workspaces + orchestration scripts
 ```

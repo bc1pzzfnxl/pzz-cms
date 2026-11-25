@@ -1,168 +1,153 @@
+<div align="center">
+
 # pzz-cms
 
-A light, MDX-first CMS built on [Astro](https://astro.build/) and Cloudflare
-Workers. It stores articles in D1, edits them in an MDX editor, and renders an
-SEO-focused blog with server-side rendering.
+**A light, MDX-first CMS on Astro and Cloudflare Workers.**
+The public site is deployed on Workers; the admin runs on your machine; content lives in D1 and media in R2.
 
-This project is developed in the open. It is generic: branding, the canonical
-URL and the default metadata live in `packages/core/src/lib/site.ts`, so the
-same code can drive any blog. See [`docs/deployment.md`](./docs/deployment.md) for
-the boundary between the template and a deployment.
+[![License](https://shieldcn.dev/github/bc1pzzfnxl/pzz-cms/license.svg)](./LICENSE)
+[![CI](https://shieldcn.dev/github/bc1pzzfnxl/pzz-cms/ci.svg)](https://github.com/bc1pzzfnxl/pzz-cms/actions)
+[![Stars](https://shieldcn.dev/github/bc1pzzfnxl/pzz-cms/stars.svg)](https://github.com/bc1pzzfnxl/pzz-cms/stargazers)
+[![PRs welcome](https://shieldcn.dev/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-New here? Follow [`docs/getting-started.md`](./docs/getting-started.md): from a
-fresh clone to a live blog with a working local admin in six steps.
+[![Astro](https://shieldcn.dev/badge/Astro-5-BC52EE.svg?logo=astro&logoColor=white)](https://astro.build)
+[![Cloudflare Workers](https://shieldcn.dev/badge/Cloudflare_Workers-deployed-F38020.svg?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
+[![TypeScript](https://shieldcn.dev/badge/TypeScript-strict-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Bun](https://shieldcn.dev/badge/Bun-1.4-000000.svg?logo=bun&logoColor=white)](https://bun.sh)
+[![Tailwind CSS](https://shieldcn.dev/badge/Tailwind_CSS-v4-06B6D4.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![MDX](https://shieldcn.dev/badge/MDX-content-1B1F24.svg?logo=mdx&logoColor=white)](https://mdxjs.com)
+[![Biome](https://shieldcn.dev/badge/Biome-lint_%2B_format-60A5FA.svg?logo=biome&logoColor=white)](https://biomejs.dev)
+[![Vitest](https://shieldcn.dev/badge/Vitest-tested-6E9F18.svg?logo=vitest&logoColor=white)](https://vitest.dev)
+[![Playwright](https://shieldcn.dev/badge/Playwright-e2e-2EAD33.svg)](https://playwright.dev)
 
-## Model: deployed site, local CMS
+[Getting started](./docs/getting-started.md) ·
+[Deployment](./docs/deployment.md) ·
+[Architecture](./docs/spec/split-site-cms.md) ·
+[Contributing](./CONTRIBUTING.md)
 
-The repository is a bun-workspaces monorepo:
+</div>
+
+---
+
+## Why pzz-cms
+
+- **The admin is never deployed.** The public Worker serves the site only: no admin routes, no login form, no session store, no secrets in production. The CMS runs on `localhost` and writes straight to D1/R2, which is the whole security boundary.
+- **One content seam.** `packages/core/src/content` is the only module that talks to D1: pages, RSS, sitemap, admin and scripts all go through it.
+- **Compiled at save time.** MDX is rendered to HTML when you save, so the Worker serves static HTML and the article body carries no MDX compiler.
+- **Batteries included.** Sitemap, RSS, `llms.txt`, canonical URLs, Open Graph, JSON-LD (`BlogPosting`, `BreadcrumbList`, `Person`, `CollectionPage`), 301 redirects on slug changes, table of contents, reading typography.
+- **A real media pipeline.** Images are converted to WebP in the browser, uploaded with 480/800/1200 px variants, served from R2 behind the edge cache, and garbage-collected after a grace period.
+- **Editable appearance.** Colours are six tokens per mode, edited in the admin with a live preview and stored in D1; callouts keep their semantic palettes.
+- **Checked like production.** Biome, strict TypeScript, Vitest, Playwright end-to-end, and a CI pipeline on every push.
+
+## Architecture
+
+```
+┌─────────────────────────────┐         ┌───────────────────────────────┐
+│  apps/site — public Worker  │         │  apps/cms — localhost:8788    │
+│  SSR pages, RSS, sitemap    │         │  admin UI, MDX editor         │
+└──────────────┬──────────────┘         └───────────────┬───────────────┘
+               │                                        │
+               │        packages/core (content)         │
+               └───────────────────┬────────────────────┘
+                                   ▼
+                    ┌──────────────────────┐    ┌──────────────────┐
+                    │  D1 — articles,      │    │  R2 — media      │
+                    │  categories, docs    │    │  + variants      │
+                    └──────────────────────┘    └──────────────────┘
+```
 
 | Package                           | Role                                                                                        |
 | --------------------------------- | ------------------------------------------------------------------------------------------- |
 | `apps/site` (`@pzz-cms/site`)     | The public site. The **only deployable app**.                                               |
 | `apps/cms` (`@pzz-cms/cms`)       | The admin. **Never deployed**: it runs locally and writes directly to the production D1/R2. |
-| `packages/core` (`@pzz-cms/core`) | The shared content module, helpers and MDX components.                                      |
+| `packages/core` (`@pzz-cms/core`) | The content module, helpers, pure styles and MDX components.                                |
 
-There is no authentication: the CMS runs on localhost, which is the security
-boundary. The public Worker exposes no admin routes, no auth routes and no
-secrets. See [`docs/adr/0008-split-site-cms.md`](./docs/adr/0008-split-site-cms.md) and
-[`docs/spec/split-site-cms.md`](./docs/spec/split-site-cms.md).
+Read [`docs/spec/split-site-cms.md`](./docs/spec/split-site-cms.md) for the layout and [`docs/adr/0008-split-site-cms.md`](./docs/adr/0008-split-site-cms.md) for the decision.
 
-## Stack
+## Features
 
-- Astro with the Cloudflare adapter, server-side rendering
-- Cloudflare D1 for content, R2 for media
-- MDX content, edited with MDXEditor (CMS app only)
-- Tailwind CSS v4
-- Bun, TypeScript strict, Biome, Vitest, Playwright
+| Area            | What you get                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------- |
+| **Editor**      | MDXEditor with live preview (same compiler as publication), image upload, raw JSX support, cover with alt |
+| **Content**     | Categories, published/draft status, slug history with automatic 301s, JSON documents served at `/<slug>/` |
+| **Media**       | WebP conversion in the browser, three width variants, dimensions and alt stored in D1, R2 edge cache      |
+| **Appearance**  | Background, text, headings, muted, borders and links — per light/dark mode, with a lorem-ipsum preview    |
+| **SEO**         | Sitemap, RSS, `llms.txt`, canonical URLs, Open Graph, Twitter cards, JSON-LD, breadcrumbs, TOC            |
+| **Performance** | Server-side rendering, subsetted self-hosted fonts, no client-side framework on public pages              |
+| **Operations**  | D1 migrations, `content:sync` / `content:import` mirror, `media:gc`, `migrate` importer, parity checker   |
+| **Quality**     | Biome, strict TypeScript, Vitest, Playwright, CI, dependency audit                                        |
 
-## Requirements
+## Quick start
 
-- [Bun](https://bun.sh/) ≥ 1.4
-- [Node.js](https://nodejs.org/) — only to run the local CMS dev server
-  (`wrangler dev` cannot run under Bun; see AGENTS.md)
-- A Cloudflare account for D1, R2 and deployment
-- For the local CMS: a `wrangler` login on your machine (`bunx wrangler login`)
-
-Node and npm are otherwise not required. One-shot wrangler commands run
-through Bun (`bunx wrangler`).
-
-## Development
+Requirements: [Bun](https://bun.sh) ≥ 1.4, [Node.js](https://nodejs.org) for the admin dev server (`wrangler dev` cannot run under Bun), and a Cloudflare account for D1, R2 and deployment.
 
 ```bash
 bun install
-bun run dev            # public site on a local D1 (http://localhost:4321)
-bun run dev:cms        # admin on wrangler dev --remote → production D1/R2
-bun run fonts          # regenerate the font subsets from current content
+bunx wrangler d1 migrations apply DB --local --config apps/site/wrangler.jsonc
+bunx wrangler d1 execute DB --local --config apps/site/wrangler.jsonc --file=scripts/seed.sql
+bun run dev            # public site on a local D1 → http://localhost:4321
 ```
 
-`dev:cms` writes to the real production database: use it for editing, never for
-experiments. There is no admin on the deployed site.
-
-## Fonts
-
-The site self-hosts Geist as four committed subsets, regenerated automatically
-when content changes — never in the site build:
-
-- `apps/site/public/fonts/`: sans and mono, each split into a preloaded core
-  (ASCII, Latin-1/Latin-Extended-A letters, combining marks, common
-  punctuation) and an extended file behind `unicode-range` (Latin-1 symbols)
-  that downloads only when a page needs it.
-- `apps/site/src/styles/fonts.css`: the matching `@font-face` rules.
-
-Automation:
-
-- `bun run fonts` dumps every article (drafts included) from remote D1 and
-  regenerates the subsets; `deploy` runs it before `build:site`, so deployed
-  fonts always match published content. If the dump fails, it keeps the
-  committed subsets and exits 0.
-- `dev:cms` also starts `bun run fonts:watch` (scripts/fonts-watch.ts), which
-  polls the article table while the admin is open and regenerates on change;
-  the site dev server picks the new files up live. Outputs are skipped when
-  byte-identical, so no-op edits never touch the files.
-
-Manual regeneration (after a fontsource upgrade, or when the site starts using
-weights outside 400–700):
+The admin runs against real Cloudflare resources: copy `apps/cms/wrangler.jsonc` to a gitignored `apps/cms/wrangler.local.jsonc`, fill in your D1 and R2 ids, then:
 
 ```bash
-bun run fonts   # warns about used characters the subsets do not cover
-bun run check
+bunx wrangler login
+bun run dev:cms        # admin → http://localhost:8788/admin/
 ```
 
-`scripts/inspect-font.ts`, `scripts/font-charset.ts` and `scripts/font-measure.ts`
-audit coverage and regressions; `scripts/font-pixel-diff.ts` +
-`scripts/font-diff-report.ts` (with `scripts/font-seed.ts`) prove rendering is
-unchanged by screenshotting the site before/after and diffing pixels.
+> `dev:cms` writes to the database configured in `wrangler.local.jsonc`. Use it for editing, not for experiments, and never commit that file.
 
-## Checks
+Step-by-step, from an empty Cloudflare account to a live blog: [`docs/getting-started.md`](./docs/getting-started.md).
 
-```bash
-bun run check          # Biome + Astro typecheck (both apps) + Vitest
-bun run lint           # Biome only
-bun run typecheck      # astro check for site and cms
-bun run test           # Vitest
-bun run e2e            # Playwright (needs the workers booted; see CI)
-bun audit              # dependency audit; must stay clean
-```
+## Scripts
+
+| Command                              | What it does                                               |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `bun run dev`                        | Public site with the Astro dev server                      |
+| `bun run dev:cms`                    | Admin on `wrangler dev --remote`, plus the font watcher    |
+| `bun run build:site`                 | The only deployable build                                  |
+| `bun run build:cms`                  | Admin build, verification only                             |
+| `bun run check`                      | Biome + typecheck (both apps) + Vitest                     |
+| `bun run e2e`                        | Playwright end-to-end (workers booted)                     |
+| `bun run fonts`                      | Regenerate the committed font subsets from current content |
+| `bun run deploy`                     | `fonts` + `build:site` + `wrangler deploy`                 |
+| `bun run migrate ../your-blog/files` | Import an existing Markdown blog into D1                   |
+| `bun run parity <old> <new>`         | Compare two sitemaps, URL by URL                           |
+| `bun run content:sync`               | Mirror D1 text content into `content/`                     |
+| `bun run content:import`             | Restore that mirror into D1                                |
+| `bun run media:gc`                   | Delete media rows and R2 objects no article references     |
 
 ## Deployment
 
 ```bash
-bun run deploy         # build:site && wrangler deploy (apps/site/wrangler.jsonc)
+bun run deploy         # build:site then wrangler deploy --config apps/site/wrangler.jsonc
 ```
 
-`apps/site/wrangler.jsonc` is a template. Fill in your own D1 and R2 IDs before
-deploying. A deployment repository carries its own gitignored copy
-(`wrangler.local.jsonc`) with real IDs (see `docs/deployment.md` and
-`docs/getting-started.md`).
+Fill `apps/site/wrangler.jsonc` with your own D1 database id and R2 bucket before the first deploy; never commit real ids. A deployment repository keeps its own gitignored copy, and only ever receives `apps/site` and `packages/core` — see [`docs/deployment.md`](./docs/deployment.md).
 
-### Cloudflare Workers Builds
+Workers Builds users: set the build command to `bun run build:site` and the `BUN_VERSION` variable to `latest`.
 
-If you use Workers Builds, set the build command to `bun run build:site` and
-the `BUN_VERSION` build variable to `latest`. Older Bun 1.2 images cannot read
-the `bun.lock` lockfile.
+## Cost control
 
-## R2 cost control
+R2's free tier is 10 GB, 1M Class A and 10M Class B operations per month. Media responses go through the Cache API, so R2 is read at most once per colo per object; uploads are capped at 1 MB with WebP conversion in the browser. Set a hard spending limit in the Cloudflare dashboard (notifications alone do not cap usage).
 
-R2's free tier is 10 GB storage, 1M Class A (writes) and 10M Class B (reads)
-operations per month. Three things keep usage inside it:
+## Documentation
 
-- **Edge caching.** Media responses are stored with the Cache API
-  (`caches.default`), so image views are served from Cloudflare's cache, not R2.
-  R2 is read at most once per colo per object. Verified: `cf-cache-status: HIT`
-  on repeat requests.
-- **Upload caps.** Images are converted to WebP in the browser (max 1600 px
-  wide) and the upload endpoint rejects anything above 1 MB.
-- **Spending limit.** Set a hard cap in the dashboard: **Manage Account →
-  Billing → set a spending limit**. Notifications alone do not cap usage.
+| Document                                                       | Contents                                           |
+| -------------------------------------------------------------- | -------------------------------------------------- |
+| [`docs/getting-started.md`](./docs/getting-started.md)         | From a fresh clone to a live blog in six steps     |
+| [`docs/deployment.md`](./docs/deployment.md)                   | Template vs deployment, what is shared, sync rules |
+| [`docs/spec/split-site-cms.md`](./docs/spec/split-site-cms.md) | App boundaries and file layout                     |
+| [`docs/backup.md`](./docs/backup.md)                           | Mirror format, restore drill, Time Travel runbook  |
+| [`docs/slug.md`](./docs/slug.md)                               | Slug pipeline and the MDX render rules             |
+| [`docs/adr/`](./docs/adr)                                      | Architecture decision records                      |
+| [`PLAN.md`](./PLAN.md)                                         | Project plan, phases and open points               |
+| [`GLOSSARY.md`](./GLOSSARY.md)                                 | Shared vocabulary                                  |
 
-## Migration
+## Contributing
 
-Import an existing Markdown blog into D1:
+Changes go through a branch and a pull request; `bun run check` must pass. Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) for setup, commit conventions and the review checklist. The data policy is strict: this repository holds code only — never articles, images, database dumps or secrets.
 
-```bash
-bun run migrate ../your-blog/src/content   # writes migration-output/ (gitignored)
-bunx wrangler d1 execute DB --remote --config apps/site/wrangler.jsonc --file=migration-output/articles.sql
-bunx wrangler d1 execute DB --remote --config apps/site/wrangler.jsonc --file=migration-output/media.sql
-bash migration-output/r2-upload.sh
-```
+## License
 
-Compare the old blog and the CMS, URL by URL:
-
-```bash
-bun run parity https://example.com https://your-worker.workers.dev /sitemap-index.xml
-```
-
-## Content mirror
-
-Keep a Git history of the text content, without storing images:
-
-```bash
-bun run content:sync -- --config=apps/site/wrangler.jsonc
-bun run content:import -- --config=apps/site/wrangler.jsonc
-bun run media:gc -- --bucket=<r2-bucket> --config=apps/site/wrangler.jsonc
-```
-
-`content:sync` mirrors published articles by default; `--all` includes drafts
-and requires a private repository. `content:import` restores text and media
-metadata into D1. `media:gc` deletes orphaned media after a 7-day grace period.
-Recovery and Time Travel procedures: [`docs/backup.md`](./docs/backup.md).
+[MIT](./LICENSE).

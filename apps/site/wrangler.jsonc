@@ -10,9 +10,9 @@
       "binding": "DB",
       "database_name": "pzz-cms",
       "database_id": "00000000-0000-0000-0000-000000000000",
-      // Explicit: the default (migrations/ next to the config) breaks when
-      // apps/site/migrations is a git symlink checked out as a plain file
-      // on Windows (wrangler would silently apply nothing).
+      // The migrations live at the repository root. Point at them explicitly:
+      // the default (a migrations/ folder next to this config) makes wrangler
+      // silently apply nothing when that copy is missing.
       "migrations_dir": "../../migrations"
     }
   ],
