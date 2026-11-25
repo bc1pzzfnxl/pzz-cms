@@ -30,15 +30,14 @@ bun run fonts          # regenerate the font subsets from current content
 bun run build:site     # the only deployable build
 bun run build:cms      # admin build, verification only
 bun run check          # Biome + typecheck (both apps) + Vitest
-bunx wrangler <cmd>    # wrangler only runs through Bun, there is no node binary
+bunx wrangler <cmd>    # one-shot wrangler commands (d1, r2, migrations, deploy)
 ```
 
-Never use npm, pnpm or npx. Wrangler's global binary needs `node`; use
-`bunx wrangler` for one-shot commands (d1 execute, r2 object, migrations,
-deploy). The **dev server** (`bun run dev:cms`) must run under Node: Bun's
-`fetch()` ignores the undici dispatcher that Miniflare's dev proxy relies on
-(bun #39247). Node is installed at `~/.local/node` and symlinked into
-`~/.bun/bin/node`; `scripts/dev-cms.ts` drives wrangler with it.
+Never use npm, pnpm or npx. Use `bunx wrangler` for one-shot commands (d1
+execute, r2 object, migrations, deploy). The **dev server** (`bun run dev:cms`)
+must run under Node: Bun's `fetch()` ignores the undici dispatcher that
+Miniflare's dev proxy relies on (bun #39247). Install Node and make `node`
+available on your `PATH`; `scripts/dev-cms.ts` drives wrangler with it.
 
 ## Rules
 
