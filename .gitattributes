@@ -1,0 +1,9 @@
+# Normalize line endings: the repository stores LF, whatever the platform.
+* text=auto eol=lf
+
+# Binary assets (never converted, never diffed).
+*.woff2 binary
+*.webp binary
+*.png binary
+*.jpg binary
+*.ico binary
