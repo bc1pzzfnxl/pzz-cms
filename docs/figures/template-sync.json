@@ -1,0 +1,15 @@
+{
+  "kind": "branchFlow",
+  "title": "Syncing the template into a deployment",
+  "intent": "A deployment receives apps/site and packages/core; apps/cms never leaves the template.",
+  "data": [
+    { "label": "tag in the template" },
+    {
+      "label": "site or core?",
+      "type": "decision",
+      "no": { "label": "not copied", "to": "apps/cms stays local" }
+    },
+    { "label": "deployment repo" },
+    { "label": "deploy" }
+  ]
+}

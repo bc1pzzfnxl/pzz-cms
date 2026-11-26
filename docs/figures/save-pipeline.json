@@ -1,0 +1,6 @@
+{
+  "kind": "flow",
+  "title": "Saving an article",
+  "intent": "The Worker never compiles MDX: it serves the HTML written at save time.",
+  "data": ["edit in the admin", "compile MDX", "D1 row", "Worker SSR"]
+}

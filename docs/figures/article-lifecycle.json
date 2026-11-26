@@ -1,0 +1,10 @@
+{
+  "kind": "stateMachine",
+  "title": "Life of an article",
+  "intent": "Renaming a published article keeps the old URL alive through slug history.",
+  "data": [
+    { "from": "draft", "event": "publish", "to": "published" },
+    { "from": "published", "event": "unpublish", "to": "draft" },
+    { "from": "published", "event": "rename the slug", "to": "published (301)" }
+  ]
+}

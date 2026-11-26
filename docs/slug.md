@@ -68,6 +68,19 @@ script. What the compiler produces is what the browser paints.
   `"ignore"` so the auth API is not redirected; middleware 301s page URLs
   without the slash.
 
+The 301 is a row in `redirects`, written when the slug changes, not a hand-made
+rule:
+
+```
+states  [draft] · published · published (301)
+
+draft     ──[ publish         ]──► published
+published ──[ unpublish       ]──► draft
+published ──[ rename the slug ]──► published (301)
+
+[ ] marks the start. Ends: published (301).
+```
+
 ### Markdown first
 
 Write prose in Markdown. Reach for a component only when a frame, table,
