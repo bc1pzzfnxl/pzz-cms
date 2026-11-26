@@ -39,21 +39,30 @@ The public site is deployed on Workers; the admin runs on your machine; content 
 - **Editable appearance.** Colours are six tokens per mode, edited in the admin with a live preview and stored in D1; callouts keep their semantic palettes.
 - **Checked like production.** Biome, strict TypeScript, Vitest, Playwright end-to-end, and a CI pipeline on every push.
 
-## Architecture
+Saving an article writes finished HTML, so the Worker never sees MDX:
 
 ```
-┌─────────────────────────────┐         ┌───────────────────────────────┐
-│  apps/site — public Worker  │         │  apps/cms — localhost:8788    │
-│  SSR pages, RSS, sitemap    │         │  admin UI, MDX editor         │
-└──────────────┬──────────────┘         └───────────────┬───────────────┘
-               │                                        │
-               │        packages/core (content)         │
-               └───────────────────┬────────────────────┘
-                                   ▼
-                    ┌──────────────────────┐    ┌──────────────────┐
-                    │  D1 — articles,      │    │  R2 — media      │
-                    │  categories, docs    │    │  + variants      │
-                    └──────────────────────┘    └──────────────────┘
+┌───────────────────┐     ┌─────────────┐     ┌────────┐     ┌────────────┐
+│ edit in the admin │ ──► │ compile MDX │ ──► │ D1 row │ ──► │ Worker SSR │
+└───────────────────┘     └─────────────┘     └────────┘     └────────────┘
+```
+
+## Architecture
+
+Two planes share one database: the admin writes, the Worker reads.
+
+```
+YOUR MACHINE                         CLOUDFLARE
+┌──────────────────────┐             ┌──────────────────────┐
+│ apps/cms · :8788     │             │ apps/site · Worker   │
+│ admin + MDX editor   │             │ SSR, RSS, sitemap    │
+└──────────┬───────────┘             └──────────┬───────────┘
+           │ writes                             │ reads
+           ▼                                    ▼
+    ┌──────────────────────────────────────────────────┐
+    │ D1 · articles, categories, settings              │
+    │ R2 · media, width variants                       │
+    └──────────────────────────────────────────────────┘
 ```
 
 | Package                           | Role                                                                                        |
@@ -140,6 +149,7 @@ R2's free tier is 10 GB, 1M Class A and 10M Class B operations per month. Media 
 | [`docs/spec/split-site-cms.md`](./docs/spec/split-site-cms.md) | App boundaries and file layout                     |
 | [`docs/backup.md`](./docs/backup.md)                           | Mirror format, restore drill, Time Travel runbook  |
 | [`docs/slug.md`](./docs/slug.md)                               | Slug pipeline and the MDX render rules             |
+| [`docs/figures/`](./docs/figures)                              | Figure specs and how to redraw them                |
 | [`docs/adr/`](./docs/adr)                                      | Architecture decision records                      |
 | [`PLAN.md`](./PLAN.md)                                         | Project plan, phases and open points               |
 | [`GLOSSARY.md`](./GLOSSARY.md)                                 | Shared vocabulary                                  |
