@@ -11,6 +11,7 @@ const MIGRATIONS = [
   "../../migrations/0003_categories.sql",
   "../../migrations/0004_category_description.sql",
   "../../migrations/0005_settings.sql",
+  "../../migrations/0006_revisions.sql",
 ].map((path) => readFileSync(new URL(path, import.meta.url), "utf8"));
 
 function applyMigration(sqlite: Sqlite, sql: string) {
@@ -320,5 +321,89 @@ describe("content module — admin write path", () => {
       .query("UPDATE settings SET value = ? WHERE key = 'theme'")
       .run(JSON.stringify({ light: { background: "red" } }));
     expect((await content.getTheme()).light.background).toBe("#ffffff");
+  });
+
+  describe("revisions", () => {
+    it("bumps the revision on every update", async () => {
+      const before = await content.getArticleById("1");
+      expect(before?.rev).toBe(1);
+
+      const saved = await content.updateArticle("1", { title: "Renamed" }, before?.rev);
+      expect(saved.rev).toBe(2);
+      expect(saved.title).toBe("Renamed");
+    });
+
+    it("rejects a write based on a stale revision", async () => {
+      const first = await content.getArticleById("1");
+      await content.updateArticle("1", { title: "First writer" }, first?.rev);
+
+      await expect(
+        content.updateArticle("1", { title: "Second writer" }, first?.rev),
+      ).rejects.toMatchObject({ code: "REVISION_CONFLICT" });
+
+      const current = await content.getArticleById("1");
+      expect(current?.title).toBe("First writer");
+      expect(current?.rev).toBe(2);
+    });
+
+    it("keeps unconditional writes working for scripts", async () => {
+      const saved = await content.updateArticle("1", { title: "No token" });
+      expect(saved.rev).toBe(2);
+    });
+
+    it("does not bump the revision when only the status changes", async () => {
+      const before = await content.getArticleById("1");
+      const published = await content.setStatus("1", "draft");
+      expect(published.rev).toBe(before?.rev);
+    });
+  });
+
+  describe("attention", () => {
+    it("reports stale drafts, missing metadata and orphan media", async () => {
+      // A draft untouched for years, one published article with no description
+      // and no cover, one referenced image and one orphan.
+      sqlite
+        .query(
+          "INSERT INTO articles (id, slug, title, description, body_mdx, body_html, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .run(
+          "old",
+          "vieux-brouillon",
+          "Old draft",
+          "",
+          "![img](/media/images/used.webp)",
+          '<img src="/media/images/used.webp">',
+          "draft",
+          "2020-01-01T00:00:00Z",
+        );
+      sqlite
+        .query(
+          "INSERT INTO articles (id, slug, title, description, body_mdx, status) VALUES (?, ?, ?, ?, ?, ?)",
+        )
+        .run("bare", "sans-meta", "No metadata", "", "", "published");
+      sqlite
+        .query("INSERT INTO media (id, r2_key) VALUES (?, ?), (?, ?)")
+        .run("m1", "images/used.webp", "m2", "images/orphan.webp");
+
+      const attention = await content.getAttention();
+
+      expect(attention.staleDraftCount).toBe(1);
+      expect(attention.staleDrafts.map((draft) => draft.slug)).toEqual(["vieux-brouillon"]);
+      expect(attention.missingDescription).toBe(1);
+      expect(attention.missingCover).toBe(3);
+      expect(attention.orphanMedia).toBe(1);
+    });
+
+    it("reports nothing when the blog is healthy", async () => {
+      sqlite.query("DELETE FROM articles").run();
+      const attention = await content.getAttention();
+      expect(attention).toEqual({
+        staleDrafts: [],
+        staleDraftCount: 0,
+        missingDescription: 0,
+        missingCover: 0,
+        orphanMedia: 0,
+      });
+    });
   });
 });

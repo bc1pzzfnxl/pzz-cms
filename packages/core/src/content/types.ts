@@ -33,6 +33,8 @@ export interface Article {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Optimistic concurrency token. Bumped by every body update. */
+  rev: number;
 }
 
 /** The fields a listing needs. Kept small so index queries stay cheap. */
@@ -150,6 +152,8 @@ export interface Document {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Optimistic concurrency token. Bumped by every body update. */
+  rev: number;
 }
 
 export interface AdminDocumentSummary {
@@ -185,6 +189,7 @@ export interface DocumentRow {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  rev: number;
 }
 
 /** Shape of an `articles` row as stored in D1. */
@@ -203,4 +208,5 @@ export interface ArticleRow {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  rev: number;
 }

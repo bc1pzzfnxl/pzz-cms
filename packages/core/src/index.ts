@@ -5,6 +5,7 @@
 export { JsonDocumentView } from "./components/documents/json-document";
 export * from "./content";
 export * from "./content/types";
+export * from "./lib/errors";
 export * from "./lib/format-number";
 export * from "./lib/graph-markdown";
 export * from "./lib/graph-motion";
