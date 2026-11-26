@@ -35,6 +35,7 @@ import {
   renderMdxToHtml,
 } from "@pzz-cms/core";
 import { useEffect, useRef, useState } from "react";
+import { ApiError, toApiError } from "../../lib/client";
 
 type Status = "draft" | "published";
 
@@ -50,6 +51,8 @@ interface InitialArticle {
   categoryId: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+  /** Optimistic concurrency token, sent back on save. */
+  rev: number;
 }
 
 interface Props {
@@ -255,6 +258,8 @@ export default function ArticleEditor({ initial, categories }: Props) {
   const [description, setDescription] = useState(initial?.description ?? "");
   const [bodyMdx, setBodyMdx] = useState(initial?.bodyMdx ?? "");
   const [status, setStatus] = useState<Status>(initial?.status ?? "draft");
+  const [rev, setRev] = useState(initial?.rev ?? 0);
+  const [conflict, setConflict] = useState(false);
   const [ogImageKey, setOgImageKey] = useState<string | null>(initial?.ogImageKey ?? null);
   const [coverAlt, setCoverAlt] = useState(initial?.coverAlt ?? "");
   const [categoryId, setCategoryId] = useState<string | null>(initial?.categoryId ?? null);
@@ -337,8 +342,8 @@ export default function ArticleEditor({ initial, categories }: Props) {
 
     const res = await fetch("/admin/api/media/", { method: "POST", body: form });
     if (!res.ok) {
-      const err = (await res.json().catch(() => ({}))) as { error?: string };
-      throw new Error(err.error ?? "Échec de l'envoi de l'image.");
+      const err = await toApiError(res);
+      throw new Error(err.message);
     }
     const data = (await res.json()) as {
       key: string;
@@ -362,9 +367,9 @@ export default function ArticleEditor({ initial, categories }: Props) {
       const data = await uploadMedia(file, coverAlt.trim());
       setOgImageKey(data.key);
       setCoverUrl(data.url);
-      setMessage("Image envoyée. Enregistrez pour l'appliquer.");
+      setMessage("Image uploaded. Save to apply it.");
     } catch (error) {
-      setMessage(`Erreur image : ${error instanceof Error ? error.message : String(error)}`);
+      setMessage(`Image error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setUploading(false);
     }
@@ -375,9 +380,9 @@ export default function ArticleEditor({ initial, categories }: Props) {
   const uploadBodyImage = (image: File): Promise<string> =>
     uploadMedia(image, "").then((data) => data.url);
 
-  async function save(): Promise<{ id: string; slug: string } | null> {
+  async function save(): Promise<{ id: string; slug: string; rev: number } | null> {
     if (!title.trim()) {
-      setMessage("Le titre est obligatoire.");
+      setMessage("The title is required.");
       return null;
     }
 
@@ -395,6 +400,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
         ogImageKey,
         coverAlt: coverAlt.trim() || null,
         categoryId,
+        ...(articleId ? { rev } : {}),
       };
 
       const res = await fetch(
@@ -407,22 +413,28 @@ export default function ArticleEditor({ initial, categories }: Props) {
       );
 
       if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        setMessage(err.error ?? "Erreur à l'enregistrement.");
+        const err = await toApiError(res);
+        if (err instanceof ApiError && err.code === "REVISION_CONFLICT") {
+          setConflict(true);
+          setMessage(err.message);
+          return null;
+        }
+        setMessage(err.issueFor("title") ?? err.message);
         return null;
       }
 
-      const data = (await res.json()) as { id: string; slug: string };
+      const data = (await res.json()) as { id: string; slug: string; rev: number };
       if (!articleId) {
         window.location.href = `/admin/${data.id}`;
       } else {
         setSlug(data.slug);
+        setRev(data.rev);
         setMessage(null);
-        (window as Window & { toast?: (message: string) => void }).toast?.("Enregistré.");
+        (window as Window & { toast?: (message: string) => void }).toast?.("Saved.");
       }
       return data;
     } catch (error) {
-      setMessage(`Erreur : ${error instanceof Error ? error.message : String(error)}`);
+      setMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     } finally {
       setBusy(false);
@@ -441,7 +453,8 @@ export default function ArticleEditor({ initial, categories }: Props) {
         body: JSON.stringify({ status: next }),
       });
       if (!res.ok) {
-        setMessage("Erreur lors du changement de statut.");
+        const err = await toApiError(res);
+        setMessage(err.message);
         return;
       }
       setStatus(next);
@@ -475,12 +488,12 @@ export default function ArticleEditor({ initial, categories }: Props) {
             <path d="m9 18 6-6-6-6" />
           </svg>
           <span className="max-w-[420px] truncate font-medium text-foreground">
-            {articleId ? title || "Sans titre" : "Nouvel article"}
+            {articleId ? title || "Untitled" : "New article"}
           </span>
           {status === "published" ? (
-            <span className="badge badge-published ml-1">publié</span>
+            <span className="badge badge-published ml-1">published</span>
           ) : (
-            <span className="badge badge-draft ml-1">brouillon</span>
+            <span className="badge badge-draft ml-1">draft</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -488,7 +501,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
             Annuler
           </a>
           <button type="submit" data-testid="save" disabled={busy} className="btn btn-outline">
-            Enregistrer
+            Save
           </button>
           {status === "published" ? (
             <button
@@ -498,7 +511,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
               disabled={busy}
               className="btn btn-outline"
             >
-              Dépublier
+              Unpublish
             </button>
           ) : (
             <button
@@ -508,7 +521,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
               disabled={busy}
               className="btn btn-primary"
             >
-              Publier
+              Publish
             </button>
           )}
         </div>
@@ -519,7 +532,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
           <div className="card space-y-5 p-6">
             <div>
               <label className="block text-sm font-medium" htmlFor="title">
-                Titre
+                Title
               </label>
               <input
                 id="title"
@@ -532,14 +545,14 @@ export default function ArticleEditor({ initial, categories }: Props) {
 
             <div>
               <label className="block text-sm font-medium" htmlFor="slug">
-                Slug (optionnel, généré depuis le titre)
+                Slug (optional, generated from the title)
               </label>
               <input
                 id="slug"
                 data-testid="slug"
                 className={inputClass}
                 value={slug}
-                placeholder="le-mystere-de-barabbas"
+                placeholder="the-barabbas-mystery"
                 onChange={(event) => setSlug(event.target.value)}
               />
             </div>
@@ -560,7 +573,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
 
             <div>
               <label className="block text-sm font-medium" htmlFor="category">
-                Catégorie
+                Category
               </label>
               <select
                 id="category"
@@ -569,7 +582,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
                 value={categoryId ?? ""}
                 onChange={(event) => setCategoryId(event.target.value || null)}
               >
-                <option value="">Sans catégorie</option>
+                <option value="">No category</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -579,23 +592,23 @@ export default function ArticleEditor({ initial, categories }: Props) {
             </div>
 
             <div>
-              <span className="block text-sm font-medium">Image de couverture</span>
+              <span className="block text-sm font-medium">Cover image</span>
               {coverUrl && (
                 <img src={coverUrl} alt="" className="mt-2 h-32 rounded-md border object-cover" />
               )}
               <label className="mt-3 block text-sm">
-                <span className="font-medium">Texte alternatif de la couverture</span>
+                <span className="font-medium">Cover alt text</span>
                 <input
                   className={inputClass}
                   value={coverAlt}
                   onChange={(event) => setCoverAlt(event.target.value)}
-                  placeholder="Décrivez l'image : sujet, source, date"
+                  placeholder="Describe the image: subject, source, date"
                   data-testid="cover-alt"
                 />
               </label>
               <p className="mt-1 text-xs text-muted-foreground">
-                Affiché sous l'image et lu par les lecteurs d'écran. Vide : le titre de l'article
-                sert de repli.
+                Shown under the image and read by screen readers. Empty: the article title is used
+                as the fallback.
               </p>
               <input
                 type="file"
@@ -609,17 +622,17 @@ export default function ArticleEditor({ initial, categories }: Props) {
                 className="mt-2 block text-sm"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Convertie en WebP dans le navigateur avant l'envoi.
+                Converted to WebP in the browser before upload.
               </p>
             </div>
           </div>
 
           <div className="card p-4">
-            <span className="block text-sm font-medium">Contenu (MDX)</span>
+            <span className="block text-sm font-medium">Body (MDX)</span>
             <p className="mt-1 text-xs text-muted-foreground">
-              Composants : Callout, Quote, Steps, Terminal, Faq, Figure, GraphCompare, GraphStat,
-              GraphTable, GraphTimeline, Stat, Reveal, Verse. Pour du JSX brut, utilisez le mode
-              Source (bouton Diff/Source).
+              Components: Callout, Quote, Steps, Terminal, Faq, Figure, GraphCompare, GraphStat,
+              GraphTable, GraphTimeline, Stat, Reveal, Verse. For raw JSX, use Source mode (the
+              Diff/Source toggle).
             </p>
             <div
               data-testid="body-editor"
@@ -669,7 +682,7 @@ export default function ArticleEditor({ initial, categories }: Props) {
           </div>
 
           <div className="card p-4">
-            <span className="block text-sm font-medium">Aperçu</span>
+            <span className="block text-sm font-medium">Preview</span>
             <div
               data-testid="preview"
               className="mdx-preview mt-1 rounded-md border p-4"
@@ -678,6 +691,22 @@ export default function ArticleEditor({ initial, categories }: Props) {
             />
             {previewError && <p className="mt-1 text-xs text-destructive">{previewError}</p>}
           </div>
+
+          {conflict && (
+            <div className="card border-destructive/40 p-4 text-sm" data-testid="conflict">
+              <p className="font-medium">This article changed in another tab.</p>
+              <p className="mt-1 text-muted-foreground">
+                Reload to get the latest version; this page will not overwrite it.
+              </p>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm mt-3"
+                onClick={() => window.location.reload()}
+              >
+                Reload
+              </button>
+            </div>
+          )}
 
           {message && (
             <p data-testid="message" className="text-sm text-muted-foreground">
@@ -691,42 +720,42 @@ export default function ArticleEditor({ initial, categories }: Props) {
             <div className="text-[15px] font-medium">Publication</div>
             <div className="mt-4 space-y-4">
               <div>
-                <div className="field-label">Statut</div>
+                <div className="field-label">Status</div>
                 {status === "published" ? (
-                  <span className="badge badge-published">publié</span>
+                  <span className="badge badge-published">published</span>
                 ) : (
-                  <span className="badge badge-draft">brouillon</span>
+                  <span className="badge badge-draft">draft</span>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-3 text-[13px]">
                 <div>
-                  <div className="text-muted-foreground">Créé</div>
+                  <div className="text-muted-foreground">Created</div>
                   <div className="mt-0.5 font-medium">
                     {formatEditorDate(initial?.createdAt ?? null)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Modifié</div>
+                  <div className="text-muted-foreground">Updated</div>
                   <div className="mt-0.5 font-medium">
                     {formatEditorDate(initial?.updatedAt ?? null)}
                   </div>
                 </div>
               </div>
               <div className="rounded-md border p-3 text-[13px]">
-                <div className="text-muted-foreground">URL publique</div>
+                <div className="text-muted-foreground">Public URL</div>
                 <div className="mt-1 truncate font-mono text-xs">/{slug || "…"}/</div>
               </div>
             </div>
           </div>
           <div className="card p-6 text-[13px] text-muted-foreground">
-            <div className="text-[15px] font-medium text-foreground">Aide</div>
+            <div className="text-[15px] font-medium text-foreground">Help</div>
             <p className="mt-1.5">
-              L'aperçu compile le MDX avec le même moteur que la publication : ce que tu vois est ce
-              qui sera servi.
+              The preview compiles the MDX with the same engine as publication: what you see is what
+              gets served.
             </p>
             <p className="mt-2">
-              Les images ajoutées dans le corps sont converties en WebP, envoyées sur R2 et
-              référencées avec leurs dimensions.
+              Images added in the body are converted to WebP, uploaded to R2 and referenced with
+              their dimensions.
             </p>
           </div>
         </aside>

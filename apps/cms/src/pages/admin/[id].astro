@@ -28,17 +28,18 @@ const initial = article
       categoryId: article.categoryId,
       createdAt: article.createdAt,
       updatedAt: article.updatedAt,
+      rev: article.rev,
     }
   : null;
 ---
 
-<AdminLayout title={initial ? initial.title : "Nouvel article"}>
+<AdminLayout title={initial ? initial.title : "New article"}>
     {
         id !== "new" && !initial ? (
             <div>
-                <h1 class="text-2xl font-semibold">Article introuvable</h1>
+                <h1 class="text-2xl font-semibold">Article not found</h1>
                 <a href="/admin/articles/" class="mt-4 inline-block text-sm hover:underline">
-                    ← Retour aux articles
+                    ← Back to articles
                 </a>
             </div>
         ) : (
@@ -50,3 +51,4 @@ const initial = article
         )
     }
 </AdminLayout>
+

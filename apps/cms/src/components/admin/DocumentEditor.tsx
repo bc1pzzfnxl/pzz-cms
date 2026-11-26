@@ -1,5 +1,6 @@
 import { JsonDocumentView } from "@pzz-cms/core";
 import { useState } from "react";
+import { ApiError, toApiError } from "../../lib/client";
 
 type Status = "draft" | "published";
 
@@ -10,6 +11,8 @@ interface InitialDocument {
   description: string;
   bodyJson: string;
   status: Status;
+  /** Optimistic concurrency token, sent back on save. */
+  rev: number;
 }
 
 interface Props {
@@ -24,7 +27,9 @@ export default function DocumentEditor({ initial }: Props) {
   const [description, setDescription] = useState(initial.description);
   const [bodyJson, setBodyJson] = useState(initial.bodyJson);
   const [status, setStatus] = useState<Status>(initial.status);
+  const [rev, setRev] = useState(initial.rev);
   const [message, setMessage] = useState<string | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [busy, setBusy] = useState(false);
 
   let parsed: unknown = null;
@@ -37,7 +42,7 @@ export default function DocumentEditor({ initial }: Props) {
 
   async function save(): Promise<boolean> {
     if (jsonError) {
-      setMessage(`JSON invalide : ${jsonError}`);
+      setMessage(`Invalid JSON: ${jsonError}`);
       return false;
     }
     setBusy(true);
@@ -46,16 +51,20 @@ export default function DocumentEditor({ initial }: Props) {
       const response = await fetch(`/admin/api/documents/${initial.id}/`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title, slug, description, bodyJson }),
+        body: JSON.stringify({ title, slug, description, bodyJson, rev }),
       });
       if (!response.ok) {
-        const data = (await response.json().catch(() => ({}))) as { error?: string };
-        setMessage(data.error ?? "Erreur à l'enregistrement.");
+        const error = await toApiError(response);
+        if (error instanceof ApiError && error.code === "REVISION_CONFLICT") {
+          setConflict(true);
+        }
+        setMessage(error.message);
         return false;
       }
-      const data = (await response.json()) as { slug: string };
+      const data = (await response.json()) as { slug: string; rev: number };
       setSlug(data.slug);
-      setMessage("Enregistré.");
+      setRev(data.rev);
+      setMessage("Saved.");
       return true;
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : String(cause));
@@ -75,11 +84,14 @@ export default function DocumentEditor({ initial }: Props) {
         body: JSON.stringify({ status: next }),
       });
       if (!response.ok) {
-        setMessage("Erreur lors du changement de statut.");
+        const error = await toApiError(response);
+        setMessage(error.message);
         return;
       }
+      const data = (await response.json()) as { rev: number };
+      setRev(data.rev);
       setStatus(next);
-      window.location.href = "/admin/documents";
+      window.location.href = "/admin/documents/";
     } finally {
       setBusy(false);
     }
@@ -96,7 +108,7 @@ export default function DocumentEditor({ initial }: Props) {
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label className="block text-sm font-medium" htmlFor="title">
-            Titre
+            Title
           </label>
           <input
             id="title"
@@ -151,16 +163,32 @@ export default function DocumentEditor({ initial }: Props) {
         </div>
 
         <div>
-          <span className="block text-sm font-medium">Aperçu</span>
+          <span className="block text-sm font-medium">Preview</span>
           <div className="mt-1 h-[28rem] overflow-auto rounded-md border px-4 py-3">
             {jsonError ? (
-              <p className="text-sm text-destructive">JSON invalide.</p>
+              <p className="text-sm text-destructive">Invalid JSON.</p>
             ) : (
               <JsonDocumentView data={parsed} />
             )}
           </div>
         </div>
       </div>
+
+      {conflict && (
+        <div className="card border-destructive/40 p-4 text-sm" data-testid="document-conflict">
+          <p className="font-medium">This document changed in another tab.</p>
+          <p className="mt-1 text-muted-foreground">
+            Reload to get the latest version; this page will not overwrite it.
+          </p>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm mt-3"
+            onClick={() => window.location.reload()}
+          >
+            Reload
+          </button>
+        </div>
+      )}
 
       {message && (
         <p data-testid="document-message" className="text-sm text-muted-foreground">
@@ -175,7 +203,7 @@ export default function DocumentEditor({ initial }: Props) {
           disabled={busy || jsonError !== null}
           className="btn btn-primary"
         >
-          Enregistrer
+          Save
         </button>
         {status === "published" ? (
           <button
@@ -185,7 +213,7 @@ export default function DocumentEditor({ initial }: Props) {
             disabled={busy}
             className="btn btn-outline"
           >
-            Dépublier
+            Unpublish
           </button>
         ) : (
           <button
@@ -195,11 +223,11 @@ export default function DocumentEditor({ initial }: Props) {
             disabled={busy}
             className="btn btn-outline"
           >
-            Publier
+            Publish
           </button>
         )}
         <a href={`/${slug}/`} target="_blank" rel="noreferrer" className="btn btn-outline">
-          Voir la page ↗
+          View page ↗
         </a>
       </div>
     </form>

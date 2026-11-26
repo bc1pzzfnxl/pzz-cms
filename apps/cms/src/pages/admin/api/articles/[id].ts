@@ -6,8 +6,17 @@ import {
   deleteMediaObjects,
   mediaKeysInHtml,
   mediaKeysInMarkdown,
+  RevisionConflictError,
 } from "@pzz-cms/core";
 import type { APIRoute } from "astro";
+import {
+  apiError,
+  apiOk,
+  conflictError,
+  notFoundError,
+  parseRev,
+  validationError,
+} from "../../../../lib/api";
 
 interface UpdateBody {
   title?: string;
@@ -18,13 +27,7 @@ interface UpdateBody {
   ogImageKey?: string | null;
   coverAlt?: string | null;
   categoryId?: string | null;
-}
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
+  rev?: number;
 }
 
 function articleMediaKeys(article: Article): Set<string> {
@@ -62,24 +65,40 @@ async function cleanupRemovedMedia(
 
 export const PUT: APIRoute = async ({ params, request }) => {
   const id = params.id;
-  if (!id) return json({ error: "Identifiant manquant." }, 400);
+  if (!id) return apiError("VALIDATION", "Missing article id.", 400);
 
   const content = createContent(env.DB);
   const existing = await content.getArticleById(id);
-  if (!existing) {
-    return json({ error: "Article introuvable." }, 404);
-  }
+  if (!existing) return notFoundError("Article not found.");
 
   const body = (await request.json()) as UpdateBody;
-  const article = await content.updateArticle(id, {
-    title: body.title,
-    slug: body.slug,
-    description: body.description,
-    bodyMdx: body.bodyMdx,
-    bodyHtml: body.bodyHtml,
-    ogImageKey: body.ogImageKey,
-    categoryId: body.categoryId,
-  });
+  const rev = parseRev(body.rev);
+  if (rev !== undefined && typeof rev !== "number") return validationError([rev]);
+
+  let article: Article;
+  try {
+    article = await content.updateArticle(
+      id,
+      {
+        title: body.title,
+        slug: body.slug,
+        description: body.description,
+        bodyMdx: body.bodyMdx,
+        bodyHtml: body.bodyHtml,
+        ogImageKey: body.ogImageKey,
+        categoryId: body.categoryId,
+      },
+      rev,
+    );
+  } catch (error) {
+    if (error instanceof RevisionConflictError) {
+      return conflictError(
+        "This article was changed elsewhere. Reload to get the latest version.",
+        { rev: error.actual },
+      );
+    }
+    throw error;
+  }
 
   await cleanupRemovedMedia(content, existing, article);
 
@@ -87,5 +106,5 @@ export const PUT: APIRoute = async ({ params, request }) => {
     await content.updateMediaAlt(article.ogImageKey, body.coverAlt?.trim() || null);
   }
 
-  return json({ id: article.id, slug: article.slug, status: article.status });
+  return apiOk({ id: article.id, slug: article.slug, status: article.status, rev: article.rev });
 };

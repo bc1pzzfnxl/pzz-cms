@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toApiError } from "../../lib/client";
 
 export default function DocumentUpload() {
   const [error, setError] = useState<string | null>(null);
@@ -17,15 +18,15 @@ export default function DocumentUpload() {
         body: JSON.stringify({ filename: file.name, bodyJson: text }),
       });
       if (!response.ok) {
-        const data = (await response.json().catch(() => ({}))) as { error?: string };
-        setError(data.error ?? "Échec de l'import.");
+        const apiError = await toApiError(response);
+        setError(apiError.issueFor("bodyJson") ?? apiError.message);
         setBusy(false);
         return;
       }
       const data = (await response.json()) as { id: string };
       window.location.href = `/admin/documents/${data.id}`;
     } catch (cause) {
-      setError(`JSON invalide : ${cause instanceof Error ? cause.message : String(cause)}`);
+      setError(`Invalid JSON: ${cause instanceof Error ? cause.message : String(cause)}`);
       setBusy(false);
     }
   }
@@ -33,7 +34,7 @@ export default function DocumentUpload() {
   return (
     <div className="text-right">
       <label className="btn btn-primary cursor-pointer">
-        Importer un .json
+        Import a .json
         <input
           type="file"
           accept=".json,application/json"

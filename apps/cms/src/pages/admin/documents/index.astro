@@ -12,7 +12,7 @@ const formatDate = (dateStr: string | null) => {
   const date = new Date(dateStr);
   return Number.isNaN(date.getTime())
     ? dateStr
-    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(date);
+    : new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(date);
 };
 
 const published = documents.filter((document) => document.status === "published").length;
@@ -24,7 +24,7 @@ const drafts = documents.length - published;
         <div>
             <h1 class="text-[24px] font-semibold tracking-tight">Documents</h1>
             <p class="mt-1 text-sm text-muted-foreground">
-                Pages JSON (hors articles) · {documents.length} documents · {drafts} brouillon(s)
+                JSON pages (not articles) · {documents.length} documents · {drafts} draft(s)
             </p>
         </div>
         <DocumentUpload client:load />
@@ -36,10 +36,10 @@ const drafts = documents.length - published;
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Titre</th>
+                            <th>Title</th>
                             <th>Slug</th>
-                            <th>Statut</th>
-                            <th>Modifié</th>
+                            <th>Status</th>
+                            <th>Updated</th>
                             <th class="w-[100px]" />
                         </tr>
                     </thead>
@@ -54,15 +54,15 @@ const drafts = documents.length - published;
                                 <td class="font-mono text-xs text-muted-foreground">/{document.slug}/</td>
                                 <td>
                                     {document.status === "published" ? (
-                                        <span class="badge badge-published">publié</span>
+                                        <span class="badge badge-published">published</span>
                                     ) : (
-                                        <span class="badge badge-draft">brouillon</span>
+                                        <span class="badge badge-draft">draft</span>
                                     )}
                                 </td>
                                 <td class="text-muted-foreground">{formatDate(document.updatedAt)}</td>
                                 <td class="text-right">
                                     <a href={`/admin/documents/${document.id}`} class="btn btn-ghost btn-sm">
-                                        Modifier
+                                        Edit
                                     </a>
                                 </td>
                             </tr>
@@ -70,12 +70,13 @@ const drafts = documents.length - published;
                     </tbody>
                 </table>
             ) : (
-                <p class="p-6 text-sm text-muted-foreground">Aucun document. Importe un fichier .json.</p>
+                <p class="p-6 text-sm text-muted-foreground">No documents. Import a .json file.</p>
             )
         }
     </div>
 
     <p class="mt-3 text-[13px] text-muted-foreground">
-        Chaque document est servi sur <code>/&lt;slug&gt;/</code> ; un brouillon renvoie 404.
+        Each document is served at <code>/&lt;slug&gt;/</code>; a draft returns 404.
     </p>
 </AdminLayout>
+
