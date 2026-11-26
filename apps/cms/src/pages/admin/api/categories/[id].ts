@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { createContent } from "@pzz-cms/core";
 import type { APIRoute } from "astro";
+import { apiError, apiOk, notFoundError, validationError } from "../../../../lib/api";
 
 interface UpdateBody {
   name?: string;
@@ -9,23 +10,18 @@ interface UpdateBody {
   position?: number;
 }
 
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
-}
-
 export const PUT: APIRoute = async ({ params, request }) => {
   const id = params.id;
-  if (!id) return json({ error: "Identifiant manquant." }, 400);
+  if (!id) return apiError("VALIDATION", "Missing category id.", 400);
 
   const content = createContent(env.DB);
-  if (!(await content.getCategoryById(id))) {
-    return json({ error: "Catégorie introuvable." }, 404);
-  }
+  if (!(await content.getCategoryById(id))) return notFoundError("Category not found.");
 
   const body = (await request.json()) as UpdateBody;
+  if (body.name !== undefined && !body.name.trim()) {
+    return validationError([{ path: "name", message: "The name is required." }]);
+  }
+
   const category = await content.updateCategory(id, {
     name: body.name?.trim() || undefined,
     slug: body.slug,
@@ -33,18 +29,16 @@ export const PUT: APIRoute = async ({ params, request }) => {
     position: body.position,
   });
 
-  return json(category);
+  return apiOk(category);
 };
 
 export const DELETE: APIRoute = async ({ params }) => {
   const id = params.id;
-  if (!id) return json({ error: "Identifiant manquant." }, 400);
+  if (!id) return apiError("VALIDATION", "Missing category id.", 400);
 
   const content = createContent(env.DB);
-  if (!(await content.getCategoryById(id))) {
-    return json({ error: "Catégorie introuvable." }, 404);
-  }
+  if (!(await content.getCategoryById(id))) return notFoundError("Category not found.");
 
   await content.deleteCategory(id);
-  return json({ ok: true });
+  return apiOk({ ok: true });
 };

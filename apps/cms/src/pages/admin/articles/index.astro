@@ -12,7 +12,7 @@ const formatDate = (dateStr: string | null) => {
   const date = new Date(dateStr);
   return Number.isNaN(date.getTime())
     ? dateStr
-    : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(date);
+    : new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(date);
 };
 
 const published = articles.filter((article) => article.status === "published").length;
@@ -24,14 +24,14 @@ const drafts = articles.length - published;
         <div>
             <h1 class="text-[24px] font-semibold tracking-tight">Articles</h1>
             <p class="mt-1 text-sm text-muted-foreground">
-                {articles.length} articles · {published} publiés · {drafts} brouillons
+                {articles.length} articles · {published} published · {drafts} drafts
             </p>
         </div>
         <a href="/admin/new/" class="btn btn-primary">
             <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M12 5v14M5 12h14"></path>
             </svg>
-            Nouvel article
+            New article
         </a>
     </div>
 
@@ -51,18 +51,18 @@ const drafts = articles.length - published;
                 type="search"
                 class="input with-icon"
                 style="width: 270px"
-                placeholder="Rechercher un article…"
+                placeholder="Search articles…"
                 data-article-search
-                aria-label="Rechercher un article"
+                aria-label="Search articles"
             />
         </div>
         <div class="flex items-center gap-1 rounded-md border p-0.5">
-            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="all">Tous</button>
-            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="published">Publiés</button>
-            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="draft">Brouillons</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="all">All</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="published">Published</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-filter-status="draft">Drafts</button>
         </div>
-        <select class="select" style="width: 190px" data-filter-category aria-label="Filtrer par catégorie">
-            <option value="">Toutes les catégories</option>
+        <select class="select" style="width: 190px" data-filter-category aria-label="Filter by category">
+            <option value="">All categories</option>
             {categories.map((category) => (
                 <option value={category.id}>{category.name}</option>
             ))}
@@ -75,10 +75,10 @@ const drafts = articles.length - published;
                 <table class="data-table" data-articles-table>
                     <thead>
                         <tr>
-                            <th>Titre</th>
-                            <th>Catégorie</th>
-                            <th>Statut</th>
-                            <th>Modifié</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Updated</th>
                             <th class="w-[110px]" />
                         </tr>
                     </thead>
@@ -99,20 +99,20 @@ const drafts = articles.length - published;
                                     {article.categoryId && categoryNames.has(article.categoryId) ? (
                                         <span class="badge badge-cat">{categoryNames.get(article.categoryId)}</span>
                                     ) : (
-                                        <span class="text-xs text-muted-foreground">sans catégorie</span>
+                                        <span class="text-xs text-muted-foreground">uncategorized</span>
                                     )}
                                 </td>
                                 <td>
                                     {article.status === "published" ? (
-                                        <span class="badge badge-published">publié</span>
+                                        <span class="badge badge-published">published</span>
                                     ) : (
-                                        <span class="badge badge-draft">brouillon</span>
+                                        <span class="badge badge-draft">draft</span>
                                     )}
                                 </td>
                                 <td class="text-muted-foreground">{formatDate(article.updatedAt)}</td>
                                 <td class="text-right">
                                     <a href={`/admin/${article.id}`} class="btn btn-ghost btn-sm">
-                                        Modifier
+                                        Edit
                                     </a>
                                 </td>
                             </tr>
@@ -120,11 +120,11 @@ const drafts = articles.length - published;
                     </tbody>
                 </table>
             ) : (
-                <p class="p-6 text-sm text-muted-foreground">Aucun article. Crée le premier avec « Nouvel article ».</p>
+                <p class="p-6 text-sm text-muted-foreground">No articles yet. Create the first one with "New article".</p>
             )
         }
         <div class="flex items-center justify-between border-t px-4 py-3 text-[13px] text-muted-foreground">
-            <span data-article-count>{articles.length} articles affichés</span>
+            <span data-article-count>{articles.length} articles shown</span>
         </div>
     </div>
 
@@ -134,7 +134,11 @@ const drafts = articles.length - published;
         const countLabel = document.querySelector("[data-article-count]");
         const categoryFilter = document.querySelector("[data-filter-category]") as HTMLSelectElement | null;
         const statusButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-filter-status]")];
-        let status = "all";
+
+        // `?status=published` lets the dashboard link straight to a filter.
+        const requestedStatus = new URLSearchParams(window.location.search).get("status");
+        let status =
+            requestedStatus === "published" || requestedStatus === "draft" ? requestedStatus : "all";
 
         const filterRows = () => {
             if (!table) return;
@@ -149,8 +153,12 @@ const drafts = articles.length - published;
                 row.style.display = matches ? "" : "none";
                 if (matches) visible += 1;
             }
-            if (countLabel) countLabel.textContent = `${visible} article(s) affiché(s)`;
+            if (countLabel) countLabel.textContent = `${visible} article(s) shown`;
         };
+
+        for (const button of statusButtons) {
+            button.classList.toggle("btn-outline", (button.dataset.filterStatus ?? "all") === status);
+        }
 
         search?.addEventListener("input", filterRows);
         categoryFilter?.addEventListener("change", filterRows);
@@ -163,5 +171,7 @@ const drafts = articles.length - published;
                 filterRows();
             });
         }
+
+        filterRows();
     </script>
 </AdminLayout>

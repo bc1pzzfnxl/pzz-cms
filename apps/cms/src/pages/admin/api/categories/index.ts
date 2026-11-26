@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { createContent } from "@pzz-cms/core";
 import type { APIRoute } from "astro";
+import { apiOk, issues, requiredText, validationError } from "../../../../lib/api";
 
 interface CreateBody {
   name?: string;
@@ -9,32 +10,24 @@ interface CreateBody {
   position?: number;
 }
 
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
-}
-
 export const GET: APIRoute = async () => {
   const content = createContent(env.DB);
-  return json(await content.listCategories());
+  return apiOk(await content.listCategories());
 };
 
 export const POST: APIRoute = async ({ request }) => {
   const content = createContent(env.DB);
   const body = (await request.json()) as CreateBody;
 
-  if (!body.name?.trim()) {
-    return json({ error: "Le nom est obligatoire." }, 400);
-  }
+  const problems = issues(requiredText(body.name, "name", "The name"));
+  if (problems.length > 0) return validationError(problems);
 
   const category = await content.createCategory({
-    name: body.name.trim(),
+    name: (body.name as string).trim(),
     slug: body.slug,
     description: body.description ?? null,
     position: body.position,
   });
 
-  return json(category, 201);
+  return apiOk(category, 201);
 };

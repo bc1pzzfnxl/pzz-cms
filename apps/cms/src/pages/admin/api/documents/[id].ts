@@ -1,39 +1,66 @@
 import { env } from "cloudflare:workers";
-import { createContent } from "@pzz-cms/core";
+import { createContent, RevisionConflictError } from "@pzz-cms/core";
 import type { APIRoute } from "astro";
+import {
+  apiError,
+  apiOk,
+  conflictError,
+  notFoundError,
+  parseRev,
+  validationError,
+} from "../../../../lib/api";
 
 interface Body {
   title?: string;
   slug?: string;
   description?: string;
   bodyJson?: string;
-}
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
+  rev?: number;
 }
 
 export const PUT: APIRoute = async ({ params, request }) => {
   const id = params.id;
-  if (!id) return json({ error: "Identifiant manquant." }, 400);
+  if (!id) return apiError("VALIDATION", "Missing document id.", 400);
 
   const content = createContent(env.DB);
-  if (!(await content.getDocumentById(id))) {
-    return json({ error: "Document introuvable." }, 404);
-  }
+  if (!(await content.getDocumentById(id))) return notFoundError("Document not found.");
 
   const body = (await request.json()) as Body;
+  const rev = parseRev(body.rev);
+  if (rev !== undefined && typeof rev !== "number") return validationError([rev]);
+
   if (body.bodyJson !== undefined) {
     try {
       JSON.parse(body.bodyJson);
     } catch {
-      return json({ error: "Le contenu n'est pas un JSON valide." }, 400);
+      return validationError([{ path: "bodyJson", message: "The content is not valid JSON." }]);
     }
   }
 
-  const document = await content.updateDocument(id, body);
-  return json({ id: document.id, slug: document.slug, status: document.status });
+  try {
+    const document = await content.updateDocument(
+      id,
+      {
+        title: body.title,
+        slug: body.slug,
+        description: body.description,
+        bodyJson: body.bodyJson,
+      },
+      rev,
+    );
+    return apiOk({
+      id: document.id,
+      slug: document.slug,
+      status: document.status,
+      rev: document.rev,
+    });
+  } catch (error) {
+    if (error instanceof RevisionConflictError) {
+      return conflictError(
+        "This document was changed elsewhere. Reload to get the latest version.",
+        { rev: error.actual },
+      );
+    }
+    throw error;
+  }
 };

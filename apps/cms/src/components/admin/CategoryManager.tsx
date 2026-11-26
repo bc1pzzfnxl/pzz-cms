@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toApiError } from "../../lib/client";
 
 type Category = {
   id: string;
@@ -21,6 +22,7 @@ export default function CategoryManager({ initial }: Props) {
   const [categories, setCategories] = useState(initial);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [nameIssue, setNameIssue] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -34,6 +36,7 @@ export default function CategoryManager({ initial }: Props) {
 
     setBusy(true);
     setMessage(null);
+    setNameIssue(null);
     try {
       const res = await fetch("/admin/api/categories/", {
         method: "POST",
@@ -41,13 +44,14 @@ export default function CategoryManager({ initial }: Props) {
         body: JSON.stringify({ name: name.trim(), description: description.trim() || null }),
       });
       if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        setMessage(err.error ?? "Erreur à la création.");
+        const error = await toApiError(res);
+        setNameIssue(error.issueFor("name") ?? null);
+        setMessage(error.message);
         return;
       }
       setName("");
       setDescription("");
-      toast("Catégorie créée.");
+      toast("Category created.");
       await refresh();
     } finally {
       setBusy(false);
@@ -64,24 +68,24 @@ export default function CategoryManager({ initial }: Props) {
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
-      setMessage("Erreur à l'enregistrement.");
+      const error = await toApiError(res);
+      setMessage(error.message);
     } else {
-      toast("Catégorie enregistrée.");
+      toast("Category saved.");
     }
     await refresh();
   }
 
   async function remove(id: string) {
-    if (
-      !window.confirm("Supprimer cette catégorie ? Les articles repasseront en « sans catégorie ».")
-    ) {
+    if (!window.confirm("Delete this category? Its articles become uncategorized.")) {
       return;
     }
     const res = await fetch(`/admin/api/categories/${id}/`, { method: "DELETE" });
     if (!res.ok) {
-      setMessage("Erreur à la suppression.");
+      const error = await toApiError(res);
+      setMessage(error.message);
     } else {
-      toast("Catégorie supprimée.");
+      toast("Category deleted.");
     }
     await refresh();
   }
@@ -105,31 +109,33 @@ export default function CategoryManager({ initial }: Props) {
           void create();
         }}
       >
-        <div className="text-[15px] font-medium">Nouvelle catégorie</div>
+        <div className="text-[15px] font-medium">New category</div>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
             <label className="field-label" htmlFor="category-name">
-              Nom
+              Name
             </label>
             <input
               id="category-name"
               data-testid="category-name"
               className={inputClass}
               value={name}
-              placeholder="Théologie"
+              placeholder="Theology"
+              aria-invalid={nameIssue ? true : undefined}
               onChange={(event) => setName(event.target.value)}
             />
+            {nameIssue && <p className="mt-1 text-xs text-destructive">{nameIssue}</p>}
           </div>
           <div>
             <label className="field-label" htmlFor="category-description">
-              Description (optionnel)
+              Description (optional)
             </label>
             <input
               id="category-description"
-              aria-label="Description de la nouvelle catégorie"
+              aria-label="New category description"
               className={inputClass}
               value={description}
-              placeholder="Affichée sur la page de la catégorie"
+              placeholder="Shown on the category page"
               onChange={(event) => setDescription(event.target.value)}
             />
           </div>
@@ -140,7 +146,7 @@ export default function CategoryManager({ initial }: Props) {
           disabled={busy}
           className="btn btn-primary mt-3"
         >
-          Ajouter
+          Add
         </button>
       </form>
 
@@ -150,8 +156,8 @@ export default function CategoryManager({ initial }: Props) {
         {categories.length > 0 ? (
           <div>
             <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[13px] font-medium text-muted-foreground">
-              <span className="w-[52px]">Ordre</span>
-              <span className="flex-1">Nom et description</span>
+              <span className="w-[52px]">Order</span>
+              <span className="flex-1">Name and description</span>
               <span className="w-20" />
             </div>
             {categories.map((category, index) => (
@@ -162,7 +168,7 @@ export default function CategoryManager({ initial }: Props) {
                 <div className="flex w-[52px] flex-col gap-1">
                   <button
                     type="button"
-                    aria-label="Monter"
+                    aria-label="Move up"
                     className="btn btn-ghost btn-sm h-6 px-1.5 text-xs disabled:opacity-30"
                     disabled={index === 0}
                     onClick={() => void move(index, -1)}
@@ -171,7 +177,7 @@ export default function CategoryManager({ initial }: Props) {
                   </button>
                   <button
                     type="button"
-                    aria-label="Descendre"
+                    aria-label="Move down"
                     className="btn btn-ghost btn-sm h-6 px-1.5 text-xs disabled:opacity-30"
                     disabled={index === categories.length - 1}
                     onClick={() => void move(index, 1)}
@@ -182,7 +188,7 @@ export default function CategoryManager({ initial }: Props) {
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-3">
                     <input
-                      aria-label={`Nom de ${category.name}`}
+                      aria-label={`Name of ${category.name}`}
                       className={inputClass}
                       defaultValue={category.name}
                       onBlur={(event) => {
@@ -196,10 +202,10 @@ export default function CategoryManager({ initial }: Props) {
                     </span>
                   </div>
                   <input
-                    aria-label={`Description de ${category.name}`}
+                    aria-label={`Description of ${category.name}`}
                     className={inputClass}
                     defaultValue={category.description ?? ""}
-                    placeholder="Description affichée sur /categorie/…"
+                    placeholder="Description shown on /categorie/…"
                     onBlur={(event) => {
                       const value = event.target.value.trim();
                       if (value !== (category.description ?? "")) {
@@ -213,13 +219,13 @@ export default function CategoryManager({ initial }: Props) {
                   className="btn btn-outline btn-sm text-destructive"
                   onClick={() => void remove(category.id)}
                 >
-                  Supprimer
+                  Delete
                 </button>
               </div>
             ))}
           </div>
         ) : (
-          <p className="p-6 text-sm text-muted-foreground">Aucune catégorie.</p>
+          <p className="p-6 text-sm text-muted-foreground">No categories.</p>
         )}
       </div>
     </div>

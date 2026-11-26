@@ -59,7 +59,7 @@ The admin (`apps/cms`) is never deployed. It runs on your machine with
 There is no authentication: localhost is the security boundary. Content saved
 in the admin appears on the deployed site immediately.
 
-The site palette is edited at `/admin/apparence/` (six colours per mode,
+The site palette is edited at `/admin/appearance/` (six colours per mode,
 published on click; stored in the `settings` table, so apply the migrations
 before deploying a layout that reads it).
 

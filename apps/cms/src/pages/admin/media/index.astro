@@ -8,11 +8,11 @@ const content = createContent(env.DB);
 const media = await content.listMedia();
 ---
 
-<AdminLayout title="Médias">
+<AdminLayout title="Media">
     <div class="mb-7">
-        <h1 class="text-[24px] font-semibold tracking-tight">Médias</h1>
+        <h1 class="text-[24px] font-semibold tracking-tight">Media</h1>
         <p class="mt-1 text-sm text-muted-foreground">
-            {media.length} images sur R2 · variantes WebP 480 / 800 / 1200 générées à l'envoi
+            {media.length} images on R2 · WebP variants 480 / 800 / 1200 generated on upload
         </p>
     </div>
 
@@ -34,12 +34,12 @@ const media = await content.listMedia();
                 type="search"
                 class="input with-icon"
                 style="width: 270px"
-                placeholder="Rechercher un média…"
+                placeholder="Search media…"
                 data-media-search
-                aria-label="Rechercher un média"
+                aria-label="Search media"
             />
         </div>
-        <span class="text-[13px] text-muted-foreground" data-media-count>{media.length} médias</span>
+        <span class="text-[13px] text-muted-foreground" data-media-count>{media.length} files</span>
     </div>
 
     {
@@ -58,20 +58,20 @@ const media = await content.listMedia();
                         <div class="p-3.5">
                             <div class="truncate text-[13.5px] font-medium">{item.r2Key.split("/").pop()}</div>
                             <div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                                {item.width && item.height ? <span>{item.width} × {item.height}</span> : <span>dimensions inconnues</span>}
+                                {item.width && item.height ? <span>{item.width} × {item.height}</span> : <span>unknown dimensions</span>}
                             </div>
                             <div class="mt-1 truncate text-xs text-muted-foreground">
-                                {item.alt ?? "sans texte alternatif"}
+                                {item.alt ?? "no alt text"}
                             </div>
                             <button type="button" class="btn btn-outline btn-sm mt-2.5 w-full" data-copy={`/media/${item.r2Key}`}>
-                                Copier l'URL
+                                Copy URL
                             </button>
                         </div>
                     </div>
                 ))}
             </div>
         ) : (
-            <p class="mt-4 text-sm text-muted-foreground">Aucun média. Envoie la première image ci-dessus.</p>
+            <p class="mt-4 text-sm text-muted-foreground">No media yet. Upload the first image above.</p>
         )
     }
 
@@ -88,7 +88,7 @@ const media = await content.listMedia();
                 card.style.display = matches ? "" : "none";
                 if (matches) visible += 1;
             }
-            if (countLabel) countLabel.textContent = `${visible} média(s)`;
+            if (countLabel) countLabel.textContent = `${visible} file(s)`;
         });
 
         for (const button of document.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
@@ -96,10 +96,10 @@ const media = await content.listMedia();
                 const url = `${window.location.origin}${button.dataset.copy ?? ""}`;
                 try {
                     await navigator.clipboard.writeText(url);
-                    (window as Window & { toast?: (message: string) => void }).toast?.("URL copiée.");
+                    (window as Window & { toast?: (message: string) => void }).toast?.("URL copied.");
                 } catch {
                     (window as Window & { toast?: (message: string) => void }).toast?.(
-                        "Copie impossible dans ce navigateur.",
+                        "Copy is not available in this browser.",
                     );
                 }
             });

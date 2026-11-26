@@ -1,3 +1,5 @@
+import { RevisionConflictError } from "../lib/errors";
+import { mediaKeysInHtml, mediaKeysInMarkdown } from "../lib/media";
 import { slugify, uniqueSlug } from "../lib/slug";
 import { DEFAULT_THEME, normalizeTheme, type SiteTheme } from "../lib/theme";
 import type {
@@ -25,7 +27,13 @@ import type {
 } from "./types";
 
 const ARTICLE_COLUMNS =
-  "id, slug, title, description, body_mdx, body_html, status, lang, og_image_key, author, category_id, published_at, created_at, updated_at";
+  "id, slug, title, description, body_mdx, body_html, status, lang, og_image_key, author, category_id, published_at, created_at, updated_at, rev";
+
+const DOCUMENT_COLUMNS =
+  "id, slug, title, description, body_json, status, published_at, created_at, updated_at, rev";
+
+/** Drafts untouched for this long show up under "needs attention". */
+const STALE_DRAFT_DAYS = 30;
 
 function now(): string {
   return new Date().toISOString();
@@ -47,6 +55,7 @@ function toArticle(row: ArticleRow): Article {
     publishedAt: row.published_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    rev: row.rev,
   };
 }
 
@@ -62,6 +71,30 @@ export interface DashboardStats {
   byCategory: { id: string; name: string; count: number }[];
   /** Most recently updated articles. */
   recent: AdminArticleSummary[];
+}
+
+/** A draft that has not moved for a while. */
+export interface StaleDraft {
+  id: string;
+  title: string;
+  slug: string;
+  updatedAt: string;
+}
+
+/**
+ * Work the dashboard can act on: content that is missing something a reader
+ * would notice, or that has been left behind.
+ */
+export interface DashboardAttention {
+  /** Drafts untouched for {@link STALE_DRAFT_DAYS} days, oldest first. */
+  staleDrafts: StaleDraft[];
+  staleDraftCount: number;
+  /** Published articles with an empty description (used by search and social). */
+  missingDescription: number;
+  /** Published articles without a cover image. */
+  missingCover: number;
+  /** Media rows no article or document references. */
+  orphanMedia: number;
 }
 
 /**
@@ -80,6 +113,7 @@ export interface Content {
   getArticleBySlug(slug: string): Promise<Article | null>;
   listSlugs(): Promise<string[]>;
   getStats(): Promise<DashboardStats>;
+  getAttention(): Promise<DashboardAttention>;
 
   // Site settings (appearance)
   getTheme(): Promise<SiteTheme>;
@@ -87,7 +121,12 @@ export interface Content {
 
   // Admin write path
   createArticle(input: CreateArticleInput): Promise<Article>;
-  updateArticle(id: string, input: UpdateArticleInput): Promise<Article>;
+  /**
+   * Update an article. When `expectedRev` is given, the write only applies if
+   * the row still has that revision; otherwise it throws
+   * {@link RevisionConflictError}.
+   */
+  updateArticle(id: string, input: UpdateArticleInput, expectedRev?: number): Promise<Article>;
   setStatus(id: string, status: ArticleStatus): Promise<Article>;
 
   // Media
@@ -112,7 +151,10 @@ export interface Content {
   getDocumentById(id: string): Promise<Document | null>;
   getPublishedDocumentBySlug(slug: string): Promise<Document | null>;
   createDocument(input: CreateDocumentInput): Promise<Document>;
-  updateDocument(id: string, input: UpdateDocumentInput): Promise<Document>;
+  /**
+   * Update a document. Same revision contract as {@link updateArticle}.
+   */
+  updateDocument(id: string, input: UpdateDocumentInput, expectedRev?: number): Promise<Document>;
   setDocumentStatus(id: string, status: ArticleStatus): Promise<Document>;
 }
 
@@ -220,14 +262,13 @@ export function createContent(db: Database): Content {
       publishedAt: row.published_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      rev: row.rev,
     };
   }
 
   async function getDocumentById(id: string): Promise<Document | null> {
     const row = await db
-      .prepare(
-        "SELECT id, slug, title, description, body_json, status, published_at, created_at, updated_at FROM documents WHERE id = ?",
-      )
+      .prepare(`SELECT ${DOCUMENT_COLUMNS} FROM documents WHERE id = ?`)
       .bind(id)
       .first<DocumentRow>();
     return row ? toDocument(row) : null;
@@ -406,7 +447,7 @@ export function createContent(db: Database): Content {
       return getArticleOrThrow(id);
     },
 
-    async updateArticle(id, input) {
+    async updateArticle(id, input, expectedRev) {
       const sets: string[] = [];
       const values: unknown[] = [];
 
@@ -448,13 +489,28 @@ export function createContent(db: Database): Content {
         values.push(input.categoryId);
       }
 
-      sets.push("updated_at = ?");
-      values.push(now(), id);
+      sets.push("updated_at = ?", "rev = rev + 1");
+      values.push(now());
 
-      await db
-        .prepare(`UPDATE articles SET ${sets.join(", ")} WHERE id = ?`)
-        .bind(...values)
-        .run();
+      if (expectedRev !== undefined) {
+        values.push(id, expectedRev);
+        const result = (await db
+          .prepare(`UPDATE articles SET ${sets.join(", ")} WHERE id = ? AND rev = ?`)
+          .bind(...values)
+          .run()) as { meta?: { changes?: number } };
+
+        if (result.meta?.changes === 0) {
+          const current = await getArticleById(id);
+          if (!current) throw new Error(`Article not found: ${id}`);
+          throw new RevisionConflictError(id, expectedRev, current.rev);
+        }
+      } else {
+        values.push(id);
+        await db
+          .prepare(`UPDATE articles SET ${sets.join(", ")} WHERE id = ?`)
+          .bind(...values)
+          .run();
+      }
 
       return getArticleOrThrow(id);
     },
@@ -594,6 +650,70 @@ export function createContent(db: Database): Content {
           publishedAt: row.published_at,
           updatedAt: row.updated_at ?? "",
         })),
+      };
+    },
+
+    async getAttention() {
+      const threshold = new Date(Date.now() - STALE_DRAFT_DAYS * 86_400_000).toISOString();
+
+      const [stale, staleCount, missingDescription, missingCover] = await Promise.all([
+        db
+          .prepare(
+            "SELECT id, title, slug, updated_at FROM articles WHERE status = 'draft' AND updated_at < ? ORDER BY updated_at ASC LIMIT 5",
+          )
+          .bind(threshold)
+          .all<{ id: string; title: string; slug: string; updated_at: string }>(),
+        db
+          .prepare("SELECT COUNT(*) AS n FROM articles WHERE status = 'draft' AND updated_at < ?")
+          .bind(threshold)
+          .first<{ n: number }>(),
+        db
+          .prepare(
+            "SELECT COUNT(*) AS n FROM articles WHERE status = 'published' AND (description IS NULL OR trim(description) = '')",
+          )
+          .first<{ n: number }>(),
+        db
+          .prepare(
+            "SELECT COUNT(*) AS n FROM articles WHERE status = 'published' AND og_image_key IS NULL",
+          )
+          .first<{ n: number }>(),
+      ]);
+
+      // Media nothing points at any more: one scan of every body, compared
+      // with the media table. Cheap for a blog and avoids a query per file.
+      const { results: mediaRows } = await db
+        .prepare("SELECT r2_key FROM media")
+        .all<{ r2_key: string }>();
+      const { results: articleRows } = await db
+        .prepare("SELECT og_image_key, body_mdx, body_html FROM articles")
+        .all<{ og_image_key: string | null; body_mdx: string; body_html: string }>();
+      const { results: documentRows } = await db
+        .prepare("SELECT body_json FROM documents")
+        .all<{ body_json: string }>();
+
+      const referenced = new Set<string>();
+      for (const row of articleRows) {
+        if (row.og_image_key) referenced.add(row.og_image_key);
+        for (const key of mediaKeysInHtml(row.body_html)) referenced.add(key);
+        for (const key of mediaKeysInMarkdown(row.body_mdx)) referenced.add(key);
+      }
+      for (const row of documentRows) {
+        for (const key of mediaKeysInMarkdown(row.body_json)) referenced.add(key);
+      }
+
+      return {
+        staleDrafts: stale.results.map(
+          (row): StaleDraft => ({
+            id: row.id,
+            title: row.title,
+            slug: row.slug,
+            updatedAt: row.updated_at,
+          }),
+        ),
+        staleDraftCount: staleCount?.n ?? 0,
+        missingDescription: missingDescription?.n ?? 0,
+        missingCover: missingCover?.n ?? 0,
+        orphanMedia: mediaRows.filter((row) => !referenced.has(row.r2_key)).length,
       };
     },
 
@@ -737,7 +857,7 @@ export function createContent(db: Database): Content {
     async getPublishedDocumentBySlug(slug) {
       const row = await db
         .prepare(
-          "SELECT id, slug, title, description, body_json, status, published_at, created_at, updated_at FROM documents WHERE slug = ? AND status = 'published'",
+          `SELECT ${DOCUMENT_COLUMNS} FROM documents WHERE slug = ? AND status = 'published'`,
         )
         .bind(slug)
         .first<DocumentRow>();
@@ -762,7 +882,7 @@ export function createContent(db: Database): Content {
       return document;
     },
 
-    async updateDocument(id, input) {
+    async updateDocument(id, input, expectedRev) {
       const sets: string[] = [];
       const values: unknown[] = [];
 
@@ -785,13 +905,28 @@ export function createContent(db: Database): Content {
         values.push(input.bodyJson);
       }
 
-      sets.push("updated_at = ?");
-      values.push(now(), id);
+      sets.push("updated_at = ?", "rev = rev + 1");
+      values.push(now());
 
-      await db
-        .prepare(`UPDATE documents SET ${sets.join(", ")} WHERE id = ?`)
-        .bind(...values)
-        .run();
+      if (expectedRev !== undefined) {
+        values.push(id, expectedRev);
+        const result = (await db
+          .prepare(`UPDATE documents SET ${sets.join(", ")} WHERE id = ? AND rev = ?`)
+          .bind(...values)
+          .run()) as { meta?: { changes?: number } };
+
+        if (result.meta?.changes === 0) {
+          const current = await getDocumentById(id);
+          if (!current) throw new Error(`Document not found: ${id}`);
+          throw new RevisionConflictError(id, expectedRev, current.rev);
+        }
+      } else {
+        values.push(id);
+        await db
+          .prepare(`UPDATE documents SET ${sets.join(", ")} WHERE id = ?`)
+          .bind(...values)
+          .run();
+      }
 
       const document = await getDocumentById(id);
       if (!document) throw new Error(`Document not found: ${id}`);

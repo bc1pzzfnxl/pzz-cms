@@ -24,8 +24,8 @@ export function createBunDatabase(sqlite: Sqlite): Database {
           return (statement.get(...(values as never[])) as T | undefined) ?? null;
         },
         async run() {
-          statement.run(...(values as never[]));
-          return {};
+          const result = statement.run(...(values as never[]));
+          return { meta: { changes: result.changes } };
         },
       };
 

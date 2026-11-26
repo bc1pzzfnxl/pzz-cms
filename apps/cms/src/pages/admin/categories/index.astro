@@ -8,11 +8,11 @@ const content = createContent(env.DB);
 const categories = await content.listCategories();
 ---
 
-<AdminLayout title="Catégories">
+<AdminLayout title="Categories">
     <div class="mb-7">
-        <h1 class="text-[24px] font-semibold tracking-tight">Catégories</h1>
+        <h1 class="text-[24px] font-semibold tracking-tight">Categories</h1>
         <p class="mt-1 text-sm text-muted-foreground">
-            Regroupent les articles sur la page d'accueil et alimentent le fil d'Ariane.
+            Group articles on the home page and drive the breadcrumb.
         </p>
     </div>
 

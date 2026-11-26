@@ -20,6 +20,7 @@ const initial = document
       description: document.description,
       bodyJson: document.bodyJson,
       status: document.status,
+      rev: document.rev,
     }
   : null;
 ---
@@ -50,11 +51,12 @@ const initial = document
             </div>
         ) : (
             <div>
-                <h1 class="text-2xl font-semibold">Document introuvable</h1>
+                <h1 class="text-2xl font-semibold">Document not found</h1>
                 <a href="/admin/documents/" class="mt-4 inline-block text-sm hover:underline">
-                    ← Retour aux documents
+                    ← Back to documents
                 </a>
             </div>
         )
     }
 </AdminLayout>
+

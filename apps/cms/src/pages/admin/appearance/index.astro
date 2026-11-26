@@ -1,0 +1,258 @@
+---
+import "@pzz-cms/core/styles/site-reading.css";
+import { env } from "cloudflare:workers";
+import { createContent, DEFAULT_THEME, type SiteTheme } from "@pzz-cms/core";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const content = createContent(env.DB);
+const theme = await content.getTheme();
+
+const tokens: { key: keyof SiteTheme["light"]; label: string; hint: string }[] = [
+  { key: "background", label: "Background", hint: "Page background" },
+  { key: "text", label: "Text", hint: "Body text" },
+  { key: "heading", label: "Headings", hint: "Headings and site name" },
+  { key: "muted", label: "Muted", hint: "Dates, captions, footer" },
+  { key: "border", label: "Borders", hint: "Tables, separators" },
+  { key: "link", label: "Links", hint: "Link colour" },
+];
+
+const modeLabel = { light: "Light", dark: "Dark" } as const;
+---
+
+<AdminLayout title="Appearance">
+    <div class="mb-7 flex items-end justify-between gap-4">
+        <div>
+            <h1 class="text-[24px] font-semibold tracking-tight">Site appearance</h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Six colours per mode. Nothing is applied before you publish.
+            </p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-ghost" data-theme-reset>Reset</button>
+            <button type="button" class="btn btn-primary" data-theme-publish>Publish</button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 items-start gap-4">
+        <div class="space-y-4">
+            {
+                (["light", "dark"] as const).map((mode) => (
+                    <div class="card p-6">
+                        <div class="flex items-center justify-between">
+                            <div class="text-[15px] font-medium">{modeLabel[mode]} palette</div>
+                            <span class="text-xs text-muted-foreground">
+                                {mode === "dark" ? "html.dark-mode" : ":root"}
+                            </span>
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            {tokens.map((token) => (
+                                <div class="flex items-center gap-3">
+                                    <input
+                                        type="color"
+                                        class="h-9 w-12 cursor-pointer rounded-md border bg-transparent p-0.5"
+                                        data-token={token.key}
+                                        data-mode={mode}
+                                        data-default={DEFAULT_THEME[mode][token.key]}
+                                        value={theme[mode][token.key]}
+                                        aria-label={`${token.label} — ${modeLabel[mode]}`}
+                                    />
+                                    <div class="flex-1">
+                                        <div class="text-[13px] font-medium">{token.label}</div>
+                                        <div class="text-[11.5px] text-muted-foreground">{token.hint}</div>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        class="input font-mono text-xs"
+                                        style="width: 110px"
+                                        data-hex={token.key}
+                                        data-mode={mode}
+                                        value={theme[mode][token.key]}
+                                        spellcheck="false"
+                                        maxlength="7"
+                                        aria-label={`${token.label} hex code — ${modeLabel[mode]}`}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))
+            }
+        </div>
+
+        <div class="card overflow-hidden" style="position: sticky; top: 88px;">
+            <div class="flex items-center justify-between border-b px-5 py-3">
+                <div class="text-[15px] font-medium">Preview</div>
+                <div class="flex items-center gap-1 rounded-md border p-0.5">
+                    <button type="button" class="btn btn-sm btn-outline" data-preview-mode="light">Light</button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-preview-mode="dark">Dark</button>
+                </div>
+            </div>
+            <div class="p-5">
+                <div
+                    class="site-reading rounded-lg border p-6"
+                    data-preview
+                    style={`--site-bg:${theme.light.background};--site-text:${theme.light.text};--site-heading:${theme.light.heading};--site-muted:${theme.light.muted};--site-border:${theme.light.border};--site-link:${theme.light.link};background:var(--site-bg);`}
+                >
+                    <h1 style="font-size: 1.9rem; margin-top: 0;">The silence of words</h1>
+                    <div class="article-meta" style="margin-top: 0;">November 12, 2026 · 6 min read</div>
+                    <p>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+                        incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+                        nostrud <a href="#">exercitation ullamco</a> laboris nisi ut aliquip ex ea
+                        commodo consequat.
+                    </p>
+                    <h2>A section</h2>
+                    <p>
+                        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+                        fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.
+                    </p>
+                    <blockquote>
+                        <strong>Form follows meaning</strong>
+                        <em>— An attentive reader</em>
+                        <p>Sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    </blockquote>
+                    <table>
+                        <thead>
+                            <tr><th>Chapter</th><th>Pages</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Opening</td><td>12</td></tr>
+                            <tr><td>Development</td><td>48</td></tr>
+                        </tbody>
+                    </table>
+                    <p>A command: <code>bun run dev</code>, then a list:</p>
+                    <ul>
+                        <li>First point</li>
+                        <li>Second point</li>
+                    </ul>
+                </div>
+            </div>
+            <p class="border-t px-5 py-3 text-[12px] text-muted-foreground">
+                Rendered with the site reading styles (same CSS rules, same font).
+            </p>
+        </div>
+    </div>
+
+    <script>
+        import { toApiError } from "../../../lib/client";
+
+        interface Palette {
+            background: string;
+            text: string;
+            heading: string;
+            muted: string;
+            border: string;
+            link: string;
+        }
+        type Mode = "light" | "dark";
+
+        const toast = (message: string, kind: "success" | "danger" = "success") =>
+            (window as Window & { toast?: (message: string, kind?: string) => void }).toast?.(message, kind);
+
+        const vars: Record<keyof Palette, string> = {
+            background: "--site-bg",
+            text: "--site-text",
+            heading: "--site-heading",
+            muted: "--site-muted",
+            border: "--site-border",
+            link: "--site-link",
+        };
+
+        const preview = document.querySelector("[data-preview]") as HTMLElement;
+        const colorInputs = [...document.querySelectorAll<HTMLInputElement>("[data-token]")];
+        const hexInputs = [...document.querySelectorAll<HTMLInputElement>("[data-hex]")];
+        let previewMode: Mode = "light";
+
+        const readTheme = (): Record<Mode, Palette> => {
+            const theme = { light: {} as Palette, dark: {} as Palette };
+            for (const input of colorInputs) {
+                const mode = input.dataset.mode as Mode;
+                const key = input.dataset.token as keyof Palette;
+                theme[mode][key] = input.value;
+            }
+            return theme;
+        };
+
+        const renderPreview = () => {
+            const theme = readTheme();
+            const palette = theme[previewMode];
+            for (const [key, cssVar] of Object.entries(vars)) {
+                preview.style.setProperty(cssVar, palette[key as keyof Palette]);
+            }
+            preview.style.setProperty("background", `var(--site-bg)`);
+        };
+
+        const syncHex = (input: HTMLInputElement) => {
+            const hex = document.querySelector<HTMLInputElement>(
+                `[data-hex="${input.dataset.token}"][data-mode="${input.dataset.mode}"]`,
+            );
+            if (hex) hex.value = input.value;
+        };
+
+        for (const input of colorInputs) {
+            input.addEventListener("input", () => {
+                syncHex(input);
+                renderPreview();
+            });
+        }
+
+        for (const input of hexInputs) {
+            input.addEventListener("input", () => {
+                const value = input.value.trim();
+                if (!/^#[0-9a-f]{6}$/i.test(value)) return;
+                const color = document.querySelector<HTMLInputElement>(
+                    `[data-token="${input.dataset.token}"][data-mode="${input.dataset.mode}"]`,
+                );
+                if (color) color.value = value;
+                renderPreview();
+            });
+        }
+
+        for (const button of document.querySelectorAll<HTMLButtonElement>("[data-preview-mode]")) {
+            button.addEventListener("click", () => {
+                previewMode = button.dataset.previewMode as Mode;
+                for (const other of document.querySelectorAll<HTMLButtonElement>("[data-preview-mode]")) {
+                    other.classList.toggle("btn-outline", other === button);
+                    other.classList.toggle("btn-ghost", other !== button);
+                }
+                renderPreview();
+            });
+        }
+
+        document.querySelector("[data-theme-reset]")?.addEventListener("click", () => {
+            for (const input of colorInputs) {
+                input.value = input.dataset.default ?? input.value;
+                syncHex(input);
+            }
+            for (const input of hexInputs) {
+                const color = document.querySelector<HTMLInputElement>(
+                    `[data-token="${input.dataset.token}"][data-mode="${input.dataset.mode}"]`,
+                );
+                if (color) input.value = color.value;
+            }
+            renderPreview();
+            toast("Defaults loaded. Publish to apply them.");
+        });
+
+        document.querySelector("[data-theme-publish]")?.addEventListener("click", async () => {
+            const theme = readTheme();
+            try {
+                const res = await fetch("/admin/api/theme/", {
+                    method: "PUT",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify(theme),
+                });
+                if (!res.ok) {
+                    const error = await toApiError(res);
+                    toast(error.message, "danger");
+                    return;
+                }
+                toast("Appearance published. The site now uses these colours.");
+            } catch {
+                toast("Network unavailable.", "danger");
+            }
+        });
+
+        renderPreview();
+    </script>
+</AdminLayout>
