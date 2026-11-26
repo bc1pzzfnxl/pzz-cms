@@ -56,8 +56,8 @@ Branches: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`.
 
 - TypeScript with `strict`. Type every public boundary.
 - Biome formats and lints. Run `bun run lint:fix` before committing.
-- Docs, comments and identifiers in English. UI copy and article content stay in
-  the site language.
+- Docs, comments and identifiers in English. Admin UI copy is English; article
+  content stays in the site language.
 - Prefer deep modules: a large surface of behaviour behind a small interface.
 
 ## Data policy

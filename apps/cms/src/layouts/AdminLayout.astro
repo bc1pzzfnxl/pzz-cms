@@ -24,31 +24,31 @@ const section = path.startsWith("/admin/articles")
       ? "documents"
       : path.startsWith("/admin/media")
         ? "media"
-        : path.startsWith("/admin/apparence")
-          ? "apparence"
+        : path.startsWith("/admin/appearance")
+          ? "appearance"
           : path === "/admin" || path === "/admin/"
             ? "dashboard"
             : "articles";
 
 const nav = [
-  { key: "dashboard", href: "/admin/", label: "Vue d'ensemble", count: null as number | null },
+  { key: "dashboard", href: "/admin/", label: "Overview", count: null as number | null },
   {
     key: "articles",
     href: "/admin/articles/",
     label: "Articles",
     count: stats.articles.published + stats.articles.draft,
   },
-  { key: "categories", href: "/admin/categories/", label: "Catégories", count: stats.categories },
+  { key: "categories", href: "/admin/categories/", label: "Categories", count: stats.categories },
   {
     key: "documents",
     href: "/admin/documents/",
     label: "Documents",
     count: stats.documents.published + stats.documents.draft,
   },
-  { key: "media", href: "/admin/media/", label: "Médias", count: stats.media },
+  { key: "media", href: "/admin/media/", label: "Media", count: stats.media },
 ];
 
-const siteNav = [{ key: "apparence", href: "/admin/apparence/", label: "Apparence du site" }];
+const siteNav = [{ key: "appearance", href: "/admin/appearance/", label: "Site appearance" }];
 
 const icons: Record<string, string> = {
   dashboard:
@@ -60,13 +60,13 @@ const icons: Record<string, string> = {
   documents: '<path d="M4 6h6l2 2h8v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z"/>',
   media:
     '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
-  apparence:
+  appearance:
     '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.4-4.5-8-10-8z"/>',
 };
 ---
 
 <!doctype html>
-<html lang="fr">
+<html lang="en">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -85,14 +85,14 @@ const icons: Record<string, string> = {
                 </div>
                 <div class="leading-tight">
                     <div class="text-[15px] font-semibold tracking-tight">{site.name}</div>
-                    <div class="text-[11.5px] text-muted-foreground">admin local</div>
+                    <div class="text-[11.5px] text-muted-foreground">local admin</div>
                 </div>
             </div>
 
             <nav class="flex-1 space-y-1 overflow-y-auto p-2.5">
                 <div data-nav-group>
                     <div class="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Pilotage
+                        Overview
                     </div>
                     {nav.slice(0, 1).map((item) => (
                         <a href={item.href} class:list={["nav-item", { active: section === item.key }]}>
@@ -110,7 +110,7 @@ const icons: Record<string, string> = {
                         </a>
                     ))}
                     <div class="px-2.5 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Contenu
+                        Content
                     </div>
                     {nav.slice(1).map((item) => (
                         <a href={item.href} class:list={["nav-item", { active: section === item.key }]}>
@@ -166,7 +166,7 @@ const icons: Record<string, string> = {
                         <path d="M10 14 21 3"></path>
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                     </svg>
-                    Voir le site
+                    View site
                 </a>
             </div>
         </aside>
@@ -192,7 +192,7 @@ const icons: Record<string, string> = {
                         <circle cx="11" cy="11" r="7"></circle>
                         <path d="m21 21-4.3-4.3"></path>
                     </svg>
-                    Rechercher…
+                    Search…
                     <span class="ml-auto rounded border bg-muted px-1.5 text-xs text-muted-foreground">Ctrl K</span>
                 </button>
             </header>
@@ -212,10 +212,10 @@ const icons: Record<string, string> = {
                     </svg>
                     <input
                         class="h-12 w-full bg-transparent text-sm outline-none"
-                        placeholder="Rechercher une page, un article, une action…"
+                        placeholder="Search a page, an article, an action…"
                         data-cmd-input
                     />
-                    <span class="rounded border bg-muted px-1.5 text-xs text-muted-foreground">Échap</span>
+                    <span class="rounded border bg-muted px-1.5 text-xs text-muted-foreground">Esc</span>
                 </div>
                 <div class="max-h-[360px] overflow-y-auto p-2" data-cmd-list>
                     <div class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Navigation</div>
@@ -239,21 +239,21 @@ const icons: Record<string, string> = {
                         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 5v14M5 12h14"></path>
                         </svg>
-                        Nouvel article
+                        New article
                     </a>
                     <a href="/admin/documents/" class="cmd-item" data-cmd-item>
                         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 16V4"></path><path d="m6 10 6-6 6 6"></path><path d="M4 20h16"></path>
                         </svg>
-                        Importer un document JSON
+                        Import a JSON document
                     </a>
                     <a href={siteUrl} target="_blank" rel="noreferrer" class="cmd-item" data-cmd-item>
                         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M15 3h6v6"></path><path d="M10 14 21 3"></path>
                         </svg>
-                        Voir le site
+                        View site
                     </a>
-                    <div class="px-2.5 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Articles récents</div>
+                    <div class="px-2.5 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Recent articles</div>
                     {stats.recent.slice(0, 3).map((article) => (
                         <a href={`/admin/${article.id}`} class="cmd-item" data-cmd-item>
                             {article.title}
@@ -325,3 +325,5 @@ const icons: Record<string, string> = {
         </script>
     </body>
 </html>
+
+

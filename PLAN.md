@@ -21,7 +21,7 @@ and `packages/core` (shared) — see ADR 0008 and `docs/spec/split-site-cms.md`.
 | Slugs             | ASCII kebab-case generated from the title. Editable before publication. A change creates a 301 in the `redirects` table and updates the sitemap.                |
 | Titles            | `title` in frontmatter, with accents. It feeds `<h1>`, `<title>` and JSON-LD. File names are ASCII slugs.                                                       |
 | URLs              | Page URLs are canonical with a trailing slash. `trailingSlash: "ignore"` plus middleware canonicalizes to the trailing-slash form. Sitemap at the same address. |
-| Language          | French UI and content. Code and docs in English. Multilingual support is v2.                                                                                    |
+| Language          | English admin UI. Content in the site language (French for the reference blog). Code and docs in English.                                                       |
 | Media             | Cloudflare R2. WebP conversion in the browser (canvas) before upload. Dimensions stored in D1.                                                                  |
 | SEO               | Modules from `skill-seo-astro` are added one by one. The blog layout is not overwritten.                                                                        |
 | Linting and hooks | Biome (lint and format), TypeScript `strict`, Husky + lint-staged on pre-commit, GitHub Actions CI.                                                             |
@@ -381,7 +381,7 @@ Done:
   aggregates in D1 (no client-side chart library, no new runtime
   dependency).
 - **Site appearance (2026-11-18):** the site palette is editable from
-  `/admin/apparence/`. Six colour tokens per mode (background, text,
+  `/admin/appearance/`. Six colour tokens per mode (background, text,
   headings, muted, borders, links) are stored as JSON in the new `settings`
   table (`migrations/0005_settings.sql`), read by `content.getTheme()` and
   injected by `MainLayout` as `--site-*` custom properties (`:root` and

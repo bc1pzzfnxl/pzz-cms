@@ -8,28 +8,28 @@ const content = createContent(env.DB);
 const theme = await content.getTheme();
 
 const tokens: { key: keyof SiteTheme["light"]; label: string; hint: string }[] = [
-  { key: "background", label: "Fond", hint: "Fond de page" },
-  { key: "text", label: "Texte", hint: "Texte du corps" },
-  { key: "heading", label: "Titres", hint: "Titres et nom du site" },
-  { key: "muted", label: "Secondaire", hint: "Dates, légendes, pied de page" },
-  { key: "border", label: "Bordures", hint: "Tableaux, séparateurs" },
-  { key: "link", label: "Liens", hint: "Couleur des liens" },
+  { key: "background", label: "Background", hint: "Page background" },
+  { key: "text", label: "Text", hint: "Body text" },
+  { key: "heading", label: "Headings", hint: "Headings and site name" },
+  { key: "muted", label: "Muted", hint: "Dates, captions, footer" },
+  { key: "border", label: "Borders", hint: "Tables, separators" },
+  { key: "link", label: "Links", hint: "Link colour" },
 ];
 
-const modeLabel = { light: "Clair", dark: "Sombre" } as const;
+const modeLabel = { light: "Light", dark: "Dark" } as const;
 ---
 
-<AdminLayout title="Apparence">
+<AdminLayout title="Appearance">
     <div class="mb-7 flex items-end justify-between gap-4">
         <div>
-            <h1 class="text-[24px] font-semibold tracking-tight">Apparence du site</h1>
+            <h1 class="text-[24px] font-semibold tracking-tight">Site appearance</h1>
             <p class="mt-1 text-sm text-muted-foreground">
-                Six couleurs par mode. Rien n'est appliqué avant « Publier ».
+                Six colours per mode. Nothing is applied before you publish.
             </p>
         </div>
         <div class="flex items-center gap-2">
-            <button type="button" class="btn btn-ghost" data-theme-reset>Réinitialiser</button>
-            <button type="button" class="btn btn-primary" data-theme-publish>Publier</button>
+            <button type="button" class="btn btn-ghost" data-theme-reset>Reset</button>
+            <button type="button" class="btn btn-primary" data-theme-publish>Publish</button>
         </div>
     </div>
 
@@ -39,7 +39,7 @@ const modeLabel = { light: "Clair", dark: "Sombre" } as const;
                 (["light", "dark"] as const).map((mode) => (
                     <div class="card p-6">
                         <div class="flex items-center justify-between">
-                            <div class="text-[15px] font-medium">Palette {modeLabel[mode]}</div>
+                            <div class="text-[15px] font-medium">{modeLabel[mode]} palette</div>
                             <span class="text-xs text-muted-foreground">
                                 {mode === "dark" ? "html.dark-mode" : ":root"}
                             </span>
@@ -69,7 +69,7 @@ const modeLabel = { light: "Clair", dark: "Sombre" } as const;
                                         value={theme[mode][token.key]}
                                         spellcheck="false"
                                         maxlength="7"
-                                        aria-label={`Code hexadécimal ${token.label} — ${modeLabel[mode]}`}
+                                        aria-label={`${token.label} hex code — ${modeLabel[mode]}`}
                                     />
                                 </div>
                             ))}
@@ -81,10 +81,10 @@ const modeLabel = { light: "Clair", dark: "Sombre" } as const;
 
         <div class="card overflow-hidden" style="position: sticky; top: 88px;">
             <div class="flex items-center justify-between border-b px-5 py-3">
-                <div class="text-[15px] font-medium">Aperçu</div>
+                <div class="text-[15px] font-medium">Preview</div>
                 <div class="flex items-center gap-1 rounded-md border p-0.5">
-                    <button type="button" class="btn btn-sm btn-outline" data-preview-mode="light">Clair</button>
-                    <button type="button" class="btn btn-sm btn-ghost" data-preview-mode="dark">Sombre</button>
+                    <button type="button" class="btn btn-sm btn-outline" data-preview-mode="light">Light</button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-preview-mode="dark">Dark</button>
                 </div>
             </div>
             <div class="p-5">
@@ -93,47 +93,49 @@ const modeLabel = { light: "Clair", dark: "Sombre" } as const;
                     data-preview
                     style={`--site-bg:${theme.light.background};--site-text:${theme.light.text};--site-heading:${theme.light.heading};--site-muted:${theme.light.muted};--site-border:${theme.light.border};--site-link:${theme.light.link};background:var(--site-bg);`}
                 >
-                    <h1 style="font-size: 1.9rem; margin-top: 0;">Le silence des mots</h1>
-                    <div class="article-meta" style="margin-top: 0;">12 novembre 2026 · 6 min de lecture</div>
+                    <h1 style="font-size: 1.9rem; margin-top: 0;">The silence of words</h1>
+                    <div class="article-meta" style="margin-top: 0;">November 12, 2026 · 6 min read</div>
                     <p>
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
                         incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
                         nostrud <a href="#">exercitation ullamco</a> laboris nisi ut aliquip ex ea
                         commodo consequat.
                     </p>
-                    <h2>Une section</h2>
+                    <h2>A section</h2>
                     <p>
                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
                         fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.
                     </p>
                     <blockquote>
-                        <strong>La forme suit le sens</strong>
-                        <em>— Un lecteur attentif</em>
+                        <strong>Form follows meaning</strong>
+                        <em>— An attentive reader</em>
                         <p>Sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
                     </blockquote>
                     <table>
                         <thead>
-                            <tr><th>Chapitre</th><th>Pages</th></tr>
+                            <tr><th>Chapter</th><th>Pages</th></tr>
                         </thead>
                         <tbody>
-                            <tr><td>Ouverture</td><td>12</td></tr>
-                            <tr><td>Développement</td><td>48</td></tr>
+                            <tr><td>Opening</td><td>12</td></tr>
+                            <tr><td>Development</td><td>48</td></tr>
                         </tbody>
                     </table>
-                    <p>Une commande : <code>bun run dev</code>, puis une liste :</p>
+                    <p>A command: <code>bun run dev</code>, then a list:</p>
                     <ul>
-                        <li>Premier point</li>
-                        <li>Deuxième point</li>
+                        <li>First point</li>
+                        <li>Second point</li>
                     </ul>
                 </div>
             </div>
             <p class="border-t px-5 py-3 text-[12px] text-muted-foreground">
-                Rendu avec les styles de lecture du site (mêmes règles CSS, même police).
+                Rendered with the site reading styles (same CSS rules, same font).
             </p>
         </div>
     </div>
 
     <script>
+        import { toApiError } from "../../../lib/client";
+
         interface Palette {
             background: string;
             text: string;
@@ -229,7 +231,7 @@ const modeLabel = { light: "Clair", dark: "Sombre" } as const;
                 if (color) input.value = color.value;
             }
             renderPreview();
-            toast("Valeurs par défaut chargées — clique sur Publier pour les appliquer.");
+            toast("Defaults loaded. Publish to apply them.");
         });
 
         document.querySelector("[data-theme-publish]")?.addEventListener("click", async () => {
@@ -241,13 +243,13 @@ const modeLabel = { light: "Clair", dark: "Sombre" } as const;
                     body: JSON.stringify(theme),
                 });
                 if (!res.ok) {
-                    const err = (await res.json().catch(() => ({}))) as { error?: string };
-                    toast(err.error ?? "Échec de la publication.", "danger");
+                    const error = await toApiError(res);
+                    toast(error.message, "danger");
                     return;
                 }
-                toast("Apparence publiée — le site utilise ces couleurs.");
+                toast("Appearance published. The site now uses these colours.");
             } catch {
-                toast("Réseau indisponible.", "danger");
+                toast("Network unavailable.", "danger");
             }
         });
 

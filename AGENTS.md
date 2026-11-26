@@ -41,8 +41,8 @@ available on your `PATH`; `scripts/dev-cms.ts` drives wrangler with it.
 
 ## Rules
 
-- Code, comments and docs in English. UI copy and article content in the site
-  language (French for the reference blog).
+- Code, comments and docs in English. Admin UI copy in English; article content
+  stays in the site language (French for the reference blog).
 - The repository is public. Never commit an article, image, database dump or
   secret. Test fixtures are synthetic.
 - Site branding and the canonical URL live in `packages/core/src/lib/site.ts`,
