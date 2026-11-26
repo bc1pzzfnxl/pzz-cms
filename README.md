@@ -10,7 +10,7 @@ The public site is deployed on Workers; the admin runs on your machine; content 
 [![Stars](https://shieldcn.dev/github/bc1pzzfnxl/pzz-cms/stars.svg)](https://github.com/bc1pzzfnxl/pzz-cms/stargazers)
 [![PRs welcome](https://shieldcn.dev/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-[![Astro](https://shieldcn.dev/badge/Astro-5-BC52EE.svg?logo=astro&logoColor=white)](https://astro.build)
+[![Astro](https://shieldcn.dev/badge/Astro-7-BC52EE.svg?logo=astro&logoColor=white)](https://astro.build)
 [![Cloudflare Workers](https://shieldcn.dev/badge/Cloudflare_Workers-deployed-F38020.svg?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
 [![TypeScript](https://shieldcn.dev/badge/TypeScript-strict-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://shieldcn.dev/badge/Bun-1.4-000000.svg?logo=bun&logoColor=white)](https://bun.sh)
